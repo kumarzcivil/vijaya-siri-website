@@ -1,0 +1,221 @@
+/* ============================================
+   DISCLAIMERS PAGE — Editorial Policy
+   ============================================ */
+.disclaimers-page {
+  background: var(--color-bg-page);
+  padding-bottom: calc(var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom, 0px));
+  animation: disclaimersPageEnter 0.4s ease-out both;
+}
+
+@media (min-width: 768px) {
+  .disclaimers-page {
+    padding-bottom: 0;
+  }
+}
+
+/* ======================== EYEBROW ======================== */
+.disclaimer-eyebrow {
+  display: inline-block;
+  font-size: var(--font-caption);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: var(--space-lg);
+}
+
+/* ======================== HERO ======================== */
+.disclaimer-hero {
+  padding: clamp(4rem, 8vw, 7rem) 0 clamp(3rem, 6vw, 5rem);
+  background: var(--color-bg-warm);
+  position: relative;
+  overflow: hidden;
+}
+
+.disclaimer-hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: linear-gradient(to bottom, transparent, var(--color-bg-page));
+  pointer-events: none;
+}
+
+.disclaimer-hero-inner {
+  max-width: 720px;
+}
+
+.disclaimer-hero-heading {
+  font-size: clamp(2.25rem, 5.5vw, 3.5rem);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-tight);
+  letter-spacing: -0.035em;
+  margin-bottom: var(--space-xl);
+}
+
+.disclaimer-hero-description {
+  font-size: clamp(0.95rem, 1.3vw, 1.05rem);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-relaxed);
+  max-width: 620px;
+  margin-bottom: var(--space-lg);
+}
+
+/* ======================== SECTIONS ======================== */
+.disclaimer-sections {
+  padding: clamp(3rem, 6vw, 5rem) 0;
+}
+
+.disclaimer-section {
+  padding: clamp(1.5rem, 3vw, 2.5rem) 0;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.45s ease-out, transform 0.45s ease-out;
+}
+
+.disclaimer-section--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.disclaimer-section-header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.disclaimer-section-number {
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--color-primary);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+.disclaimer-section-title {
+  font-size: clamp(1.25rem, 2.5vw, 1.5rem);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  letter-spacing: -0.02em;
+}
+
+.disclaimer-section-body {
+  max-width: 680px;
+}
+
+.disclaimer-section-body p {
+  font-size: clamp(0.9rem, 1.2vw, 1rem);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-relaxed);
+  margin-bottom: var(--space-md);
+}
+
+.disclaimer-section-body p:last-child {
+  margin-bottom: 0;
+}
+
+.disclaimer-section--final .disclaimer-section-body p {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+/* ======================== DIVIDER ======================== */
+.disclaimer-divider {
+  height: 1px;
+  background: var(--color-border-light);
+  margin: 0;
+}
+
+/* ======================== CLOSING ======================== */
+.disclaimer-closing {
+  padding: clamp(2rem, 4vw, 3rem) 0 clamp(4rem, 8vw, 6rem);
+}
+
+.disclaimer-closing-text {
+  font-size: clamp(0.95rem, 1.3vw, 1.05rem);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-relaxed);
+  max-width: 620px;
+  font-style: italic;
+}
+
+/* ============================================
+   TABLET — 768px to 1023px
+   ============================================ */
+@media (min-width: 768px) and (max-width: 1023px) {
+}
+
+/* ============================================
+   DESKTOP — 1024px+
+   ============================================ */
+@media (min-width: 1024px) {
+}
+
+/* ============================================
+   MOBILE — up to 767px
+   ============================================ */
+@media (max-width: 767px) {
+  .disclaimer-hero {
+    padding: clamp(2.5rem, 5vw, 3.5rem) 0 clamp(1rem, 3vw, 2rem);
+  }
+
+  .disclaimer-hero::after {
+    height: 40px;
+  }
+
+  .disclaimer-hero-heading {
+    margin-bottom: var(--space-md);
+  }
+
+  .disclaimer-hero-description {
+    margin-bottom: var(--space-sm);
+  }
+
+  .disclaimer-sections {
+    padding: clamp(1rem, 3vw, 1.5rem) 0;
+  }
+
+  .disclaimer-section-header {
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+  }
+
+  .disclaimer-section-number {
+    font-size: 1.75rem;
+  }
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+@keyframes disclaimersPageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================
+   REDUCED MOTION
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  .disclaimers-page {
+    animation: none;
+  }
+
+  .disclaimer-section {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}

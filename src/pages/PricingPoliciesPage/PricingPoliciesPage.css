@@ -1,0 +1,418 @@
+/* ============================================
+   PRICING POLICIES PAGE — Editorial Policy
+   ============================================ */
+.pricing-policies-page {
+  background: var(--color-bg-page);
+  padding-bottom: calc(var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom, 0px));
+  animation: pricingPageEnter 0.4s ease-out both;
+}
+
+@media (min-width: 768px) {
+  .pricing-policies-page {
+    padding-bottom: 0;
+  }
+}
+
+/* ======================== EYEBROW ======================== */
+.pricing-eyebrow {
+  display: inline-block;
+  font-size: var(--font-caption);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: var(--space-lg);
+}
+
+.pricing-eyebrow--light {
+  color: var(--color-primary);
+}
+
+/* ======================== HERO ======================== */
+.pricing-hero {
+  padding: clamp(4rem, 8vw, 7rem) 0 clamp(3rem, 6vw, 5rem);
+  background: var(--color-bg-warm);
+  position: relative;
+  overflow: hidden;
+}
+
+.pricing-hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: linear-gradient(to bottom, transparent, var(--color-bg-page));
+  pointer-events: none;
+}
+
+.pricing-hero-inner {
+  max-width: 720px;
+}
+
+.pricing-hero-heading {
+  font-size: clamp(2.25rem, 5.5vw, 3.5rem);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-tight);
+  letter-spacing: -0.035em;
+  margin-bottom: var(--space-xl);
+}
+
+.pricing-hero-description {
+  font-size: clamp(0.95rem, 1.3vw, 1.05rem);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-relaxed);
+  max-width: 620px;
+}
+
+/* ======================== SECTIONS ======================== */
+.pricing-sections {
+  padding: clamp(3rem, 6vw, 5rem) 0;
+}
+
+.pricing-section {
+  padding: clamp(1.5rem, 3vw, 2.5rem) 0;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.45s ease-out, transform 0.45s ease-out;
+}
+
+.pricing-section--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.pricing-section-header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.pricing-section-number {
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--color-primary);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+.pricing-section-title {
+  font-size: clamp(1.25rem, 2.5vw, 1.5rem);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  letter-spacing: -0.02em;
+}
+
+.pricing-section-body {
+  max-width: 680px;
+}
+
+.pricing-section-body p {
+  font-size: clamp(0.9rem, 1.2vw, 1rem);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-relaxed);
+  margin-bottom: var(--space-md);
+}
+
+.pricing-section-body p:last-child {
+  margin-bottom: 0;
+}
+
+.pricing-section-note {
+  font-size: var(--font-small) !important;
+  color: var(--color-text-tertiary) !important;
+  margin-top: var(--space-sm) !important;
+}
+
+.pricing-section--final .pricing-section-body p {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+/* ======================== DIVIDER ======================== */
+.pricing-divider {
+  height: 1px;
+  background: var(--color-border-light);
+  margin: 0;
+}
+
+/* ======================== LIST ======================== */
+.pricing-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.pricing-list-item {
+  font-size: clamp(0.875rem, 1.1vw, 0.95rem);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-relaxed);
+  padding-left: var(--space-lg);
+  position: relative;
+}
+
+.pricing-list-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  opacity: 0.5;
+}
+
+/* ======================== INCLUDES GRID ======================== */
+.pricing-includes-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: var(--space-md) 0;
+}
+
+.pricing-includes-item {
+  display: inline-block;
+  padding: 0.35rem 0.85rem;
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-caption);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  letter-spacing: 0.01em;
+}
+
+/* ======================== SCOPE STEPS ======================== */
+.pricing-scope-steps {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin: var(--space-lg) 0;
+  flex-wrap: wrap;
+}
+
+.pricing-scope-step {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.pricing-scope-step-text {
+  display: inline-block;
+  padding: 0.4rem 0.9rem;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  border-radius: var(--radius-md);
+  font-size: var(--font-small);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.01em;
+}
+
+.pricing-scope-arrow {
+  color: var(--color-text-tertiary);
+  opacity: 0.4;
+  flex-shrink: 0;
+}
+
+/* ======================== RATES ======================== */
+.pricing-rates {
+  padding: clamp(2.5rem, 5vw, 4rem) 0;
+  background: var(--color-bg-white);
+}
+
+.pricing-rates-inner {
+  max-width: 720px;
+}
+
+.pricing-rates-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.pricing-rate-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: var(--space-lg);
+  background: var(--color-bg-page);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-light);
+}
+
+.pricing-rate-name {
+  font-size: var(--font-caption);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.pricing-rate-value {
+  font-size: clamp(1.25rem, 2vw, 1.5rem);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--color-primary);
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+
+.pricing-rate-unit {
+  font-size: var(--font-caption);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-tertiary);
+  letter-spacing: 0;
+}
+
+.pricing-rates-note {
+  font-size: var(--font-small);
+  color: var(--color-text-tertiary);
+  line-height: var(--line-height-relaxed);
+}
+
+/* ======================== PRICING PROMISE ======================== */
+.pricing-promise {
+  padding: clamp(4rem, 8vw, 7rem) 0;
+  background: var(--color-navy-dark);
+}
+
+.pricing-promise-inner {
+  max-width: 680px;
+  text-align: center;
+  margin: 0 auto;
+}
+
+.pricing-promise-statement {
+  font-size: clamp(1.5rem, 3.5vw, 2.25rem);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-inverse);
+  line-height: var(--line-height-snug);
+  letter-spacing: -0.025em;
+  margin-bottom: var(--space-2xl);
+}
+
+.pricing-promise-note {
+  font-size: clamp(0.95rem, 1.3vw, 1.05rem);
+  color: rgba(255, 255, 255, 0.5);
+  line-height: var(--line-height-relaxed);
+}
+
+/* ======================== FINAL NOTE ======================== */
+.pricing-final-note {
+  padding: clamp(2rem, 4vw, 3rem) 0 clamp(4rem, 8vw, 6rem);
+}
+
+.pricing-final-note-text {
+  font-size: var(--font-small);
+  color: var(--color-text-tertiary);
+  line-height: var(--line-height-relaxed);
+  max-width: 620px;
+}
+
+/* ============================================
+   TABLET — 768px to 1023px
+   ============================================ */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .pricing-rates-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .pricing-scope-steps {
+    flex-wrap: nowrap;
+  }
+}
+
+/* ============================================
+   DESKTOP — 1024px+
+   ============================================ */
+@media (min-width: 1024px) {
+  .pricing-rates-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .pricing-scope-steps {
+    flex-wrap: nowrap;
+  }
+
+  .pricing-promise-statement {
+    font-size: clamp(2rem, 3vw, 2.5rem);
+  }
+}
+
+/* ============================================
+   MOBILE — up to 767px
+   ============================================ */
+@media (max-width: 767px) {
+  .pricing-hero {
+    padding: clamp(3rem, 6vw, 4rem) 0 clamp(2.5rem, 5vw, 3rem);
+  }
+
+  .pricing-section-header {
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+  }
+
+  .pricing-section-number {
+    font-size: 1.75rem;
+  }
+
+  .pricing-scope-steps {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+
+  .pricing-scope-arrow {
+    display: none;
+  }
+
+  .pricing-rates-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pricing-promise {
+    padding: clamp(3rem, 6vw, 4rem) 0;
+  }
+
+  .pricing-promise-statement {
+    font-size: clamp(1.3rem, 4.5vw, 1.75rem);
+  }
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+@keyframes pricingPageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================
+   REDUCED MOTION
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  .pricing-policies-page {
+    animation: none;
+  }
+
+  .pricing-section {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}

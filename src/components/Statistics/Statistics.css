@@ -1,0 +1,192 @@
+/* ============================================
+   PROOF PANEL — compact proof strip
+   ============================================ */
+.proof-panel {
+  position: relative;
+  z-index: 3;
+}
+
+.proof-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  background: var(--color-border-light);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--color-border-light);
+  box-shadow: var(--shadow-sm);
+}
+
+.proof-stat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 1rem 0.875rem;
+  background: var(--color-bg-white);
+  transition: background var(--transition-fast);
+}
+
+.proof-stat:hover {
+  background: var(--color-surface-hover);
+}
+
+/* ── Icon container ── */
+.proof-stat-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.proof-stat-icon svg {
+  stroke-width: 1.75;
+}
+
+/* Star icon gets orange fill */
+.proof-stat-icon .proof-icon-star {
+  color: var(--color-primary);
+}
+
+/* ── Text content ── */
+.proof-stat-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.proof-stat-value {
+  font-size: 1.25rem;
+  font-weight: var(--font-weight-extrabold);
+  color: var(--color-text-primary);
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+}
+
+.proof-stat-label {
+  font-size: var(--font-caption);
+  color: var(--color-text-tertiary);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+/* ============================================
+   MOBILE — 2×2 grid with icon+text
+   ============================================ */
+@media (max-width: 767px) {
+  .proof-panel {
+    padding: 0 var(--page-padding-mobile) var(--space-lg);
+    margin-top: 16px;
+  }
+
+  .proof-grid {
+    border-radius: var(--radius-lg);
+  }
+
+  .proof-stat {
+    padding: 0.875rem 0.875rem;
+    gap: 8px;
+  }
+
+  .proof-stat-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+  }
+
+  .proof-stat-icon svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .proof-stat-value {
+    font-size: 1.05rem;
+  }
+
+  .proof-stat-label {
+    font-size: 0.625rem;
+  }
+}
+
+/* ============================================
+   TABLET — 768px to 1023px
+   ============================================ */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .proof-panel {
+    padding: 0 var(--page-padding-tablet) var(--space-2xl);
+  }
+
+  .proof-grid {
+    grid-template-columns: repeat(4, 1fr);
+    border-radius: var(--radius-md);
+  }
+
+  .proof-stat {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 6px;
+    padding: 1rem 0.75rem;
+  }
+
+  .proof-stat-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+  }
+
+  .proof-stat-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .proof-stat-value {
+    font-size: 1.2rem;
+  }
+
+  .proof-stat-label {
+    font-size: 0.65rem;
+  }
+}
+
+/* ============================================
+   DESKTOP — 1024px+
+   ============================================ */
+@media (min-width: 1024px) {
+  .proof-panel {
+    padding: 0 var(--page-padding-desktop) var(--space-3xl);
+  }
+
+  .proof-grid {
+    grid-template-columns: repeat(4, 1fr);
+    border-radius: var(--radius-md);
+  }
+
+  .proof-stat {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+    padding: 1.25rem 1rem;
+  }
+
+  .proof-stat-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+  }
+
+  .proof-stat-value {
+    font-size: 1.4rem;
+  }
+
+  .proof-stat-label {
+    font-size: var(--font-caption);
+  }
+}

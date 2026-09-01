@@ -1,0 +1,572 @@
+/* ========================
+   HOME PAGE
+   8px-based spacing grid:
+   8 / 12 / 16 / 24 / 32 / 48 / 64
+   ======================== */
+.home-page {
+  padding-bottom: calc(var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom, 0px) + var(--space-xl));
+}
+
+@media (min-width: 768px) {
+  .home-page {
+    padding-bottom: 0;
+  }
+}
+
+/* ========================
+   HERO — MOBILE (base)
+   ======================== */
+.home-hero {
+  padding-top: calc(var(--mobile-header-height) + var(--space-xl));
+  padding-bottom: var(--space-lg);
+  text-align: center;
+}
+
+.home-hero-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Eyebrow — "Welcome to Vijaya Siri" */
+.home-hero-eyebrow {
+  display: inline-block;
+  font-size: var(--font-caption);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  margin-bottom: var(--space-sm);
+  opacity: 0;
+  transform: translateY(10px);
+  animation: heroFadeUp 0.6s ease 0.1s forwards;
+}
+
+/* "Building Trust, Crafting Homes." */
+.home-hero-title {
+  font-family: var(--font-serif);
+  font-size: clamp(2.25rem, 6vw, 3.5rem);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  margin: 0 0 var(--space-sm);
+  opacity: 0;
+  transform: translateY(14px);
+  animation: heroFadeUp 0.7s ease 0.2s forwards;
+}
+
+.home-hero-title-navy {
+  color: var(--color-navy);
+}
+
+.home-hero-title-orange {
+  color: var(--color-primary);
+}
+
+/* Orange decorative accent — small, tight to title */
+.home-hero-accent {
+  width: 48px;
+  height: 3px;
+  background: var(--color-primary);
+  border-radius: 2px;
+  margin: 0 auto var(--space-sm);
+  opacity: 0;
+  transform: translateY(8px);
+  animation: heroFadeUp 0.6s ease 0.4s forwards;
+}
+
+/* Supporting text */
+.home-hero-desc {
+  font-size: clamp(0.875rem, 1.8vw, 1rem);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-relaxed);
+  max-width: 380px;
+  margin: 0 auto var(--space-md);
+  opacity: 0;
+  transform: translateY(12px);
+  animation: heroFadeUp 0.7s ease 0.5s forwards;
+}
+
+/* CTA wrapper */
+.home-hero-actions {
+  display: flex;
+  gap: var(--space-md);
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: heroFadeUp 0.6s ease 0.7s forwards;
+}
+
+/* Hero CTA button */
+.home-hero-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-family);
+  font-size: var(--font-small);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-inverse);
+  background: var(--color-primary);
+  border: none;
+  cursor: pointer;
+  padding: 0.75rem 1.5rem;
+  min-height: 44px;
+  border-radius: var(--radius-md);
+  transition:
+    background 0.25s ease,
+    transform 0.2s ease,
+    box-shadow 0.25s ease;
+}
+
+.home-hero-cta:hover {
+  background: var(--color-primary-hover);
+  box-shadow: 0 4px 16px rgba(232, 114, 42, 0.3);
+}
+
+.home-hero-cta:active {
+  transform: scale(0.98);
+  transition-duration: 0.1s;
+}
+
+.home-hero-cta:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ========================
+   HERO ANIMATIONS
+   ======================== */
+@keyframes heroFadeUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-hero-eyebrow,
+  .home-hero-title,
+  .home-hero-accent,
+  .home-hero-desc,
+  .home-hero-actions {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+}
+
+/* ========================
+   HERO — TABLET (768–1023px)
+   ======================== */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .home-hero {
+    padding-top: calc(var(--header-height) + var(--space-lg));
+    padding-bottom: var(--space-lg);
+  }
+
+  .home-hero-title {
+    font-size: clamp(2rem, 4vw, 2.75rem);
+  }
+
+  .home-hero-desc {
+    max-width: 420px;
+  }
+}
+
+/* ========================
+   HERO — DESKTOP (1024px+)
+   ======================== */
+@media (min-width: 1024px) {
+  .home-hero {
+    padding-top: calc(var(--header-height) + var(--space-lg));
+    padding-bottom: var(--space-lg);
+  }
+
+  .home-hero-title {
+    font-size: clamp(2.5rem, 3.2vw, 3.25rem);
+  }
+
+  .home-hero-desc {
+    font-size: 1rem;
+    max-width: 440px;
+  }
+}
+
+/* Large desktop */
+@media (min-width: 1440px) {
+  .home-hero-title {
+    font-size: 3.5rem;
+  }
+
+  .home-hero-desc {
+    max-width: 480px;
+  }
+}
+
+/* ========================
+   SERVICES
+   ======================== */
+.home-services {
+  padding: var(--space-lg) 0 var(--space-3xl);
+}
+
+@media (min-width: 1024px) {
+  .home-services {
+    padding: var(--space-lg) 0 var(--space-4xl);
+  }
+}
+
+/* Services header */
+.home-services-header {
+  text-align: center;
+  margin-bottom: var(--space-lg);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.home-services-header--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.home-services-label {
+  display: inline-block;
+  font-size: var(--font-caption);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: var(--space-sm);
+}
+
+.home-services-title {
+  font-family: var(--font-serif);
+  font-size: clamp(1.375rem, 3vw, 1.75rem);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  letter-spacing: -0.01em;
+  margin: 0 0 var(--space-sm);
+  line-height: var(--line-height-snug);
+}
+
+/* Orange accent under services heading */
+.home-services-accent {
+  width: 40px;
+  height: 3px;
+  background: var(--color-primary);
+  border-radius: 2px;
+  margin: 0 auto;
+}
+
+/* Services grid */
+.home-services-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-md);
+}
+
+@media (min-width: 768px) {
+  .home-services-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-lg);
+  }
+}
+
+@media (min-width: 768px) and (max-width: 899px) {
+  .home-services-grid {
+    gap: var(--space-md);
+  }
+}
+
+/* ========================
+   SERVICE CARD
+   Clean, minimal, architectural
+   ======================== */
+.home-service-card {
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-lg) var(--space-lg) var(--space-md);
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 0.5s ease,
+    transform 0.25s ease-out,
+    box-shadow 0.25s ease-out,
+    border-color 0.25s ease-out;
+  box-shadow: 0 1px 3px rgba(27, 42, 74, 0.03);
+}
+
+.home-service-card--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.home-service-card:hover {
+  box-shadow: 0 4px 12px rgba(27, 42, 74, 0.06);
+  border-color: var(--color-border-warm);
+  transform: translateY(-2px);
+}
+
+.home-service-card--visible:hover {
+  transform: translateY(-2px);
+}
+
+/* Primary card — Construct: subtle orange border */
+.home-service-card--primary {
+  border-color: rgba(232, 114, 42, 0.3);
+  border-width: 1px;
+}
+
+.home-service-card--primary:hover {
+  border-color: rgba(232, 114, 42, 0.45);
+  box-shadow: 0 4px 12px rgba(232, 114, 42, 0.05);
+}
+
+/* Card content wrapper */
+.home-service-card-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+/* Service icon — centered, consistent */
+.home-service-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-navy);
+  margin-bottom: var(--space-md);
+}
+
+.home-service-icon--primary {
+  color: var(--color-primary);
+}
+
+/* Card title — serif */
+.home-service-title {
+  font-family: var(--font-serif);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--color-navy);
+  margin: 0 0 0.25rem;
+  letter-spacing: -0.01em;
+  line-height: var(--line-height-tight);
+}
+
+/* Card subtitle — orange */
+.home-service-subtitle {
+  font-size: var(--font-small);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+  margin: 0 0 0.375rem;
+  line-height: var(--line-height-snug);
+}
+
+/* Card description */
+.home-service-copy {
+  font-size: var(--font-small);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-relaxed);
+  margin: 0;
+}
+
+/* ========================
+   CARD CTA
+   ======================== */
+.home-service-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-family);
+  font-size: 0.8125rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-inverse);
+  background: var(--color-navy);
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem 0.9rem;
+  min-height: 36px;
+  border-radius: var(--radius-md);
+  margin-top: var(--space-md);
+  transition:
+    background 0.25s ease,
+    transform 0.2s ease;
+}
+
+.home-service-cta .home-service-cta-arrow {
+  display: inline-flex;
+  transition: transform 0.25s ease;
+}
+
+.home-service-cta:hover .home-service-cta-arrow {
+  transform: translateX(3px);
+}
+
+.home-service-cta:hover {
+  background: var(--color-navy-light);
+}
+
+.home-service-cta:active {
+  transform: scale(0.98);
+  transition-duration: 0.1s;
+}
+
+.home-service-cta:focus-visible {
+  outline: 2px solid var(--color-navy);
+  outline-offset: 2px;
+}
+
+.home-service-cta--primary {
+  background: var(--color-primary);
+}
+
+.home-service-cta--primary:hover {
+  background: var(--color-primary-hover);
+}
+
+.home-service-cta--primary:focus-visible {
+  outline-color: var(--color-primary);
+}
+
+/* ========================
+   MOBILE
+   ======================== */
+@media (max-width: 767px) {
+  /* Hero — accommodate two-row header + breathing room */
+  .home-hero {
+    padding-top: calc(var(--mobile-header-height) + 2.75rem + var(--space-lg));
+    padding-bottom: var(--space-xl);
+  }
+
+  /* Faster reveal on mobile — content appears quickly */
+  .home-hero-eyebrow {
+    animation-duration: 0.5s;
+    animation-delay: 0.05s;
+  }
+
+  .home-hero-title {
+    animation-duration: 0.5s;
+    animation-delay: 0.1s;
+  }
+
+  .home-hero-accent {
+    animation-duration: 0.5s;
+    animation-delay: 0.15s;
+  }
+
+  .home-hero-desc {
+    animation-duration: 0.5s;
+    animation-delay: 0.2s;
+  }
+
+  .home-hero-actions {
+    animation-duration: 0.5s;
+    animation-delay: 0.3s;
+  }
+
+  /* Services — comfortable transition from hero */
+  .home-services {
+    padding-top: var(--space-2xl);
+  }
+
+  /* Service card — premium, minimal, icon-led */
+  .home-service-card {
+    padding: var(--space-lg) var(--space-lg) var(--space-lg);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--color-border);
+    box-shadow: 0 1px 2px rgba(27, 42, 74, 0.02);
+  }
+
+  /* Icon container — subtle rounded square */
+  .home-service-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-page);
+    margin-bottom: var(--space-md);
+  }
+
+  .home-service-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* Typography hierarchy */
+  .home-service-title {
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .home-service-subtitle {
+    font-size: 0.8125rem;
+    margin-bottom: 0.375rem;
+  }
+
+  .home-service-copy {
+    font-size: 0.8125rem;
+  }
+
+  /* Card CTA — 44px touch target, compact */
+  .home-service-cta {
+    font-size: 0.75rem;
+    padding: 0.55rem 0.9rem;
+    min-height: 44px;
+    margin-top: var(--space-md);
+  }
+
+  /* Tap feedback only — no hover lift on touch */
+  .home-service-card:hover {
+    transform: none;
+    box-shadow: 0 1px 2px rgba(27, 42, 74, 0.02);
+  }
+
+  .home-service-card--visible:hover {
+    transform: none;
+  }
+
+  .home-service-card--visible:active {
+    transform: scale(0.99);
+    transition-duration: 0.1s;
+  }
+}
+
+/* ========================
+   TABLET
+   ======================== */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .home-service-card {
+    padding: var(--space-lg) var(--space-md) var(--space-md);
+  }
+
+  .home-service-icon {
+    width: 52px;
+    height: 52px;
+  }
+
+  .home-service-title {
+    font-size: 1rem;
+  }
+
+  .home-service-subtitle {
+    font-size: 0.8125rem;
+  }
+
+  .home-service-copy {
+    font-size: 0.8125rem;
+  }
+
+  .home-service-cta {
+    font-size: 0.8125rem;
+  }
+}

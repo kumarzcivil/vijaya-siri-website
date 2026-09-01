@@ -1,0 +1,97 @@
+/* ========================
+   ROUTE UNAVAILABLE PAGE
+   Communicates that a feature is intentionally unavailable
+   (deliberately NOT styled as an error/404 page).
+   ======================== */
+.route-unavailable-page {
+  padding: var(--space-3xl) 0 var(--space-4xl);
+}
+
+.route-unavailable-card {
+  max-width: 480px;
+  margin: 0 auto;
+  background: var(--color-bg-white);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-3xl) var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.75rem;
+}
+
+.route-unavailable-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-circle);
+  background: rgba(232, 114, 42, 0.1);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.route-unavailable-title {
+  font-family: var(--font-family);
+  font-size: clamp(1.5rem, 5vw, var(--font-h2));
+  font-weight: var(--font-weight-bold);
+  color: var(--color-navy);
+  letter-spacing: -0.02em;
+  line-height: var(--line-height-tight);
+  margin: 0;
+}
+
+.route-unavailable-text {
+  font-size: var(--font-body);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-normal);
+  max-width: 340px;
+  margin: 0;
+}
+
+.route-unavailable-home-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: var(--font-body);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-inverse);
+  background: var(--color-primary);
+  border-radius: var(--radius-md);
+  padding: 0.875rem 1.75rem;
+  min-height: 48px;
+  margin-top: var(--space-sm);
+  transition:
+    background var(--transition-fast),
+    transform var(--transition-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.route-unavailable-home-btn:hover {
+  background: var(--color-primary-hover);
+}
+
+.route-unavailable-home-btn:active {
+  transform: scale(0.98);
+  transition-duration: 0.1s;
+}
+
+.route-unavailable-home-btn:focus-visible {
+  outline: 2px solid var(--color-navy);
+  outline-offset: 2px;
+}
+
+@media (min-width: 768px) {
+  .route-unavailable-card {
+    padding: var(--space-3xl) var(--space-2xl);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-unavailable-home-btn:active {
+    transform: none;
+  }
+}

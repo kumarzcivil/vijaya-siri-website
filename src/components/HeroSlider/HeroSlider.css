@@ -1,0 +1,163 @@
+﻿/* ========================
+   HERO SLIDER (phs = Pro Hero Slider)
+   Poster-based advertisement carousel
+   ======================== */
+.phs-slider {
+  position: relative;
+  width: 100%;
+}
+
+.phs-track {
+  position: relative;
+  width: 100%;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--color-bg-warm);
+  box-shadow: var(--shadow-md);
+}
+
+/* ---- Slide ---- */
+.phs-slide {
+  display: block;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  opacity: 0;
+  transform: translateX(12px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+  pointer-events: none;
+  cursor: pointer;
+  line-height: 0;
+}
+
+.phs-slide img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Fallback surface when a poster image fails to load */
+.phs-slide-fallback {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 6;
+  background: linear-gradient(135deg, var(--color-navy) 0%, var(--color-navy-muted) 100%);
+}
+
+.phs-slide--active {
+  position: relative;
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .phs-slide {
+    transition: opacity 0.01ms;
+    transform: none;
+  }
+}
+
+/* ---- Pagination ---- */
+.phs-pagination {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding: var(--space-sm) 0 0;
+}
+
+.phs-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-circle);
+  background: var(--color-border);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.25s ease, width 0.25s ease;
+}
+
+.phs-dot--active {
+  background: var(--color-primary);
+  width: 20px;
+  border-radius: 4px;
+}
+
+.phs-dot:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ---- Arrows ---- */
+.phs-arrow {
+  display: flex;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-circle);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(4px);
+  border: 1px solid var(--color-border);
+  color: var(--color-navy);
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  transition:
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.phs-arrow:hover {
+  background: var(--color-bg-white);
+  box-shadow: var(--shadow-sm);
+}
+
+.phs-arrow:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.phs-arrow--prev { left: var(--space-sm); }
+.phs-arrow--next { right: var(--space-sm); }
+
+@media (min-width: 1024px) {
+  .phs-arrow--prev { left: var(--space-md); }
+  .phs-arrow--next { right: var(--space-md); }
+  .phs-arrow { width: 44px; height: 44px; }
+}
+
+/* ========================
+   MOBILE (below 768px)
+   ======================== */
+@media (max-width: 767px) {
+  .phs-track {
+    border-radius: var(--radius-sm);
+  }
+
+  .phs-dot {
+    width: 6px;
+    height: 6px;
+  }
+
+  .phs-dot--active {
+    width: 16px;
+  }
+}
+
+/* ========================
+   DESKTOP (1024px+)
+   ======================== */
+@media (min-width: 1024px) {
+  .phs-track {
+    border-radius: var(--radius-xl);
+  }
+}

@@ -1,0 +1,400 @@
+.roadmap {
+  position: relative;
+}
+
+.roadmap-steps {
+  display: flex;
+  gap: 0;
+}
+
+/* Each step */
+.roadmap-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Reveal animation base state */
+.roadmap-step .roadmap-step-dot {
+  opacity: 0.5;
+  transform: scale(0.92);
+}
+
+.roadmap-step .roadmap-step-info {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+/* Revealed — content visible but muted */
+.roadmap-step--revealed .roadmap-step-dot {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.roadmap-step--revealed .roadmap-step-info {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+/* Active — orange emphasis */
+.roadmap-step--active .roadmap-step-dot {
+  background: var(--color-primary);
+  transform: scale(1.05);
+  box-shadow: 0 0 0 3px rgba(232, 114, 42, 0.15), var(--shadow-md);
+}
+
+.roadmap-step--active .roadmap-step-number {
+  color: var(--color-primary);
+  opacity: 1;
+}
+
+.roadmap-step--active .roadmap-step-title {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-bold);
+}
+
+.roadmap-step--active .roadmap-step-desc {
+  color: var(--color-text-secondary);
+}
+
+/* Completed step — navy dot with orange accent */
+.roadmap-step--completed .roadmap-step-dot {
+  background: var(--color-navy);
+  border-color: var(--color-primary);
+  box-shadow: none;
+}
+
+.roadmap-step--completed .roadmap-step-number {
+  color: var(--color-primary);
+  opacity: 0.7;
+}
+
+.roadmap-step--completed .roadmap-step-title {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.roadmap-step--completed .roadmap-step-desc {
+  color: var(--color-text-secondary);
+}
+
+/* Marker: dot + connector line */
+.roadmap-step-marker {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+/* Circle with icon */
+.roadmap-step-dot {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-circle);
+  background: var(--color-navy);
+  border: 3px solid var(--color-bg-white);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+  transition: background 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease, opacity 0.5s ease;
+}
+
+.roadmap-step:not(.roadmap-step--active):not(.roadmap-step--completed):hover .roadmap-step-dot {
+  background: var(--color-primary);
+  transform: scale(1.05);
+  opacity: 1;
+}
+
+.roadmap-step-icon {
+  color: var(--color-text-inverse);
+}
+
+/* Connector line to the right */
+.roadmap-step-connector {
+  position: absolute;
+  top: 50%;
+  left: calc(50% + 30px);
+  width: calc(100% - 60px);
+  height: 2px;
+  background: #E5E7EB;
+  z-index: 1;
+  transform: translateY(-50%);
+  overflow: hidden;
+}
+
+.roadmap-step-connector-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 100%;
+  background: var(--color-primary);
+  transition: width 0.8s ease;
+}
+
+.roadmap-step--completed .roadmap-step-connector-fill,
+.roadmap-step--filling .roadmap-step-connector-fill {
+  width: 100%;
+}
+
+/* Step info content */
+.roadmap-step-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.roadmap-step-number {
+  font-size: var(--font-caption);
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.35rem;
+  opacity: 0.6;
+  transition: color 0.3s ease, opacity 0.3s ease;
+}
+
+.roadmap-step-title {
+  font-size: 1.05rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
+  margin-bottom: 0.45rem;
+  letter-spacing: -0.01em;
+  transition: color 0.3s ease, font-weight 0.3s ease;
+}
+
+.roadmap-step-desc {
+  font-size: var(--font-small);
+  color: var(--color-text-tertiary);
+  line-height: var(--line-height-relaxed);
+  max-width: 200px;
+  transition: color 0.3s ease;
+}
+
+/* ========================
+   MOBILE: Vertical layout
+   ======================== */
+@media (max-width: 767px) {
+  .roadmap-steps {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .roadmap-step {
+    flex-direction: row;
+    align-items: flex-start;
+    text-align: left;
+    gap: 1.25rem;
+    padding: 1rem 0;
+    position: relative;
+  }
+
+  /* Reveal animation — mobile */
+  .roadmap-step .roadmap-step-info {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  .roadmap-step--revealed .roadmap-step-info {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Vertical neutral line between dots */
+  .roadmap-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 25px;
+    top: calc(1rem + 48px);
+    bottom: 0;
+    width: 2px;
+    background: #E5E7EB;
+    z-index: 0;
+  }
+
+  /* Vertical fill line */
+  .roadmap-step:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 25px;
+    top: calc(1rem + 48px);
+    height: 0;
+    width: 2px;
+    background: var(--color-primary);
+    z-index: 1;
+    transition: height 0.8s ease;
+  }
+
+  .roadmap-step--completed:not(:last-child)::before,
+  .roadmap-step--filling:not(:last-child)::before {
+    height: calc(100% - 1rem - 48px);
+  }
+
+  .roadmap-step-marker {
+    width: 50px;
+    flex-shrink: 0;
+    margin-bottom: 0;
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    position: relative;
+  }
+
+  .roadmap-step-marker .roadmap-step-connector {
+    display: none;
+  }
+
+  .roadmap-step-dot {
+    width: 48px;
+    height: 48px;
+    margin-left: 1px;
+  }
+
+  .roadmap-step-info {
+    flex: 1;
+    min-width: 0;
+    align-items: flex-start;
+    padding-top: 0.15rem;
+    max-width: 270px;
+  }
+
+  .roadmap-step-number {
+    margin-bottom: 0.25rem;
+    font-size: 0.65rem;
+    font-weight: 600;
+  }
+
+  .roadmap-step-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.35rem;
+    line-height: var(--line-height-snug);
+  }
+
+  .roadmap-step-desc {
+    max-width: none;
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: var(--color-text-tertiary);
+  }
+
+  /* Upcoming — quieter state */
+  .roadmap-step:not(.roadmap-step--active):not(.roadmap-step--completed) .roadmap-step-number {
+    color: var(--color-text-tertiary);
+    opacity: 0.5;
+  }
+
+  .roadmap-step:not(.roadmap-step--active):not(.roadmap-step--completed) .roadmap-step-title {
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .roadmap-step:not(.roadmap-step--active):not(.roadmap-step--completed) .roadmap-step-desc {
+    color: var(--color-text-tertiary);
+    opacity: 0.75;
+  }
+
+  /* Active mobile overrides */
+  .roadmap-step--active .roadmap-step-number {
+    font-size: 0.7rem;
+  }
+
+  .roadmap-step--active .roadmap-step-title {
+    font-size: 1.05rem;
+  }
+
+  .roadmap-step--active .roadmap-step-desc {
+    opacity: 1;
+  }
+
+  /* Completed mobile overrides */
+  .roadmap-step--completed .roadmap-step-title {
+    font-weight: var(--font-weight-semibold);
+  }
+}
+
+/* ========================
+   TABLET
+   ======================== */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .roadmap-step-dot {
+    width: 50px;
+    height: 50px;
+  }
+
+  .roadmap-step-connector {
+    left: calc(50% + 27px);
+    width: calc(100% - 54px);
+  }
+
+  .roadmap-step-title {
+    font-size: 0.95rem;
+  }
+
+  .roadmap-step-desc {
+    font-size: 0.8rem;
+    max-width: 200px;
+  }
+}
+
+/* ========================
+   DESKTOP
+   ======================== */
+@media (min-width: 1024px) {
+  .roadmap-step-dot {
+    width: 56px;
+    height: 56px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .roadmap-step-dot {
+    width: 60px;
+    height: 60px;
+  }
+
+  .roadmap-step-desc {
+    max-width: 200px;
+  }
+}
+
+/* ========================
+   REDUCED MOTION
+   ======================== */
+@media (prefers-reduced-motion: reduce) {
+  .roadmap-step .roadmap-step-dot,
+  .roadmap-step .roadmap-step-info,
+  .roadmap-step-dot,
+  .roadmap-step-number,
+  .roadmap-step-title,
+  .roadmap-step-desc,
+  .roadmap-step-connector-fill {
+    transition: none;
+  }
+
+  .roadmap-step .roadmap-step-dot {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .roadmap-step .roadmap-step-info {
+    opacity: 1;
+    transform: none;
+  }
+
+  .roadmap-step:not(:last-child)::before {
+    transition: none;
+  }
+}
