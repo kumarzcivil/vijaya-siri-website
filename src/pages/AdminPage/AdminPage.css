@@ -412,6 +412,65 @@
   gap: var(--space-sm);
 }
 
+/* Location contact cards */
+.admin-locations-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.admin-location-card {
+  padding: 1.25rem 1.25rem 1.5rem;
+  background: var(--color-bg-white);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.admin-location-card--active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-50);
+}
+
+.admin-location-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.admin-location-heading {
+  min-width: 0;
+}
+
+.admin-location-status {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.admin-location-status-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.admin-location-status-label {
+  font-size: var(--font-small);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.admin-location-status-note {
+  margin: 0;
+  font-size: var(--font-caption);
+  color: var(--color-text-tertiary);
+  line-height: var(--line-height-relaxed);
+  max-width: 52ch;
+}
+
 /* Responsive */
 @media (max-width: 767px) {
   .admin-project-row {

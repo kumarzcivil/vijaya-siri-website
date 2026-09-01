@@ -31,6 +31,7 @@ import AdminDashboard from './pages/AdminPage/AdminDashboard';
 import AdminComingSoon from './pages/AdminPage/AdminComingSoon';
 import AdminProjectsSection from './pages/AdminPage/AdminProjectsSection';
 import AdminPackagesSection from './pages/AdminPage/AdminPackagesSection';
+import LocationContactSection from './pages/AdminPage/LocationContactSection';
 import ProFixServicesSection from './pages/AdminPage/ProFixServicesSection';
 import ProFixCategoriesSection from './pages/AdminPage/ProFixCategoriesSection';
 import ProFixBannersSection from './pages/AdminPage/ProFixBannersSection';
@@ -97,6 +98,7 @@ function AppLayout() {
               <Route path="site-control" element={<SiteControlSection />} />
               <Route path="projects" element={<AdminProjectsSection />} />
               <Route path="packages" element={<AdminPackagesSection />} />
+              <Route path="locations" element={<LocationContactSection />} />
               <Route path="pro-fix/services" element={<ProFixServicesSection />} />
               <Route path="pro-fix/categories" element={<ProFixCategoriesSection />} />
               <Route path="pro-fix/banners" element={<ProFixBannersSection />} />

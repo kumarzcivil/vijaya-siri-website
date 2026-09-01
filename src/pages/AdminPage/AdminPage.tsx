@@ -185,6 +185,12 @@ export default function AdminPage() {
           >
             Packages
           </NavLink>
+          <NavLink
+            to="/admin/locations"
+            className={({ isActive }) => `admin-nav-item${isActive ? ' admin-nav-item--active' : ''}`}
+          >
+            Locations
+          </NavLink>
 
           {ADMIN_GROUPS.map((group) => {
             const groupActive = isWithin(pathname, group.base);
