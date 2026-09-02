@@ -122,14 +122,14 @@ export default function Header() {
 
           <span className="header-divider" />
 
-          <button className="header-icon-btn header-account-btn" aria-label="Account">
+          <Link to="/login" className="header-icon-btn header-account-btn" aria-label="Account">
             <div className="header-avatar">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                 <circle cx="12" cy="7" r="4" />
               </svg>
             </div>
-          </button>
+          </Link>
         </div>
       </div>
     </header>
