@@ -26,6 +26,7 @@ import QuickFixBookPage from './pages/QuickFixBookPage/QuickFixBookPage';
 import QuickFixConfirmationPage from './pages/QuickFixConfirmationPage/QuickFixConfirmationPage';
 import AccountPage from './pages/AccountPage/AccountPage';
 import LoginPage from './pages/LoginPage/LoginPage';
+import BookingsPage from './pages/BookingsPage/BookingsPage';
 import OffersPage from './pages/OffersPage/OffersPage';
 import AdminPage from './pages/AdminPage/AdminPage';
 import AdminDashboard from './pages/AdminPage/AdminDashboard';
@@ -94,6 +95,7 @@ function AppLayout() {
             <Route path="/quick-fix/:serviceId/confirmed" element={<QuickFixConfirmationPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/account" element={<AccountPage />} />
+            <Route path="/bookings" element={<BookingsPage />} />
             <Route path="/offers" element={<OffersPage />} />
             <Route path="/admin" element={<AdminPage />}>
               <Route index element={<AdminDashboard />} />
