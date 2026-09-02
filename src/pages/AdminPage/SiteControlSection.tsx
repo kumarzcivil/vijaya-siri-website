@@ -7,6 +7,13 @@ import {
   resetSiteControl,
 } from '../../data/siteControl';
 import type { SiteStatus } from '../../data/siteControl';
+import type { CustomerService } from '../../data/locationServiceConfig';
+import {
+  getLocationServiceConfig,
+  updateLocationAvailability,
+  updateLoginRequired,
+} from '../../data/locationServiceConfig';
+import { locations } from '../../data/locations';
 import AdminToggle from './AdminToggle';
 import './AdminPage.css';
 import './AdminShell.css';
@@ -106,6 +113,7 @@ const FEATURE_OFF_TEXTS: Record<SiteFeature, { title: string; body: string }> = 
 
 export default function SiteControlSection() {
   const [control, setControl] = useState<SiteControl>(() => getSiteControl());
+  const [serviceConfig, setServiceConfig] = useState(() => getLocationServiceConfig());
   const [toggleOffFeature, setToggleOffFeature] = useState<SiteFeature | null>(null);
   const [maintenanceConfirm, setMaintenanceConfirm] = useState(false);
   const [emergencyConfirm, setEmergencyConfirm] = useState(false);
@@ -189,6 +197,18 @@ export default function SiteControlSection() {
     showToast('Site Control restored to defaults');
   }, [resetConfirm, showToast]);
 
+  const handleLocationAvailability = useCallback((locationId: string, service: CustomerService, active: boolean) => {
+    setServiceConfig(updateLocationAvailability(locationId, service, active));
+    const serviceLabel = service === 'quickFix' ? 'Quick Fix' : 'Pro Fix';
+    showToast(`${serviceLabel} is now ${active ? 'available' : 'unavailable'} for this location`);
+  }, [showToast]);
+
+  const handleLoginRequired = useCallback((service: CustomerService, active: boolean) => {
+    setServiceConfig(updateLoginRequired(service, active));
+    const serviceLabel = service === 'quickFix' ? 'Quick Fix' : 'Pro Fix';
+    showToast(`Customer login is now ${active ? 'required' : 'not required'} for ${serviceLabel}`);
+  }, [showToast]);
+
   const globalOnline = control.global === 'online';
   const anyOff = Object.values(control.pages).some((v) => v === false);
 
@@ -265,6 +285,122 @@ export default function SiteControlSection() {
           </div>
         </div>
       ))}
+
+      {/* LOCATION & SERVICE ACCESS */}
+      <div className="admin-section">
+        <div className="admin-section-header">
+          <h2 className="admin-section-title">Location &amp; Service Access</h2>
+          <p className="admin-section-desc">
+            Control which services customers can use in each location. A service that is
+            unavailable for a location is hidden and protected from direct URL access for
+            customers in that location.
+          </p>
+        </div>
+
+        <div className="sc-group">
+          {locations.map((loc) => {
+            const availability = serviceConfig.locations[loc.id] ?? { quickFix: false, proFix: false };
+            return (
+              <div key={loc.id} className="sc-row sc-row--location">
+                <div className="sc-row-info">
+                  <span className="sc-row-label">{loc.label}</span>
+                  <span className="sc-row-desc">
+                    Quick Fix
+                    <span className="admin-featured-badge admin-featured-badge--loc">
+                      {availability.quickFix ? 'On' : 'Off'}
+                    </span>
+                    <span className="sc-row-desc-sep" aria-hidden="true">·</span>
+                    Pro Fix
+                    <span className={`admin-featured-badge admin-featured-badge--loc${availability.proFix ? ' admin-featured-badge--on' : ''}`}>
+                      {availability.proFix ? 'On' : 'Off'}
+                    </span>
+                  </span>
+                </div>
+                <span className="sc-location-toggle-label">Quick Fix</span>
+                <AdminToggle
+                  active={availability.quickFix}
+                  onClick={() =>
+                    handleLocationAvailability(loc.id, 'quickFix', !availability.quickFix)
+                  }
+                />
+                <span className="sc-location-toggle-label">Pro Fix</span>
+                <AdminToggle
+                  active={availability.proFix}
+                  onClick={() => handleLocationAvailability(loc.id, 'proFix', !availability.proFix)}
+                />
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="sc-group sc-group--access">
+          <h3 className="sc-access-title">Customer Access</h3>
+          <div className="sc-row">
+            <div className="sc-row-info">
+              <span className="sc-row-label">Quick Fix Login Required</span>
+              <span className="sc-row-desc">
+                When on, customers must sign in before using Quick Fix.
+              </span>
+            </div>
+            <span className={`admin-featured-badge${serviceConfig.quickFixLoginRequired ? ' admin-featured-badge--on' : ''}`}>
+              {serviceConfig.quickFixLoginRequired ? 'On' : 'Off'}
+            </span>
+            <AdminToggle
+              active={serviceConfig.quickFixLoginRequired}
+              onClick={() => handleLoginRequired('quickFix', !serviceConfig.quickFixLoginRequired)}
+            />
+          </div>
+          <div className="sc-row">
+            <div className="sc-row-info">
+              <span className="sc-row-label">Pro Fix Login Required</span>
+              <span className="sc-row-desc">
+                When on, customers must sign in before using Pro Fix.
+              </span>
+            </div>
+            <span className={`admin-featured-badge${serviceConfig.proFixLoginRequired ? ' admin-featured-badge--on' : ''}`}>
+              {serviceConfig.proFixLoginRequired ? 'On' : 'Off'}
+            </span>
+            <AdminToggle
+              active={serviceConfig.proFixLoginRequired}
+              onClick={() => handleLoginRequired('proFix', !serviceConfig.proFixLoginRequired)}
+            />
+          </div>
+        </div>
+
+        <div className="sc-summary">
+          <h3 className="sc-summary-title">Service Availability</h3>
+          <div className="sc-summary-table">
+            <div className="sc-summary-head">
+              <span>Location</span>
+              <span>Quick Fix</span>
+              <span>Pro Fix</span>
+              <span>Customer Login</span>
+            </div>
+            {locations.map((loc) => {
+              const availability = serviceConfig.locations[loc.id] ?? { quickFix: false, proFix: false };
+              const loginRequired =
+                availability.quickFix || availability.proFix
+                  ? (availability.quickFix && serviceConfig.quickFixLoginRequired) ||
+                    (availability.proFix && serviceConfig.proFixLoginRequired)
+                  : false;
+              return (
+                <div className="sc-summary-row" key={loc.id}>
+                  <span className="sc-summary-location">{loc.label}</span>
+                  <span className={availability.quickFix ? 'sc-summary-on' : 'sc-summary-off'}>
+                    {availability.quickFix ? 'On' : 'Off'}
+                  </span>
+                  <span className={availability.proFix ? 'sc-summary-on' : 'sc-summary-off'}>
+                    {availability.proFix ? 'On' : 'Off'}
+                  </span>
+                  <span className={loginRequired ? 'sc-summary-on' : 'sc-summary-off'}>
+                    {loginRequired ? 'Required' : 'Not required'}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
 
       {/* ALWAYS ON */}
       <div className="admin-section">

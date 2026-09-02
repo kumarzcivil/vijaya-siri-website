@@ -58,6 +58,7 @@ import EstimatorMaterialSection from './pages/AdminPage/EstimatorMaterialSection
 import EstimatorTemplatesSection from './pages/AdminPage/EstimatorTemplatesSection';
 import SmallWorksEstimatorSection from './pages/AdminPage/SmallWorksEstimatorSection';
 import RouteUnavailablePage from './pages/RouteUnavailablePage/RouteUnavailablePage';
+import ServiceGate from './components/ServiceGate/ServiceGate';
 import { useSiteControl } from './hooks/useSiteControl';
 
 function ScrollToTop() {
@@ -101,15 +102,78 @@ function AppLayout() {
             <Route path="/disclaimers" element={<DisclaimersPage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/quote" element={<QuoteFormPage />} />
-            <Route path="/pro-fix" element={<ProFixPage />} />
-            <Route path="/pro-fix/:serviceId" element={<ProFixServiceDetailPage />} />
-            <Route path="/pro-fix/:serviceId/estimate" element={<ProFixEstimatePage />} />
-            <Route path="/pro-fix/:serviceId/estimate/book" element={<ProFixBookVisitPage />} />
-            <Route path="/pro-fix/:serviceId/estimate/confirmed" element={<ProFixConfirmationPage />} />
-            <Route path="/quick-fix" element={<QuickFixPage />} />
-            <Route path="/quick-fix/:serviceId" element={<QuickFixServiceDetailPage />} />
-            <Route path="/quick-fix/:serviceId/book" element={<QuickFixBookPage />} />
-            <Route path="/quick-fix/:serviceId/confirmed" element={<QuickFixConfirmationPage />} />
+            <Route
+              path="/pro-fix"
+              element={
+                <ServiceGate service="proFix">
+                  <ProFixPage />
+                </ServiceGate>
+              }
+            />
+            <Route
+              path="/pro-fix/:serviceId"
+              element={
+                <ServiceGate service="proFix">
+                  <ProFixServiceDetailPage />
+                </ServiceGate>
+              }
+            />
+            <Route
+              path="/pro-fix/:serviceId/estimate"
+              element={
+                <ServiceGate service="proFix">
+                  <ProFixEstimatePage />
+                </ServiceGate>
+              }
+            />
+            <Route
+              path="/pro-fix/:serviceId/estimate/book"
+              element={
+                <ServiceGate service="proFix">
+                  <ProFixBookVisitPage />
+                </ServiceGate>
+              }
+            />
+            <Route
+              path="/pro-fix/:serviceId/estimate/confirmed"
+              element={
+                <ServiceGate service="proFix">
+                  <ProFixConfirmationPage />
+                </ServiceGate>
+              }
+            />
+            <Route
+              path="/quick-fix"
+              element={
+                <ServiceGate service="quickFix">
+                  <QuickFixPage />
+                </ServiceGate>
+              }
+            />
+            <Route
+              path="/quick-fix/:serviceId"
+              element={
+                <ServiceGate service="quickFix">
+                  <QuickFixServiceDetailPage />
+                </ServiceGate>
+              }
+            />
+            <Route
+              path="/quick-fix/:serviceId/book"
+              element={
+                <ServiceGate service="quickFix">
+                  <QuickFixBookPage />
+                </ServiceGate>
+              }
+            />
+            <Route
+              path="/quick-fix/:serviceId/confirmed"
+              element={
+                <ServiceGate service="quickFix">
+                  <QuickFixConfirmationPage />
+                </ServiceGate>
+              }
+            />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/account" element={<AccountPage />} />
             <Route path="/bookings" element={<BookingsPage />} />

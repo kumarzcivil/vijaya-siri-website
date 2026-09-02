@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { setCustomerSignedIn } from '../../data/customerAuth';
 import './LoginPage.css';
 
 function validateMobile(v: string): boolean {
@@ -17,6 +18,8 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<LoginErrors>({});
   const [notified, setNotified] = useState(false);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const handleMobileChange = (value: string) => {
     setMobile(value.replace(/\D/g, '').slice(0, 10));
@@ -46,7 +49,13 @@ export default function LoginPage() {
 
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length === 0) {
-      setNotified(true);
+      setCustomerSignedIn();
+      const returnTo = searchParams.get('return');
+      if (returnTo && returnTo.startsWith('/')) {
+        navigate(returnTo, { replace: true });
+      } else {
+        setNotified(true);
+      }
     }
   };
 
