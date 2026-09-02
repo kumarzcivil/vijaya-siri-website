@@ -1,0 +1,342 @@
+/* ============================================
+   CONTROL CENTER — new module pages
+   Empty states, settings and profile. Uses the
+   existing design tokens, card and header styles.
+   ============================================ */
+
+.cc-page {
+  max-width: 860px;
+}
+
+/* Empty state */
+.cc-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-3xl) var(--space-xl);
+  background: var(--color-bg-white);
+  border: 1.5px dashed var(--color-border);
+  border-radius: var(--radius-xl);
+  text-align: center;
+}
+
+.cc-empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: var(--space-sm);
+  border-radius: var(--radius-lg);
+  background: var(--color-navy);
+  color: var(--color-bg-white);
+}
+
+.cc-empty-title {
+  font-family: var(--font-family);
+  font-size: var(--font-h3);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-navy);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.cc-empty-text {
+  font-size: var(--font-body);
+  line-height: var(--line-height-relaxed);
+  color: var(--color-text-secondary);
+  margin: 0;
+  max-width: 48ch;
+}
+
+.cc-empty-status {
+  margin-top: var(--space-sm);
+  padding: 0.3rem 0.85rem;
+  font-size: var(--font-caption);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-tertiary);
+  background: var(--color-bg-page);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+}
+
+/* Settings + profile cards */
+.cc-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-md);
+}
+
+.cc-settings-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-lg);
+  background: var(--color-bg-white);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.cc-settings-card-title {
+  margin: 0;
+  font-size: var(--font-h4, 1.125rem);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-navy);
+  letter-spacing: -0.02em;
+}
+
+.cc-settings-card-desc {
+  margin: 0;
+  font-size: var(--font-small);
+  line-height: var(--line-height-relaxed);
+  color: var(--color-text-secondary);
+}
+
+.cc-setting-rows {
+  list-style: none;
+  margin: var(--space-sm) 0 0;
+  padding: 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.cc-setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.cc-setting-label {
+  font-size: var(--font-small);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.cc-setting-value {
+  font-size: var(--font-small);
+  color: var(--color-text-tertiary);
+  text-align: right;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.cc-setting-note {
+  margin: var(--space-sm) 0 0;
+  font-size: var(--font-caption);
+  line-height: var(--line-height-relaxed);
+  color: var(--color-text-tertiary);
+}
+
+.cc-settings-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.cc-settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.cc-settings-form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.cc-settings-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-shrink: 0;
+}
+
+.cc-setting-select-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.cc-setting-select {
+  min-width: 0;
+}
+
+.cc-settings-footer {
+  margin-top: var(--space-2xl);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.cc-settings-note--center {
+  margin: 0;
+  max-width: 48ch;
+  text-align: center;
+}
+
+/* Profile */
+.cc-profile-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-2xl) var(--space-xl);
+  background: var(--color-bg-white);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+}
+
+.cc-profile-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+.cc-profile-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-lg);
+  background: var(--color-navy);
+  color: var(--color-bg-white);
+}
+
+.cc-profile-title {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.cc-profile-title h2 {
+  margin: 0 0 0.25rem;
+  font-size: var(--font-h4, 1.125rem);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-navy);
+  letter-spacing: -0.02em;
+}
+
+.cc-profile-title p {
+  margin: 0;
+  font-size: var(--font-small);
+  line-height: var(--line-height-relaxed);
+  color: var(--color-text-secondary);
+}
+
+/* Responsive */
+@media (max-width: 767px) {
+  .cc-empty-state {
+    padding: var(--space-2xl) var(--space-lg);
+  }
+
+  .cc-empty-title {
+    font-size: 1.25rem;
+  }
+
+  .cc-empty-text {
+    font-size: 0.875rem;
+  }
+
+  .cc-settings-card {
+    padding: var(--space-md) var(--space-lg);
+  }
+
+  .cc-profile-card {
+    padding: var(--space-xl) var(--space-lg);
+  }
+
+  .cc-profile-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+  }
+}
+
+/* Profile edit form */
+.cc-profile-actions {
+  margin-left: auto;
+}
+
+.cc-profile-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-md);
+}
+
+.cc-profile-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.cc-profile-field--error .admin-input {
+  border-color: #dc2626;
+}
+
+.cc-profile-field--error .admin-input:focus {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.cc-profile-error {
+  font-size: var(--font-caption);
+  color: #dc2626;
+}
+
+.cc-profile-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.cc-profile-notice {
+  margin-top: var(--space-md);
+  padding: var(--space-md) var(--space-sm);
+  font-size: var(--font-small);
+  line-height: var(--line-height-relaxed);
+  color: var(--color-navy);
+  background: var(--color-primary-light);
+  border: 1px solid rgba(232, 114, 42, 0.35);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+@media (max-width: 767px) {
+  .cc-profile-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cc-profile-form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cc-profile-form-actions .admin-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .cc-profile-actions {
+    width: 100%;
+  }
+
+  .cc-profile-actions .admin-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

@@ -7,10 +7,18 @@ const REQUEST_CARDS = [
   { label: 'Quick Fix Requests', desc: 'Coming with hosting' },
 ];
 
-const SHORTCUTS = [
+interface Shortcut {
+  to: string;
+  title: string;
+  desc: string;
+  cta?: string;
+}
+
+const SHORTCUTS: Shortcut[] = [
   { to: '/admin/site-control', title: 'Site Control', desc: 'Control availability of customer pages and global maintenance mode.' },
   { to: '/admin/projects', title: 'Projects', desc: 'Manage featured projects and their display order.' },
   { to: '/admin/packages', title: 'Packages', desc: 'Manage construction packages, pricing and active state.' },
+  { to: '/admin/estimator/project', title: 'Estimator', desc: 'Create project estimates and calculate construction quantities.', cta: 'Open Estimator' },
   { to: '/admin/pro-fix/services', title: 'Pro Fix', desc: 'Services, categories and banner promotions for the Pro Fix experience.' },
   { to: '/admin/quick-fix/services', title: 'Quick Fix', desc: 'Services, categories and banner promotions for the Quick Fix experience.' },
   { to: '/admin/marketing/statistics', title: 'Marketing', desc: 'Statistics and the Discover Services feed on the home page.' },
@@ -40,7 +48,7 @@ export default function AdminDashboard() {
     <div className="admin-dash">
       <div className="admin-dash-header">
         <span className="admin-dash-eyebrow">Control Center</span>
-        <h1 className="admin-dash-title">Vijaya Siri Admin</h1>
+        <h1 className="admin-dash-title">Vijaya Siri Control Center</h1>
         <p className="admin-dash-subtitle">Manage your customer-facing content.</p>
       </div>
 
@@ -54,6 +62,7 @@ export default function AdminDashboard() {
               </span>
             </span>
             <span className="admin-dash-card-desc">{shortcut.desc}</span>
+            {shortcut.cta && <span className="admin-dash-card-cta">{shortcut.cta}</span>}
           </NavLink>
         ))}
       </div>

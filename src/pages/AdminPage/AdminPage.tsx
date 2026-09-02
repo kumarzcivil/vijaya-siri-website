@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import './AdminShell.css';
 
-type AdminGroupKey = 'pro-fix' | 'quick-fix' | 'marketing';
+type AdminGroupKey = 'pro-fix' | 'quick-fix' | 'marketing' | 'requests';
 
 interface AdminNavItem {
   to: string;
@@ -45,6 +45,16 @@ const ADMIN_GROUPS: AdminGroup[] = [
       { to: '/admin/marketing/statistics', label: 'Statistics' },
       { to: '/admin/marketing/discover-services', label: 'Discover Services' },
       { to: '/admin/marketing/offers', label: 'Offers' },
+    ],
+  },
+  {
+    key: 'requests',
+    label: 'Requests',
+    base: '/control-center/requests',
+    items: [
+      { to: '/control-center/requests/quote', label: 'Quote Requests' },
+      { to: '/control-center/requests/pro-fix', label: 'Pro Fix Requests' },
+      { to: '/control-center/requests/quick-fix', label: 'Quick Fix Requests' },
     ],
   },
 ];
@@ -100,6 +110,7 @@ export default function AdminPage() {
       'pro-fix': false,
       'quick-fix': false,
       marketing: false,
+      requests: false,
     };
     ADMIN_GROUPS.forEach((group) => {
       if (isWithin(pathname, group.base)) initial[group.key] = true;
@@ -146,7 +157,7 @@ export default function AdminPage() {
         >
           <MenuIcon />
         </button>
-        <span className="admin-topbar-title">Vijaya Siri Admin</span>
+        <span className="admin-topbar-title">Vijaya Siri Control Center</span>
       </div>
 
       <div className="admin-sidebar-backdrop" onClick={() => setNavOpen(false)} aria-hidden="true" />
@@ -184,6 +195,12 @@ export default function AdminPage() {
             className={({ isActive }) => `admin-nav-item${isActive ? ' admin-nav-item--active' : ''}`}
           >
             Packages
+          </NavLink>
+          <NavLink
+            to="/admin/estimator"
+            className={({ isActive }) => `admin-nav-item${isActive ? ' admin-nav-item--active' : ''}`}
+          >
+            Estimator
           </NavLink>
           <NavLink
             to="/admin/locations"
@@ -224,6 +241,43 @@ export default function AdminPage() {
               </div>
             );
           })}
+
+          <NavLink
+            to="/control-center/bookings"
+            className={({ isActive }) => `admin-nav-item${isActive ? ' admin-nav-item--active' : ''}`}
+          >
+            Bookings
+          </NavLink>
+          <NavLink
+            to="/control-center/customers"
+            className={({ isActive }) => `admin-nav-item${isActive ? ' admin-nav-item--active' : ''}`}
+          >
+            Customers
+          </NavLink>
+          <NavLink
+            to="/control-center/leads"
+            className={({ isActive }) => `admin-nav-item${isActive ? ' admin-nav-item--active' : ''}`}
+          >
+            Leads
+          </NavLink>
+          <NavLink
+            to="/control-center/notifications"
+            className={({ isActive }) => `admin-nav-item${isActive ? ' admin-nav-item--active' : ''}`}
+          >
+            Notifications
+          </NavLink>
+          <NavLink
+            to="/control-center/settings"
+            className={({ isActive }) => `admin-nav-item${isActive ? ' admin-nav-item--active' : ''}`}
+          >
+            Settings
+          </NavLink>
+          <NavLink
+            to="/control-center/profile"
+            className={({ isActive }) => `admin-nav-item${isActive ? ' admin-nav-item--active' : ''}`}
+          >
+            Profile
+          </NavLink>
         </nav>
 
         <div className="admin-sidebar-foot">Vijaya Siri &middot; V3.40 Control Center</div>

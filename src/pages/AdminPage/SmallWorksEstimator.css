@@ -1,0 +1,577 @@
+/* ============================================
+   SMALL WORKS ESTIMATOR — WEB UI
+   Reuses the Project Estimator design tokens / theme.
+   ============================================ */
+
+.sw-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+/* ---- Action bar ---- */
+.sw-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+
+.sw-templates-actions {
+  margin: 0;
+}
+
+/* ---- Add buttons ---- */
+.sw-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  align-self: flex-start;
+  margin-top: var(--space-md);
+  padding: 0.6rem 1rem;
+  border: 1.5px dashed var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-white);
+  color: var(--color-navy);
+  font-size: var(--font-small);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  min-height: 44px;
+}
+
+.sw-add-btn:hover {
+  border-color: var(--color-accent, #e8722a);
+  color: var(--color-accent, #e8722a);
+  background: var(--color-bg-page);
+}
+
+/* ---- BOQ table ---- */
+.sw-boq-table th.sw-col-no,
+.sw-boq-table td.sw-col-no {
+  width: 44px;
+  text-align: center;
+}
+
+.sw-col-unit {
+  width: 72px;
+  white-space: nowrap;
+}
+
+.sw-col-num {
+  width: 100px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.sw-col-actions {
+  width: 150px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.sw-boq-desc {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary, #1a1a2e);
+}
+
+.sw-boq-sub {
+  margin-top: 0.2rem;
+  font-size: var(--font-caption);
+  color: var(--color-text-tertiary);
+  line-height: 1.4;
+}
+
+.est-table-total-row td,
+.est-table-total-row th {
+  border-top: 1.5px solid var(--color-border);
+  border-bottom: none;
+  background: var(--color-bg-page);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-navy);
+}
+
+/* ---- Row action buttons ---- */
+.sw-row-actions,
+.sw-stage-actions,
+.sw-term-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.3rem;
+}
+
+.sw-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md, 10px);
+  background: var(--color-bg-page);
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.sw-icon-btn:hover:not(:disabled) {
+  background: var(--color-bg-white);
+  border-color: var(--color-border);
+  color: var(--color-navy);
+}
+
+.sw-icon-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.sw-icon-btn--danger:hover:not(:disabled) {
+  color: #c0392b;
+  border-color: rgba(192, 57, 43, 0.35);
+  background: #fdf2f0;
+}
+
+/* ---- Inline edit rows (BOQ) ---- */
+.sw-edit-row > td {
+  background: var(--color-bg-page);
+}
+
+.sw-boq-edit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-md) 0;
+}
+
+.sw-boq-edit-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.sw-edit-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  justify-content: flex-end;
+}
+
+.sw-wide {
+  grid-column: span 3;
+}
+
+.sw-textarea {
+  min-height: 88px;
+  resize: vertical;
+  line-height: var(--line-height-relaxed, 1.6);
+}
+
+/* ---- Payment ---- */
+.sw-payment-mode {
+  margin-bottom: var(--space-md);
+}
+
+.sw-stages {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.sw-stage-row,
+.sw-term-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.sw-stage-main,
+.sw-term-main {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.sw-stage-name,
+.sw-term-title {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-navy);
+}
+
+.sw-stage-desc,
+.sw-term-desc {
+  font-size: var(--font-caption);
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+.sw-stage-meta {
+  font-size: var(--font-caption);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-accent, #e8722a);
+  white-space: nowrap;
+}
+
+.sw-stage-amount {
+  font-weight: var(--font-weight-extrabold);
+  color: var(--color-navy);
+  white-space: nowrap;
+}
+
+.sw-stage-edit,
+.sw-term-edit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--color-bg-page);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.sw-advance {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.sw-advance-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+/* ---- Schedule table ---- */
+.sw-schedule {
+  margin-top: var(--space-md);
+}
+
+.sw-schedule-head {
+  margin-bottom: var(--space-sm);
+  font-size: var(--font-caption);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-tertiary);
+}
+
+.sw-total-error td:last-child {
+  color: #c0392b;
+}
+
+/* ---- Summary ---- */
+.sw-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-md);
+}
+
+/* ---- Confirm delete overlay ---- */
+.sw-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-lg);
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.sw-confirm {
+  width: 100%;
+  max-width: 380px;
+  padding: var(--space-xl);
+  background: var(--color-bg-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.sw-confirm-title {
+  margin: 0 0 var(--space-sm);
+  font-size: var(--font-h4, 1.125rem);
+  color: var(--color-navy);
+}
+
+.sw-confirm-text {
+  margin: 0 0 var(--space-lg);
+  color: var(--color-text-secondary);
+}
+
+.sw-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-md);
+}
+
+.sw-btn-danger {
+  background: #c0392b !important;
+}
+
+.sw-btn-danger:hover {
+  background: #a93226 !important;
+}
+
+/* ============================================
+   TEMPLATES LIST PAGE
+   ============================================ */
+
+.sw-template-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.sw-template-group {
+  padding: var(--space-lg);
+}
+
+.sw-template-category {
+  margin-bottom: var(--space-md);
+  font-size: var(--font-caption);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-tertiary);
+}
+
+.sw-template-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0 calc(var(--space-md) * -1);
+}
+
+.sw-template-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  margin: 0 var(--space-md);
+  border-bottom: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md, 10px);
+  color: inherit;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.sw-template-row:last-child {
+  border-bottom: none;
+}
+
+.sw-template-row:hover {
+  background: var(--color-bg-page);
+}
+
+.sw-template-row:focus-visible {
+  outline: 2px solid var(--color-accent, #e8722a);
+  outline-offset: -2px;
+}
+
+.sw-template-row-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  border-radius: var(--radius-md, 10px);
+  background: var(--color-bg-page);
+  color: var(--color-accent, #e8722a);
+}
+
+.sw-template-row-main {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.sw-template-row-title {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-navy);
+}
+
+.sw-template-row-desc {
+  font-size: var(--font-small);
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+  overflow-wrap: break-word;
+}
+
+.sw-template-row-count {
+  flex: 0 0 auto;
+  font-size: var(--font-caption);
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+
+.sw-template-row-action {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: var(--space-md);
+  min-height: 40px;
+  padding: 0.5rem 1rem;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-white);
+  font-size: var(--font-caption);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-navy);
+  white-space: nowrap;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.sw-template-row:hover .sw-template-row-action {
+  border-color: var(--color-accent, #e8722a);
+  background: var(--color-accent, #e8722a);
+  color: var(--color-bg-white);
+}
+
+.sw-template-row-arrow {
+  flex: 0 0 auto;
+  font-weight: var(--font-weight-extrabold);
+}
+
+/* --- Templates list: tablet --- */
+@media (max-width: 767px) {
+  .sw-template-list {
+    margin: 0;
+  }
+
+  .sw-template-row {
+    margin: 0;
+  }
+}
+
+/* --- Templates list: mobile (stacked rows) --- */
+@media (max-width: 640px) {
+  .sw-template-row {
+    flex-wrap: wrap;
+    gap: var(--space-sm) var(--space-md);
+    padding: var(--space-md) 0;
+  }
+
+  .sw-template-row-icon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .sw-template-row-main {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .sw-template-row-count {
+    flex: 0 0 100%;
+    padding-left: calc(38px + var(--space-md));
+  }
+
+  .sw-template-row-action {
+    flex: 0 0 100%;
+    justify-content: center;
+    margin-left: 0;
+    min-height: 44px;
+  }
+}
+
+/* ============================================
+   PRINT EXTRAS (used inside the hidden print sheet)
+   ============================================ */
+
+.est-pr-paragraph {
+  margin: 0;
+  font-size: 8.5pt;
+  line-height: 1.5;
+  color: #2a2f45;
+}
+
+.est-pr-list {
+  margin: 0;
+  padding-left: 4mm;
+  font-size: 8.5pt;
+  line-height: 1.6;
+  color: #2a2f45;
+}
+
+.est-pr-list li {
+  margin-bottom: 1.5mm;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 767px) {
+  .sw-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sw-boq-edit-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .sw-wide {
+    grid-column: span 2;
+  }
+
+  .sw-stage-row,
+  .sw-term-row {
+    flex-wrap: wrap;
+  }
+
+  .sw-stage-amount {
+    flex-basis: 100%;
+  }
+}
+
+@media (max-width: 540px) {
+  .sw-boq-edit-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sw-wide {
+    grid-column: span 1;
+  }
+
+  .sw-row-actions,
+  .sw-stage-actions,
+  .sw-term-actions {
+    gap: 0.2rem;
+  }
+
+  .sw-icon-btn {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* ============================================
+   PRINT — show only the print sheet; hide Screen UI
+   ============================================ */
+
+@media print {
+  .sw-page {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+  }
+
+  .sw-page > *:not(.est-print-sheet):not(.est-print-footer) {
+    display: none !important;
+  }
+
+  .sw-page .est-print-sheet {
+    display: block !important;
+  }
+
+  /* .est-print-footer is shown via the shared print rules (display: flex) */
+}

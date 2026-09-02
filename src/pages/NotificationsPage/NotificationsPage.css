@@ -1,0 +1,108 @@
+.notifications-page {
+  min-height: 100vh;
+  padding: var(--space-3xl) 0 var(--space-4xl);
+  background: var(--color-bg-warm);
+}
+
+.notifications-header {
+  text-align: center;
+  margin-bottom: var(--space-2xl);
+}
+
+.notifications-title {
+  font-family: var(--font-family);
+  font-size: clamp(1.625rem, 5vw, var(--font-h2));
+  font-weight: var(--font-weight-bold);
+  color: var(--color-navy);
+  letter-spacing: -0.02em;
+  line-height: var(--line-height-tight);
+  margin: 0 0 var(--space-sm);
+}
+
+.notifications-subtitle {
+  font-size: var(--font-body);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-normal);
+  margin: 0;
+}
+
+/* Future notification-type structure */
+.notifications-categories {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-sm);
+  max-width: 720px;
+  margin: 0 auto var(--space-2xl);
+}
+
+.notifications-category {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: var(--font-small);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  padding: 0.4rem 0.9rem;
+}
+
+.notifications-category-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-circle);
+  background: var(--color-primary);
+}
+
+/* Empty state */
+.notifications-empty {
+  max-width: 480px;
+  margin: 0 auto;
+  background: var(--color-bg-white);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-3xl) var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.75rem;
+}
+
+.notifications-empty-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-circle);
+  background: rgba(232, 114, 42, 0.1);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notifications-empty-title {
+  font-family: var(--font-family);
+  font-size: clamp(1.375rem, 5vw, var(--font-h3));
+  font-weight: var(--font-weight-bold);
+  color: var(--color-navy);
+  letter-spacing: -0.02em;
+  line-height: var(--line-height-tight);
+  margin: 0;
+}
+
+.notifications-empty-text {
+  font-size: var(--font-body);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-normal);
+  max-width: 340px;
+  margin: 0;
+}
+
+@media (min-width: 768px) {
+  .notifications-empty {
+    padding: var(--space-3xl) var(--space-2xl);
+  }
+}

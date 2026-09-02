@@ -136,8 +136,8 @@ export default function BookingsPage() {
             <p className="bookings-empty-text">
               Your service bookings will appear here once you book a service.
             </p>
-            <Link to="/quick-fix" className="bookings-cta-btn">
-              Explore Services
+            <Link to="/quote" className="bookings-cta-btn">
+              Get a Quote
             </Link>
           </div>
         </div>
