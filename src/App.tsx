@@ -59,7 +59,19 @@ import EstimatorTemplatesSection from './pages/AdminPage/EstimatorTemplatesSecti
 import SmallWorksEstimatorSection from './pages/AdminPage/SmallWorksEstimatorSection';
 import RouteUnavailablePage from './pages/RouteUnavailablePage/RouteUnavailablePage';
 import ServiceGate from './components/ServiceGate/ServiceGate';
+import PaymentPage from './pages/PaymentPage/PaymentPage';
 import { useSiteControl } from './hooks/useSiteControl';
+import AccountDashboardHome from './pages/AccountPage/sections/AccountDashboardHome';
+import ProfileSection from './pages/AccountPage/sections/ProfileSection';
+import AddressesSection from './pages/AccountPage/sections/AddressesSection';
+import AccountOffersSection from './pages/AccountPage/sections/AccountOffersSection';
+import AccountNotificationsSection from './pages/AccountPage/sections/AccountNotificationsSection';
+import PaymentPrefsSection from './pages/AccountPage/sections/PaymentPrefsSection';
+import SecuritySection from './pages/AccountPage/sections/SecuritySection';
+import SupportSection from './pages/AccountPage/sections/SupportSection';
+import ControlCenterCustomersSection from './pages/AdminPage/ControlCenterCustomersSection';
+import ControlCenterBookingsSection from './pages/AdminPage/ControlCenterBookingsSection';
+import ControlCenterNotificationsSection from './pages/AdminPage/ControlCenterNotificationsSection';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -175,7 +187,17 @@ function AppLayout() {
               }
             />
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/account" element={<AccountPage />} />
+            <Route path="/payment" element={<PaymentPage />} />
+            <Route path="/account" element={<AccountPage />}>
+              <Route index element={<AccountDashboardHome />} />
+              <Route path="profile" element={<ProfileSection />} />
+              <Route path="addresses" element={<AddressesSection />} />
+              <Route path="offers" element={<AccountOffersSection />} />
+              <Route path="notifications" element={<AccountNotificationsSection />} />
+              <Route path="payment-preferences" element={<PaymentPrefsSection />} />
+              <Route path="security" element={<SecuritySection />} />
+              <Route path="support" element={<SupportSection />} />
+            </Route>
             <Route path="/bookings" element={<BookingsPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/offers" element={<OffersPage />} />
@@ -210,30 +232,8 @@ function AppLayout() {
             </Route>
             <Route path="/control-center" element={<AdminPage />}>
               <Route index element={<Navigate to="/admin" replace />} />
-              <Route
-                path="bookings"
-                element={
-                  <ControlCenterEmptyState
-                    icon={<Icon name="clipboard" size={30} />}
-                    heading="Bookings"
-                    description="View and manage customer service bookings."
-                    emptyTitle="No bookings yet"
-                    emptyText="Customer bookings will appear here once booking data is connected."
-                  />
-                }
-              />
-              <Route
-                path="customers"
-                element={
-                  <ControlCenterEmptyState
-                    icon={<Icon name="users" size={30} />}
-                    heading="Customers"
-                    description="View and manage customer information."
-                    emptyTitle="No customer records yet"
-                    emptyText="Customer information will appear here once the customer system is connected."
-                  />
-                }
-              />
+              <Route path="bookings" element={<ControlCenterBookingsSection />} />
+              <Route path="customers" element={<ControlCenterCustomersSection />} />
               <Route
                 path="leads"
                 element={
@@ -248,15 +248,7 @@ function AppLayout() {
               />
               <Route
                 path="notifications"
-                element={
-                  <ControlCenterEmptyState
-                    icon={<Icon name="bell" size={30} />}
-                    heading="Notifications"
-                    description="Manage operational notifications and customer updates."
-                    emptyTitle="No notifications yet"
-                    emptyText="Notifications will appear here once the notification system is connected."
-                  />
-                }
+                element={<ControlCenterNotificationsSection />}
               />
               <Route
                 path="requests/quote"

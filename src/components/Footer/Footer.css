@@ -149,6 +149,10 @@
   color: var(--color-primary);
 }
 
+.footer-mobile-only {
+  display: none;
+}
+
 /* ========================
    TABLET (768-1023px)
    ======================== */
@@ -205,6 +209,14 @@
 
   .footer-grid {
     gap: var(--space-xl);
+  }
+
+  .footer-mobile-hidden {
+    display: none;
+  }
+
+  .footer-mobile-only {
+    display: inline-flex;
   }
 
   .footer-link {

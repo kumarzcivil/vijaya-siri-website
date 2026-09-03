@@ -13,7 +13,11 @@ export interface QuickFixBookingDetails {
   siteLocation: string;
 }
 
-export type QuickFixPaymentStatus = 'paid' | 'pay_after_service';
+export type QuickFixPaymentStatus =
+  | 'pending'
+  | 'submitted'
+  | 'paid'
+  | 'pay_after_service';
 
 export interface QuickFixBooking {
   serviceId: string;
@@ -26,6 +30,18 @@ export interface QuickFixBooking {
   paymentRequired: boolean;
   paymentStatus: QuickFixPaymentStatus;
   paymentRef: string;
+  /** Payment method label stored on the booking for display (e.g. MANUAL_UPI). */
+  paymentMethod?: string;
+  /** Reference to the canonical Payment record (set once a payment exists). */
+  paymentId?: string;
+  /** Value financial instrument / booking reference shown to the customer. */
+  bookingId?: string;
+  /** Reference to the customer identity session. */
+  customerId?: string;
+  /** Coupon code applied at checkout (if any). */
+  couponCode?: string;
+  /** Discount (INR) applied from the coupon. */
+  couponDiscount?: number;
   customerDetails: QuickFixBookingDetails;
   createdAt: string;
 }

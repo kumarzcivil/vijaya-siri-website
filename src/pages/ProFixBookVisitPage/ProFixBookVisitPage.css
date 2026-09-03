@@ -569,3 +569,62 @@
     transform: none;
   }
 }
+
+/* ---- Schedule (date & time) selection ---- */
+.pfbook-card--error {
+  border-color: #DC2626;
+}
+
+.pfbook-card-label + .pfbook-chip-row {
+  margin-top: var(--space-sm);
+}
+
+.pfbook-card .pfbook-chip-row + .pfbook-chip-row {
+  margin-top: 0.625rem;
+}
+
+.pfbook-card .pfbook-chip-row + .pfbook-field-error {
+  margin-top: var(--space-sm);
+  display: block;
+}
+
+.pfbook-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.pfbook-chip {
+  font-family: var(--font-family);
+  font-size: var(--font-caption);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  padding: 0.4375rem 0.875rem;
+  cursor: pointer;
+  min-height: 36px;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pfbook-chip:hover {
+  border-color: var(--color-border-warm);
+  color: var(--color-navy);
+}
+
+.pfbook-chip--active {
+  background: var(--color-primary-light);
+  color: var(--color-navy);
+  border-color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.pfbook-chip:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}

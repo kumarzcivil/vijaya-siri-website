@@ -47,7 +47,7 @@ export interface ProFixSiteVisitWaiver {
 
 export type ProFixEstimateStatus = 'draft' | 'reviewed' | 'booked';
 
-export type ProFixPaymentStatus = 'pending' | 'paid' | 'failed';
+export type ProFixPaymentStatus = 'pending' | 'submitted' | 'paid' | 'failed';
 
 export interface ProFixBillingDetails {
   name: string;
@@ -73,6 +73,22 @@ export interface ProFixSiteVisitOrder {
   estimateStatus: ProFixEstimateStatus;
   paymentStatus: ProFixPaymentStatus;
   paymentRef: string;
+  /** Payment method label stored on the order for display (e.g. MANUAL_UPI). */
+  paymentMethod?: string;
+  /** Preferred visit date (YYYY-MM-DD). */
+  slotDate?: string;
+  /** Preferred visit time slot label. */
+  slotTime?: string;
+  /** Reference to the canonical Payment record (set once a payment exists). */
+  paymentId?: string;
+  /** Customer-visible booking reference. */
+  bookingId?: string;
+  /** Reference to the customer identity session. */
+  customerId?: string;
+  /** Coupon code applied at checkout (if any). */
+  couponCode?: string;
+  /** Discount (INR) applied from the coupon. */
+  couponDiscount?: number;
   createdAt: string;
 }
 

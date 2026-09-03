@@ -161,6 +161,17 @@ const paths: Record<string, JSX.Element> = {
       <path d="M8 18h.01" />
     </>
   ),
+  cash: (
+    <>
+      <rect x="2" y="6" width="20" height="12" rx="2" />
+      <circle cx="12" cy="12" r="2.5" />
+      <path d="M6 12h.01" />
+      <path d="M18 12h.01" />
+    </>
+  ),
+  'chevron-down': (
+    <polyline points="6 9 12 15 18 9" />
+  ),
 };
 
 export default function Icon({ name, size = 20, className }: IconProps) {

@@ -12,12 +12,22 @@ import {
   type QuickFixBooking,
   type QuickFixBookingDetails,
 } from '../../data/quickfixBooking';
+import { useLocation } from '../../context/LocationContext';
+import {
+  CURRENCY,
+  generateBookingId,
+  generatePaymentId,
+  getOrCreateCustomerId,
+  type Payment,
+  type PaymentDraft,
+} from '../../data/payment';
+import { DEFAULT_SLOT_DURATION_MIN } from '../../data/bookingSchedule';
 import { setQuickFixBooking } from '../../store/quickFixBooking';
+import { setPaymentDraft } from '../../store/payment';
+import { findBookingConflict } from '../../store/bookingConflict';
 import './QuickFixBookPage.css';
 
 type FieldErrors = Partial<Record<keyof QuickFixBookingDetails, string>>;
-
-const PAYMENT_METHODS = ['UPI', 'Card', 'NetBanking'] as const;
 
 function validateDetails(details: QuickFixBookingDetails): FieldErrors {
   const errors: FieldErrors = {};
@@ -28,17 +38,10 @@ function validateDetails(details: QuickFixBookingDetails): FieldErrors {
   return errors;
 }
 
-function processMockPayment(): Promise<string> {
-  return new Promise((resolve) => {
-    window.setTimeout(() => {
-      resolve(`QF-${Date.now().toString(36).toUpperCase()}`);
-    }, 900);
-  });
-}
-
 export default function QuickFixBookPage() {
   const { serviceId } = useParams<{ serviceId: string }>();
   const navigate = useNavigate();
+  const { selected } = useLocation();
   const service = getQuickFixService(serviceId);
 
   const requiresTimeSlot = service?.bookingConfiguration.requiresTimeSlot ?? false;
@@ -55,8 +58,6 @@ export default function QuickFixBookPage() {
   });
   const [errors, setErrors] = useState<FieldErrors>({});
   const [slotError, setSlotError] = useState<string | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<(typeof PAYMENT_METHODS)[number]>('UPI');
-  const [processing, setProcessing] = useState(false);
 
   const slotDays = useMemo(getQuickFixSlotDays, []);
 
@@ -72,7 +73,7 @@ export default function QuickFixBookPage() {
     []
   );
 
-  const handleConfirm = useCallback(async () => {
+  const handleConfirm = useCallback(() => {
     if (!service) return;
 
     const nextErrors = validateDetails(details);
@@ -88,28 +89,92 @@ export default function QuickFixBookPage() {
 
     if (Object.keys(nextErrors).length > 0 || hasSlotError) return;
 
-    setProcessing(true);
-    try {
-      const paymentRef = requiresPayment ? await processMockPayment() : '';
-      const booking: QuickFixBooking = {
-        serviceId: service.id,
-        serviceName: service.name,
-        categoryName: getQuickFixCategoryName(service.categoryId),
-        slotDate,
-        slotTime,
-        amount,
-        payableNow: requiresPayment ? amount : 0,
-        paymentRequired: requiresPayment,
-        paymentStatus: requiresPayment ? 'paid' : 'pay_after_service',
-        paymentRef,
-        customerDetails: details,
-        createdAt: new Date().toISOString(),
-      };
-      setQuickFixBooking(booking);
-      navigate(`/quick-fix/${service.id}/confirmed`, { replace: true });
-    } finally {
-      setProcessing(false);
+    if (requiresTimeSlot) {
+      const conflict = findBookingConflict({
+        serviceType: 'QUICK_FIX',
+        date: slotDate,
+        timeLabel: slotTime,
+        durationMin: DEFAULT_SLOT_DURATION_MIN,
+      });
+      if (conflict !== null) {
+        setSlotError(
+          'Both services can\u2019t be placed at the same time. Please choose another time.'
+        );
+        return;
+      }
     }
+
+    const customerId = getOrCreateCustomerId();
+    const bookingId = generateBookingId('QUICK_FIX');
+
+    const pendingBooking: QuickFixBooking = {
+      serviceId: service.id,
+      serviceName: service.name,
+      categoryName: getQuickFixCategoryName(service.categoryId),
+      slotDate,
+      slotTime,
+      amount,
+      payableNow: requiresPayment ? amount : 0,
+      paymentRequired: requiresPayment,
+      paymentStatus: requiresPayment ? 'pending' : 'pay_after_service',
+      paymentRef: '',
+      paymentId: requiresPayment ? generatePaymentId() : undefined,
+      bookingId,
+      customerId,
+      customerDetails: details,
+      createdAt: new Date().toISOString(),
+    };
+
+    if (!requiresPayment) {
+      setQuickFixBooking(pendingBooking);
+      navigate(`/quick-fix/${service.id}/confirmed`, { replace: true });
+      return;
+    }
+
+    const payment: Payment = {
+      paymentId: pendingBooking.paymentId as string,
+      bookingId,
+      customerId,
+      amount: pendingBooking.payableNow,
+      currency: CURRENCY,
+      method: null,
+      status: 'INITIATED',
+      transactionReference: '',
+      gatewayReference: null,
+      createdAt: new Date().toISOString(),
+    };
+
+    const draft: PaymentDraft = {
+      serviceType: 'QUICK_FIX',
+      bookingId,
+      currency: CURRENCY,
+      payment,
+      serviceId: service.id,
+      serviceName: service.name,
+      categoryName: pendingBooking.categoryName,
+      locationId: selected.id,
+      locationLabel: selected.label,
+      scheduledDate: slotDate,
+      scheduledTime: slotTime,
+      customer: {
+        customerId,
+        name: details.name,
+        mobile: details.mobile,
+        siteAddress: details.siteAddress,
+        siteLocation: details.siteLocation,
+      },
+      price: {
+        basePrice: amount,
+        addOnsAmount: 0,
+        discount: 0,
+        finalAmount: amount,
+      },
+      quickFixBooking: pendingBooking,
+    };
+
+    setQuickFixBooking(pendingBooking);
+    setPaymentDraft(draft);
+    navigate(`/payment?service=QUICK_FIX`, { replace: true });
   }, [
     service,
     details,
@@ -118,6 +183,7 @@ export default function QuickFixBookPage() {
     slotDate,
     slotTime,
     amount,
+    selected,
     navigate,
   ]);
 
@@ -148,15 +214,10 @@ export default function QuickFixBookPage() {
     <button
       className="qfk-confirm-btn"
       onClick={handleConfirm}
-      disabled={processing}
       type="button"
     >
-      {processing
-        ? 'Processing…'
-        : requiresPayment
-          ? `Pay ${formatINR(amount)} & Confirm Booking`
-          : 'Confirm Booking'}
-      {!processing && <Icon name="arrow-right" size={16} />}
+      {requiresPayment ? `Continue to Payment \u00B7 ${formatINR(amount)}` : 'Confirm Booking'}
+      <Icon name="arrow-right" size={16} />
     </button>
   );
 
@@ -310,29 +371,9 @@ export default function QuickFixBookPage() {
               </div>
               <p className="qfk-payable-note">
                 {requiresPayment
-                  ? 'Pay now to confirm your slot. Balance if any is quoted before extra work.'
+                  ? 'You will choose a payment method on the next step to confirm your slot. Balance if any is quoted before extra work.'
                   : 'No prepayment needed. Pay after the service is completed.'}
               </p>
-
-              {requiresPayment && (
-                <div className="qfk-methods-block">
-                  <div className="qfk-methods" role="group" aria-label="Payment method">
-                    {PAYMENT_METHODS.map((m) => (
-                      <button
-                        key={m}
-                        type="button"
-                        className={`qfk-method ${paymentMethod === m ? 'qfk-method--active' : ''}`}
-                        onClick={() => setPaymentMethod(m)}
-                        aria-pressed={paymentMethod === m}
-                      >
-                        {m}
-                      </button>
-                    ))}
-                    <span className="qfk-test-badge">Test Mode</span>
-                  </div>
-                  <p className="qfk-methods-note">Test payment &mdash; no real money is charged.</p>
-                </div>
-              )}
 
               <div className="qfk-side-action">{confirmButton}</div>
             </section>

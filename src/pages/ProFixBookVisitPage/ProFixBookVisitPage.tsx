@@ -11,12 +11,24 @@ import {
   type ProFixBillingDetails,
   type ProFixSiteVisitOrder,
 } from '../../data/profix';
+import { getQuickFixSlotDays, type QuickFixSlotDay } from '../../data/quickfixBooking';
+import { BOOKING_TIME_SLOTS } from '../../data/bookingSchedule';
+import { DEFAULT_SLOT_DURATION_MIN } from '../../data/bookingSchedule';
+import { useLocation } from '../../context/LocationContext';
+import {
+  CURRENCY,
+  generateBookingId,
+  generatePaymentId,
+  getOrCreateCustomerId,
+  type Payment,
+  type PaymentDraft,
+} from '../../data/payment';
 import { setProFixBooking } from '../../store/proFixBooking';
+import { setPaymentDraft } from '../../store/payment';
+import { findBookingConflict } from '../../store/bookingConflict';
 import './ProFixBookVisitPage.css';
 
 type FieldErrors = Partial<Record<keyof ProFixBillingDetails, string>>;
-
-const PAYMENT_METHODS = ['UPI', 'Card', 'NetBanking'] as const;
 
 function validateBillingDetails(details: ProFixBillingDetails): FieldErrors {
   const errors: FieldErrors = {};
@@ -30,18 +42,11 @@ function validateBillingDetails(details: ProFixBillingDetails): FieldErrors {
   return errors;
 }
 
-function processMockSiteVisitPayment(): Promise<string> {
-  return new Promise((resolve) => {
-    window.setTimeout(() => {
-      resolve(`PF-${Date.now().toString(36).toUpperCase()}`);
-    }, 900);
-  });
-}
-
 export default function ProFixBookVisitPage() {
   const { serviceId } = useParams<{ serviceId: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { selected } = useLocation();
   const service = getProFixService(serviceId);
 
   const pricing = service?.pricing;
@@ -70,8 +75,11 @@ export default function ProFixBookVisitPage() {
     email: '',
   });
   const [errors, setErrors] = useState<FieldErrors>({});
-  const [paymentMethod, setPaymentMethod] = useState<(typeof PAYMENT_METHODS)[number]>('UPI');
-  const [processing, setProcessing] = useState(false);
+  const [slotDate, setSlotDate] = useState<string>('');
+  const [slotTime, setSlotTime] = useState<string>('');
+  const [slotError, setSlotError] = useState<string | null>(null);
+
+  const slotDays = useMemo<QuickFixSlotDay[]>(getQuickFixSlotDays, []);
 
   const handleBack = useCallback(() => {
     navigate(service ? `/pro-fix/${service.id}/estimate?qty=${quantity}` : '/pro-fix');
@@ -82,40 +90,120 @@ export default function ProFixBookVisitPage() {
     setErrors((prev) => ({ ...prev, [field]: undefined }));
   }, []);
 
-  const handlePayAndSchedule = useCallback(async () => {
+  const handleContinue = useCallback(() => {
     if (!service || !pricing || workCost === null) return;
     const nextErrors = validateBillingDetails(details);
     setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) return;
 
-    setProcessing(true);
-    try {
-      const paymentRef = await processMockSiteVisitPayment();
-      const effectiveWaiver = waiver?.enabled ? Math.min(waiver.amount, siteVisitCharge) : 0;
-      const order: ProFixSiteVisitOrder = {
-        serviceId: service.id,
-        serviceName: service.name,
-        categoryName: getProFixCategoryName(service.category),
-        quantity,
-        unit: pricing.unit ?? service.unit,
-        rate: pricing.rate ?? 0,
-        estimatedWorkCost: workCost,
-        siteVisitCharge,
-        siteVisitWaiverAmount: effectiveWaiver,
-        effectiveSiteVisitCost: siteVisitCharge - effectiveWaiver,
-        payableNow: siteVisitCharge,
-        billingDetails: details,
-        estimateStatus: 'booked',
-        paymentStatus: 'paid',
-        paymentRef,
-        createdAt: new Date().toISOString(),
-      };
-      setProFixBooking(order);
-      navigate(`/pro-fix/${service.id}/estimate/confirmed`, { replace: true });
-    } finally {
-      setProcessing(false);
+    let hasSlotError = false;
+    if (!slotDate || !slotTime) {
+      setSlotError('Please select a date and time slot.');
+      hasSlotError = true;
+    } else {
+      setSlotError(null);
     }
-  }, [service, pricing, workCost, details, siteVisitCharge, waiver, quantity, navigate]);
+
+    if (Object.keys(nextErrors).length > 0 || hasSlotError) return;
+
+    const conflict = findBookingConflict({
+      serviceType: 'PRO_FIX',
+      date: slotDate,
+      timeLabel: slotTime,
+      durationMin: DEFAULT_SLOT_DURATION_MIN,
+    });
+    if (conflict !== null) {
+      setSlotError(
+        'Both services can\u2019t be placed at the same time. Please choose another time.'
+      );
+      return;
+    }
+
+    const customerId = getOrCreateCustomerId();
+    const bookingId = generateBookingId('PRO_FIX');
+    const effectiveWaiver = waiver?.enabled ? Math.min(waiver.amount, siteVisitCharge) : 0;
+
+    const pendingOrder: ProFixSiteVisitOrder = {
+      serviceId: service.id,
+      serviceName: service.name,
+      categoryName: getProFixCategoryName(service.category),
+      quantity,
+      unit: pricing.unit ?? service.unit,
+      rate: pricing.rate ?? 0,
+      estimatedWorkCost: workCost,
+      siteVisitCharge,
+      siteVisitWaiverAmount: effectiveWaiver,
+      effectiveSiteVisitCost: siteVisitCharge - effectiveWaiver,
+      payableNow: siteVisitCharge,
+      billingDetails: details,
+      estimateStatus: 'booked',
+      paymentStatus: 'pending',
+      paymentRef: '',
+      paymentId: generatePaymentId(),
+      bookingId,
+      customerId,
+      slotDate,
+      slotTime,
+      createdAt: new Date().toISOString(),
+    };
+
+    const payment: Payment = {
+      paymentId: pendingOrder.paymentId as string,
+      bookingId,
+      customerId,
+      amount: siteVisitCharge,
+      currency: CURRENCY,
+      method: null,
+      status: 'INITIATED',
+      transactionReference: '',
+      gatewayReference: null,
+      createdAt: new Date().toISOString(),
+    };
+
+    const draft: PaymentDraft = {
+      serviceType: 'PRO_FIX',
+      bookingId,
+      currency: CURRENCY,
+      payment,
+      serviceId: service.id,
+      serviceName: service.name,
+      categoryName: pendingOrder.categoryName,
+      locationId: selected.id,
+      locationLabel: selected.label,
+      scheduledDate: slotDate,
+      scheduledTime: slotTime,
+      customer: {
+        customerId,
+        name: details.name,
+        mobile: details.mobile,
+        email: details.email.trim() || undefined,
+        siteAddress: details.siteAddress,
+        siteLocation: details.siteLocation,
+      },
+      price: {
+        basePrice: siteVisitCharge,
+        addOnsAmount: 0,
+        discount: 0,
+        finalAmount: siteVisitCharge,
+      },
+      proFixOrder: pendingOrder,
+    };
+
+    setProFixBooking(pendingOrder);
+    setPaymentDraft(draft);
+    navigate(`/payment?service=PRO_FIX`, { replace: true });
+  }, [
+    service,
+    pricing,
+    workCost,
+    details,
+    siteVisitCharge,
+    waiver,
+    quantity,
+    slotDate,
+    slotTime,
+    selected,
+    navigate,
+  ]);
 
   if (!service || !pricingEnabled || workCost === null || !pricing) {
     return (
@@ -178,12 +266,11 @@ export default function ProFixBookVisitPage() {
   const payButton = (
     <button
       className="pfbook-pay-btn"
-      onClick={handlePayAndSchedule}
-      disabled={processing}
+      onClick={handleContinue}
       type="button"
     >
-      {processing ? 'Processing…' : `Pay ${formatINR(siteVisitCharge)} & Schedule Visit`}
-      {!processing && <Icon name="arrow-right" size={16} />}
+      Continue to Payment &middot; {formatINR(siteVisitCharge)}
+      <Icon name="arrow-right" size={16} />
     </button>
   );
 
@@ -237,6 +324,46 @@ export default function ProFixBookVisitPage() {
             </div>
           </section>
 
+          <section
+            className={`pfbook-card ${slotError ? 'pfbook-card--error' : ''}`}
+            aria-labelledby="pfbook-slot-title"
+          >
+            <span className="pfbook-card-label" id="pfbook-slot-title">Preferred Visit Time</span>
+            <div className="pfbook-chip-row" role="group" aria-label="Select date">
+              {slotDays.map((day) => (
+                <button
+                  key={day.value}
+                  type="button"
+                  className={`pfbook-chip ${slotDate === day.value ? 'pfbook-chip--active' : ''}`}
+                  onClick={() => {
+                    setSlotDate(day.value);
+                    setSlotError(null);
+                  }}
+                  aria-pressed={slotDate === day.value}
+                >
+                  {day.label}
+                </button>
+              ))}
+            </div>
+            <div className="pfbook-chip-row" role="group" aria-label="Select time slot">
+              {BOOKING_TIME_SLOTS.map((slot) => (
+                <button
+                  key={slot}
+                  type="button"
+                  className={`pfbook-chip ${slotTime === slot ? 'pfbook-chip--active' : ''}`}
+                  onClick={() => {
+                    setSlotTime(slot);
+                    setSlotError(null);
+                  }}
+                  aria-pressed={slotTime === slot}
+                >
+                  {slot}
+                </button>
+              ))}
+            </div>
+            {slotError && <span className="pfbook-field-error">{slotError}</span>}
+          </section>
+
           <aside className="pfbook-side">
             <div className="pfbook-visit" role="note">
               <div className="pfbook-visit-main">
@@ -270,24 +397,6 @@ export default function ProFixBookVisitPage() {
                 after site assessment.
               </p>
             </section>
-
-            <div className="pfbook-methods-block">
-              <div className="pfbook-methods" role="group" aria-label="Payment method">
-                {PAYMENT_METHODS.map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    className={`pfbook-method ${paymentMethod === m ? 'pfbook-method--active' : ''}`}
-                    onClick={() => setPaymentMethod(m)}
-                    aria-pressed={paymentMethod === m}
-                  >
-                    {m}
-                  </button>
-                ))}
-                <span className="pfbook-test-badge">Test Mode</span>
-              </div>
-              <p className="pfbook-methods-note">Test payment &mdash; no real money is charged.</p>
-            </div>
 
             <div className="pfbook-side-action">{payButton}</div>
           </aside>

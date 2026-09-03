@@ -83,7 +83,8 @@ export default function BookingsPage() {
         amount: quickFixBooking.paymentRequired ? quickFixBooking.payableNow : quickFixBooking.amount,
         status: 'upcoming',
         paymentRef:
-          quickFixBooking.paymentStatus === 'paid' && quickFixBooking.paymentRef
+          (quickFixBooking.paymentStatus === 'paid' || quickFixBooking.paymentStatus === 'submitted') &&
+          quickFixBooking.paymentRef
             ? quickFixBooking.paymentRef
             : undefined,
         detailsPath: `/quick-fix/${quickFixBooking.serviceId}/confirmed`,
@@ -100,10 +101,13 @@ export default function BookingsPage() {
         serviceName: proFixOrder.serviceName,
         categoryName: proFixOrder.categoryName,
         location,
-        amount: proFixOrder.effectiveSiteVisitCost > 0 ? proFixOrder.effectiveSiteVisitCost : proFixOrder.siteVisitCharge,
+        scheduledDate: proFixOrder.slotDate || undefined,
+        scheduledTime: proFixOrder.slotTime || undefined,
+        amount: proFixOrder.payableNow > 0 ? proFixOrder.payableNow : proFixOrder.siteVisitCharge,
         status: 'upcoming',
         paymentRef:
-          proFixOrder.paymentStatus === 'paid' && proFixOrder.paymentRef
+          (proFixOrder.paymentStatus === 'paid' || proFixOrder.paymentStatus === 'submitted') &&
+          proFixOrder.paymentRef
             ? proFixOrder.paymentRef
             : undefined,
         detailsPath: `/pro-fix/${proFixOrder.serviceId}/estimate/confirmed`,

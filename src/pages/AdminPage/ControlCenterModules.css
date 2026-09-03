@@ -340,3 +340,335 @@
     justify-content: center;
   }
 }
+
+/* ============================================
+   CONTROL CENTER — live data modules
+   Customers, Bookings, Notifications
+   ============================================ */
+
+.cc-search {
+  margin-bottom: var(--space-lg);
+  max-width: 420px;
+}
+
+.cc-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.cc-card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  background: var(--color-bg-white);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.cc-card-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-lg);
+  background: var(--color-navy);
+  color: var(--color-bg-white);
+  font-size: var(--font-h3);
+  font-weight: var(--font-weight-bold);
+}
+
+.cc-card-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.cc-card-title {
+  margin: 0;
+  font-size: var(--font-h4, 1.125rem);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  letter-spacing: -0.01em;
+}
+
+.cc-card-meta {
+  margin: 0;
+  font-size: var(--font-small);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-relaxed);
+}
+
+.cc-card-sub {
+  margin: 0;
+  font-size: var(--font-caption);
+  color: var(--color-text-tertiary);
+}
+
+.cc-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-top: var(--space-xs);
+}
+
+.cc-tag {
+  padding: 0.2rem 0.6rem;
+  font-size: var(--font-caption);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  background: var(--color-bg-page);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+}
+
+.cc-card-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-shrink: 0;
+}
+
+/* Bookings */
+.cc-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.cc-summary-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: var(--space-md) var(--space-lg);
+  background: var(--color-bg-white);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.cc-summary-stat-value {
+  font-size: var(--font-h2);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--color-navy);
+  line-height: 1;
+}
+
+.cc-summary-stat-label {
+  font-size: var(--font-caption);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-tertiary);
+}
+
+.cc-card--booking {
+  flex-wrap: wrap;
+}
+
+.cc-card-topline {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.cc-kind {
+  font-size: var(--font-caption);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-navy);
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-page);
+}
+
+.cc-kind--quick-fix { color: #166534; background: #dcfce7; }
+.cc-kind--pro-fix { color: #6d28d9; background: #f3e8ff; }
+
+.cc-ref {
+  font-size: var(--font-caption);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-tertiary);
+}
+
+.cc-rows {
+  margin: var(--space-sm) 0 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.cc-row {
+  display: flex;
+  gap: var(--space-md);
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--color-border-light);
+  font-size: var(--font-small);
+}
+
+.cc-row dt {
+  flex-shrink: 0;
+  width: 110px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+}
+
+.cc-row dd {
+  margin: 0;
+  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.cc-card-actions--status {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-sm);
+}
+
+.cc-status-label {
+  font-size: var(--font-caption);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-tertiary);
+}
+
+.cc-status-btns {
+  display: flex;
+  gap: var(--space-xs);
+  flex-wrap: wrap;
+}
+
+.cc-status-btn {
+  padding: 0.3rem 0.7rem;
+  font-family: var(--font-family);
+  font-size: var(--font-caption);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
+  background: var(--color-bg-white);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  text-transform: capitalize;
+  transition: all var(--transition-fast);
+}
+
+.cc-status-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.cc-status-btn--active {
+  background: var(--color-navy);
+  border-color: var(--color-navy);
+  color: var(--color-text-inverse);
+}
+
+.cc-status-btn--active.cc-status-btn--completed {
+  background: var(--color-success);
+  border-color: var(--color-success);
+}
+
+.cc-status-btn--active.cc-status-btn--cancelled {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+/* Notifications */
+.cc-send-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+  background: var(--color-bg-white);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.cc-send-row {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.cc-send-row--tools {
+  align-items: center;
+}
+
+.cc-send-select {
+  max-width: 200px;
+}
+
+.cc-card--notif-unread {
+  border-left: 3px solid var(--color-primary);
+}
+
+.cc-cat {
+  font-size: var(--font-caption);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-tertiary);
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-page);
+}
+
+.cc-cat--booking { color: #9a3412; background: #ffedd5; }
+.cc-cat--quote { color: #1d4ed8; background: #dbeafe; }
+.cc-cat--service { color: #166534; background: #dcfce7; }
+.cc-cat--account { color: #6d28d9; background: #f3e8ff; }
+.cc-cat--system { color: var(--color-text-tertiary); background: var(--color-bg-page); }
+
+.cc-badge {
+  font-size: var(--font-caption);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--radius-pill);
+}
+
+@media (max-width: 767px) {
+  .cc-card {
+    flex-wrap: wrap;
+    padding: var(--space-md);
+  }
+
+  .cc-card-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .cc-card-actions .admin-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  .cc-send-row {
+    flex-direction: column;
+  }
+
+  .cc-send-select {
+    max-width: none;
+  }
+
+  .cc-row {
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .cc-row dt {
+    width: auto;
+  }
+}

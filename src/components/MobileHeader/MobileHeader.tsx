@@ -56,12 +56,37 @@ export default function MobileHeader() {
     : 'Search Pro Fix services';
   const locRef = useRef<HTMLDivElement>(null);
   const actionsRef = useRef<HTMLDivElement>(null);
+  const menuBtnRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLElement>(null);
 
   const availableFeatures = getAvailableFeatureSet();
   const quoteEnabled = useIsFeatureEnabled('quote');
   const visibleMenuLinks = menuLinks.filter(
     (link) => !link.feature || availableFeatures.has(link.feature)
   );
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handlePointerDown = (e: PointerEvent) => {
+      const target = e.target as Node;
+      const insideMenu = menuRef.current && menuRef.current.contains(target);
+      const insideToggle = menuBtnRef.current && menuBtnRef.current.contains(target);
+      if (!insideMenu && !insideToggle) {
+        setMenuOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [menuOpen]);
 
   useEffect(() => {
     if (!locOpen) return;
@@ -111,6 +136,7 @@ export default function MobileHeader() {
         <div className="mobile-header-top">
           <button
             className="mobile-menu-btn"
+            ref={menuBtnRef}
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label="Toggle menu"
             aria-expanded={menuOpen}
@@ -267,7 +293,7 @@ export default function MobileHeader() {
       </div>
 
       {menuOpen && (
-        <nav className="mobile-menu" aria-label="Mobile navigation">
+        <nav className="mobile-menu" ref={menuRef} aria-label="Mobile navigation">
           {visibleMenuLinks.map((link) => (
             <MenuLink key={link.id} link={link} onClick={() => setMenuOpen(false)} />
           ))}
