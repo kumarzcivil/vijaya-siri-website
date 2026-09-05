@@ -12,7 +12,6 @@ export {
   reorderMarketingServices,
   getActiveMarketingServices,
 } from './services';
-export { defaultProjects, getProjects, saveProjects, getFeaturedProjects, updateProject, addProject, resetProjects } from './projects';
 export {
   statistics,
   getMarketingStatistics,
@@ -44,9 +43,8 @@ export { roadmapSteps } from './roadmap';
 export type { Package, PackageSpecMatrix, SpecCategory, SpecRow, SpecValue } from './packages';
 export type { Category } from './categories';
 export type { Service } from './services';
-export type { FeaturedProject } from './projects';
 export type { Stat } from './statistics';
-export type { Benefit } from './benefits';
 export type { Offer, OfferDestinationType } from './offers';
+export type { Benefit } from './benefits';
 export type { Location } from './locations';
 export type { RoadmapStep } from './roadmap';

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { getActiveMarketingStatistics } from '../../data';
+import { fetchMarketingStats, type MarketingStat } from '../../api/marketing';
 import Icon from '../Icon/Icon';
 import './Statistics.css';
 
@@ -100,14 +100,21 @@ function AnimatedStat({ value, label, icon, delay }: AnimatedStatProps) {
 }
 
 export default function Statistics() {
-  const stats = getActiveMarketingStatistics();
+  const [stats, setStats] = useState<MarketingStat[]>([]);
+
+  useEffect(() => {
+    fetchMarketingStats()
+      .then((data) => setStats(data.filter((s) => s.status === 'active').sort((a, b) => a.displayOrder - b.displayOrder)))
+      .catch(() => {});
+  }, []);
+
   return (
     <section className="proof-panel">
       <div className="section-container">
         <div className="proof-grid">
           {stats.map((stat, i) => (
             <AnimatedStat
-              key={stat.id}
+              key={stat._id}
               value={stat.value}
               label={stat.label}
               icon={stat.icon}

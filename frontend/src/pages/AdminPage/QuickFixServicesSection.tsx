@@ -1,20 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useServiceReorder } from '../../hooks/useServiceReorder';
 import {
-  getQuickFixServices,
+  fetchQuickFixAdminCategories,
+  fetchQuickFixAdminServices,
+  createQuickFixService,
   updateQuickFixService,
-  addQuickFixService,
-  resetQuickFixServices,
-  moveQuickFixService,
+  toggleQuickFixService,
+  deleteQuickFixService,
   reorderQuickFixServices,
-  getQuickFixCategories,
-  getQuickFixCategoryName,
-  formatINR,
-} from '../../data/quickfix';
-import type { QuickFixDuration, QuickFixService } from '../../data/quickfix';
+} from '../../api/quickFix';
+import type { QuickFixDuration } from '../../api/quickFix';
 import BannerImageUpload from './BannerImageUpload';
 import './AdminPage.css';
 import './AdminShell.css';
+
+function svcToFrontend(s: any) {
+  return { ...s, id: s._id, image: s.image?.url ?? '' };
+}
+function catToFrontend(c: any) {
+  return { ...c, id: c._id };
+}
 
 const ADD_SERVICE_ID = '__add_quickfix_service__';
 
@@ -44,7 +49,7 @@ interface ToastState {
   isError: boolean;
 }
 
-function buildForm(service: QuickFixService): ServiceForm {
+function buildForm(service: any): ServiceForm {
   return {
     name: service.name,
     categoryId: service.categoryId,
@@ -92,6 +97,10 @@ function toOptionalNum(value: string): number | undefined {
   return parsed;
 }
 
+function formatINR(amount: number): string {
+  return `\u20B9${Math.round(amount).toLocaleString('en-IN')}`;
+}
+
 function StatusToggle({ active, onClick }: { active: boolean; onClick: () => void }) {
   return (
     <button
@@ -109,11 +118,13 @@ function StatusToggle({ active, onClick }: { active: boolean; onClick: () => voi
 }
 
 export default function QuickFixServicesSection() {
-  const [services, setServices] = useState<QuickFixService[]>(() => getQuickFixServices());
+  const [services, setServices] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
-  const [editForm, setEditForm] = useState<ServiceForm>(() => emptyForm(getQuickFixCategories()[0]?.id ?? ''));
+  const [editForm, setEditForm] = useState<ServiceForm>(() => emptyForm(''));
   const [toast, setToast] = useState<ToastState | null>(null);
   const [resetConfirm, setResetConfirm] = useState(false);
 
@@ -126,6 +137,20 @@ export default function QuickFixServicesSection() {
     toastTimer.current = window.setTimeout(() => setToast(null), DEFAULT_TOAST_MS);
   }, []);
 
+  const loadData = useCallback(async () => {
+    try {
+      const [svcs, cats] = await Promise.all([fetchQuickFixAdminServices(), fetchQuickFixAdminCategories()]);
+      setServices(svcs.map(svcToFrontend));
+      setCategories(cats.map(catToFrontend));
+    } catch (err: any) {
+      setToast({ message: err.message || 'Failed to load services', isError: true });
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
+
   useEffect(() => {
     return () => {
       if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
@@ -133,7 +158,9 @@ export default function QuickFixServicesSection() {
     };
   }, []);
 
-  const startEdit = useCallback((service: QuickFixService) => {
+  const getCategoryName = useCallback((catId: string) => categories.find((c) => c.id === catId)?.name ?? catId, [categories]);
+
+  const startEdit = useCallback((service: any) => {
     setAdding(false);
     setEditingId(service.id);
     setEditForm(buildForm(service));
@@ -142,30 +169,43 @@ export default function QuickFixServicesSection() {
   const startAdd = useCallback(() => {
     setEditingId(null);
     setAdding(true);
-    const allCats = getQuickFixCategories();
-    const activeCats = allCats.filter((c) => c.active);
-    const defaultCategory = (activeCats[0] ?? allCats[0])?.id ?? '';
+    const activeCats = categories.filter((c) => c.active);
+    const defaultCategory = (activeCats[0] ?? categories[0])?.id ?? '';
     setEditForm(emptyForm(defaultCategory));
-  }, []);
+  }, [categories]);
 
   const cancelEdit = useCallback(() => {
     setAdding(false);
     setEditingId(null);
-    setEditForm(emptyForm(getQuickFixCategories()[0]?.id ?? ''));
-  }, []);
+    setEditForm(emptyForm(categories[0]?.id ?? ''));
+  }, [categories]);
 
-  const toggleActive = useCallback((id: string) => {
+  const toggleActive = useCallback(async (id: string) => {
     const service = services.find((s) => s.id === id);
     if (!service) return;
-    const updated = updateQuickFixService(id, { active: !service.active });
-    setServices(updated);
+    try {
+      await toggleQuickFixService(id);
+      setServices((prev) => prev.map((s) => s.id === id ? { ...s, active: !s.active } : s));
+    } catch (err: any) {
+      setToast({ message: err.message || 'Failed to update', isError: true });
+    }
   }, [services]);
 
-  const handleMove = useCallback((id: string, direction: 'up' | 'down') => {
-    const updated = moveQuickFixService(id, direction);
-    setServices(updated);
-    showToast(direction === 'up' ? 'Service moved up' : 'Service moved down');
-  }, [showToast]);
+  const handleMove = useCallback(async (id: string, direction: 'up' | 'down') => {
+    const sorted = [...services].sort((a, b) => a.displayOrder - b.displayOrder);
+    const idx = sorted.findIndex((s) => s.id === id);
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= sorted.length) return;
+    const ids = sorted.map((s) => s.id);
+    [ids[idx], ids[swapIdx]] = [ids[swapIdx], ids[idx]];
+    try {
+      const reordered = await reorderQuickFixServices(ids);
+      setServices(reordered.map(svcToFrontend));
+      showToast(direction === 'up' ? 'Service moved up' : 'Service moved down');
+    } catch (err: any) {
+      setToast({ message: err.message || 'Failed to reorder', isError: true });
+    }
+  }, [services, showToast]);
 
   const handleResetClick = useCallback(() => {
     if (!resetConfirm) {
@@ -176,12 +216,12 @@ export default function QuickFixServicesSection() {
     }
     if (resetTimer.current !== null) window.clearTimeout(resetTimer.current);
     setResetConfirm(false);
-    setServices(resetQuickFixServices());
+    loadData();
     cancelEdit();
-    showToast('Quick Fix services restored to defaults');
-  }, [resetConfirm, cancelEdit, showToast]);
+    showToast('Quick Fix services refreshed from server');
+  }, [resetConfirm, cancelEdit, showToast, loadData]);
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     if (!editingId && !adding) return;
     const name = editForm.name.trim();
     if (!name) {
@@ -221,21 +261,22 @@ export default function QuickFixServicesSection() {
       },
     };
 
-    if (adding) {
-      addQuickFixService(payload);
-      showToast('Service added');
-    } else if (editingId) {
-      updateQuickFixService(editingId, payload);
-      showToast('Changes saved');
+    try {
+      if (adding) {
+        await createQuickFixService(payload as any);
+      } else if (editingId) {
+        await updateQuickFixService(editingId, payload as any);
+      }
+      if (adding) setQuery('');
+      await loadData();
+      showToast(adding ? 'Service added' : 'Changes saved');
+      cancelEdit();
+    } catch (err: any) {
+      showToast(err.message || 'Failed to save', true);
     }
+  }, [editingId, adding, editForm, cancelEdit, showToast, loadData]);
 
-    if (adding) setQuery('');
-
-    setServices(getQuickFixServices());
-    cancelEdit();
-  }, [editingId, adding, editForm, cancelEdit, showToast]);
-
-  const allCategories = getQuickFixCategories();
+  const allCategories = categories;
 
   const q = query.trim().toLowerCase();
   const sortedServices = [...services].sort((a, b) => a.displayOrder - b.displayOrder);
@@ -244,14 +285,14 @@ export default function QuickFixServicesSection() {
       !q ||
       s.name.toLowerCase().includes(q) ||
       s.shortDescription.toLowerCase().includes(q) ||
-      getQuickFixCategoryName(s.categoryId).toLowerCase().includes(q)
+      getCategoryName(s.categoryId).toLowerCase().includes(q)
   );
 
   const serviceIndex = (id: string) => sortedServices.findIndex((s) => s.id === id);
 
   const editingService = services.find((s) => s.id === editingId);
 
-  const display = adding ? [{ id: ADD_SERVICE_ID } as unknown as QuickFixService, ...filtered] : filtered;
+  const display = adding ? [{ id: ADD_SERVICE_ID } as unknown as any, ...filtered] : filtered;
 
   const reorderEnabled = !adding && editingId === null && query.trim() === '';
 
@@ -259,21 +300,36 @@ export default function QuickFixServicesSection() {
     enabled: reorderEnabled,
     items: display,
     fullIds: sortedServices.map((s) => s.id),
-    onCommitted: (orderedIds) => {
-      const reordered = reorderQuickFixServices(orderedIds);
-      setServices(reordered);
-      showToast('Service order updated');
+    onCommitted: async (orderedIds) => {
+      try {
+        const reordered = await reorderQuickFixServices(orderedIds);
+        setServices(reordered.map(svcToFrontend));
+        showToast('Service order updated');
+      } catch (err: any) {
+        showToast(err.message || 'Failed to reorder', true);
+      }
     },
   });
 
   const set = (patch: Partial<ServiceForm>) => setEditForm((prev) => ({ ...prev, ...patch }));
+
+  if (loading) {
+    return (
+      <div className="admin-page">
+        <div className="admin-header">
+          <h1 className="admin-title">Quick Fix Services</h1>
+          <p className="admin-subtitle">Loading services...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="admin-page">
       <div className="admin-header">
         <h1 className="admin-title">Quick Fix Services</h1>
         <p className="admin-subtitle">
-          These are the services customers see on Quick Fix. Changes are saved to browser storage.
+          These are the services customers see on Quick Fix. Changes are saved to the server.
         </p>
         <div className="admin-actions">
           <div className="admin-search">
@@ -573,7 +629,7 @@ export default function QuickFixServicesSection() {
                 <div className="admin-project-details">
                   <h3 className="admin-project-name">{service.name}</h3>
                   <p className="admin-project-meta">
-                    {getQuickFixCategoryName(service.categoryId)}
+                    {getCategoryName(service.categoryId)}
                     {service.pricing?.enabled && service.pricing.price != null
                       ? ` \u00B7 ${formatINR(service.pricing.price)}`
                       : ''}

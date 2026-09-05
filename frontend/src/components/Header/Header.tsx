@@ -2,8 +2,9 @@ import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useLocation } from '../../context/LocationContext';
 import { useActiveRoute } from '../../hooks/useActiveRoute';
+import { useAvailableFeatureSet } from '../../hooks/useSiteControl';
+import { fetchMyNotifications, markAllNotificationsRead } from '../../api/notifications';
 import type { SiteFeature } from '../../data/siteControl';
-import { getAvailableFeatureSet } from '../../data/siteControl';
 import './Header.css';
 
 const navItems: Array<{ id: string; label: string; path: string; feature?: SiteFeature }> = [
@@ -29,8 +30,23 @@ function NavLink({ item }: { item: typeof navItems[number] }) {
 
 export default function Header() {
   const [locationOpen, setLocationOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const { selected, options, select } = useLocation();
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem('vs_auth_token');
+    if (!token) return;
+    fetchMyNotifications()
+      .then((n) => setUnreadCount(n.filter((x) => !x.read).length))
+      .catch(() => {});
+    const interval = setInterval(() => {
+      fetchMyNotifications()
+        .then((n) => setUnreadCount(n.filter((x) => !x.read).length))
+        .catch(() => {});
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (!locationOpen) return;
@@ -48,7 +64,7 @@ export default function Header() {
     setLocationOpen(false);
   };
 
-  const availableFeatures = getAvailableFeatureSet();
+  const availableFeatures = useAvailableFeatureSet();
   const visibleNavItems = navItems.filter(
     (item) => !item.feature || availableFeatures.has(item.feature)
   );
@@ -103,11 +119,12 @@ export default function Header() {
         </nav>
 
         <div className="header-right">
-          <Link to="/notifications" className="header-icon-btn" aria-label="Notifications">
+          <Link to="/account/notifications" className="header-icon-btn header-notif-btn" aria-label="Notifications" onClick={() => { if (unreadCount > 0) { markAllNotificationsRead().catch(() => {}); setUnreadCount(0); } }}>
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
               <path d="M13.73 21a2 2 0 0 1-3.46 0" />
             </svg>
+            {unreadCount > 0 && <span className="header-notif-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>}
           </Link>
 
           <Link to="/bookings" className="header-icon-btn header-bookings-btn" aria-label="My Bookings">

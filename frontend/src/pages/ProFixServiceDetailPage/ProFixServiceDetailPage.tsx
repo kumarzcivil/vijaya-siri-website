@@ -1,12 +1,12 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Icon from '../../components/Icon/Icon';
 import {
-  getProFixService,
-  getProFixCategoryName,
-  formatINR,
-  proFixBenefits,
-} from '../../data/profix';
+  fetchProFixServices,
+  fetchProFixCategories,
+  type ProFixService as ApiService,
+  type ProFixCategory as ApiCategory,
+} from '../../api/proFix';
 import './ProFixServiceDetailPage.css';
 
 const WHATSAPP = 'https://wa.me/919008855088';
@@ -17,17 +17,105 @@ const TRUST_ITEMS = [
   { id: 'ontime', icon: 'clock' },
 ] as const;
 
+const proFixBenefits = [
+  { id: 'verified', title: 'Verified Professionals', description: 'Skilled and background-checked experts.' },
+  { id: 'materials', title: 'Quality Materials', description: 'Only premium-grade materials used.' },
+  { id: 'pricing', title: 'Transparent Pricing', description: 'No hidden costs, clear quotes upfront.' },
+  { id: 'ontime', title: 'On-time Delivery', description: 'Projects completed on schedule.' },
+  { id: 'satisfaction', title: 'Satisfaction Guaranteed', description: 'Your satisfaction is our priority.' },
+];
+
+function formatINR(amount: number): string {
+  return `\u20B9${Math.round(amount).toLocaleString('en-IN')}`;
+}
+
+interface PageService {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  imageUrl?: string;
+  unit: string;
+  startingPrice: string;
+  included: string[];
+  notes: string[];
+  pricing?: {
+    enabled: boolean;
+    mode: string;
+    rate?: number;
+    unit?: string;
+    quantityLabel?: string;
+    defaultQuantity?: number;
+    minQuantity?: number;
+    maxQuantity?: number;
+    step?: number;
+  };
+  siteVisitCharge: number;
+  siteVisitWaiver: {
+    enabled: boolean;
+    label: string;
+    amount: number;
+    trigger: string;
+  };
+}
+
+function adaptService(s: ApiService): PageService {
+  return {
+    id: s._id,
+    name: s.name,
+    category: s.category,
+    description: s.description,
+    imageUrl: s.image?.url,
+    unit: s.unit,
+    startingPrice: s.startingPrice,
+    included: s.included ?? [],
+    notes: s.notes ?? [],
+    pricing: s.pricing,
+    siteVisitCharge: s.siteVisitCharge ?? 300,
+    siteVisitWaiver: s.siteVisitWaiver ?? {
+      enabled: true,
+      label: 'Work Completion Waiver',
+      amount: s.siteVisitCharge ?? 300,
+      trigger: 'work_completion',
+    },
+  };
+}
+
+function adaptCategory(c: ApiCategory): { id: string; name: string } {
+  return { id: c._id, name: c.name };
+}
+
 export default function ProFixServiceDetailPage() {
   const { serviceId } = useParams<{ serviceId: string }>();
   const navigate = useNavigate();
-  const service = getProFixService(serviceId);
+  const [service, setService] = useState<PageService | null>(null);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!serviceId) {
+      setLoading(false);
+      return;
+    }
+    Promise.all([
+      fetchProFixServices({ active: true }),
+      fetchProFixCategories({ active: true }),
+    ])
+      .then(([svcData, catData]) => {
+        const found = svcData.find((s) => s._id === serviceId);
+        if (found) setService(adaptService(found));
+        setCategories(catData.map(adaptCategory));
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [serviceId]);
 
   const handleCreateEstimate = useCallback(() => {
     if (!service) return;
     navigate(`/pro-fix/${service.id}/estimate`);
   }, [navigate, service]);
 
-  if (!service) {
+  if (!loading && !service) {
     return (
       <div className="pfsd-page">
         <div className="section-container">
@@ -47,9 +135,13 @@ export default function ProFixServiceDetailPage() {
     );
   }
 
+  if (loading || !service) {
+    return null;
+  }
+
   const pricing = service.pricing;
   const pricingEnabled = !!pricing?.enabled && pricing.mode !== 'custom';
-  const categoryName = getProFixCategoryName(service.category);
+  const categoryName = categories.find((c) => c.id === service.category)?.name ?? service.category;
   const included = service.included ?? [];
   const notes = service.notes ?? [];
 

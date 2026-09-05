@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useActiveRoute } from '../../hooks/useActiveRoute';
+import { useAvailableFeatureSet } from '../../hooks/useSiteControl';
 import type { SiteFeature } from '../../data/siteControl';
-import { getAvailableFeatureSet } from '../../data/siteControl';
 import './MobileNavigation.css';
 
 const navItems: Array<{
@@ -88,7 +88,7 @@ function NavItem({ item }: { item: typeof navItems[number] }) {
 }
 
 export default function MobileNavigation() {
-  const availableFeatures = getAvailableFeatureSet();
+  const availableFeatures = useAvailableFeatureSet();
   const visibleNavItems = navItems.filter(
     (item) => !item.feature || availableFeatures.has(item.feature)
   );

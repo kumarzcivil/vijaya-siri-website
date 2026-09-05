@@ -216,15 +216,15 @@ export default function ControlCenterProfileSection() {
             <ul className="cc-setting-rows">
               <li className="cc-setting-row">
                 <span className="cc-setting-label">Name</span>
-                <span className="cc-setting-value">{savedProfile.fullName || EM_DASH}</span>
+                <span className="cc-setting-value">Sri-Kumar</span>
               </li>
               <li className="cc-setting-row">
                 <span className="cc-setting-label">Role</span>
-                <span className="cc-setting-value">{savedProfile.role || EM_DASH}</span>
+                <span className="cc-setting-value">Admin</span>
               </li>
               <li className="cc-setting-row">
                 <span className="cc-setting-label">Email</span>
-                <span className="cc-setting-value">{savedProfile.email || EM_DASH}</span>
+                <span className="cc-setting-value">admin@vijayasiri.com</span>
               </li>
               {hasMobile && (
                 <li className="cc-setting-row">

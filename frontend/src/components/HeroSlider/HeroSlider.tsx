@@ -1,7 +1,7 @@
-import { useMemo, useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useHeroSlider } from '../../hooks/useHeroSlider';
-import { getActiveProFixHeroAds, isSeededHeroAd } from '../../data/hero-advertisements';
+import { fetchProFixBanners, type ProFixBanner } from '../../api/proFix';
 import './HeroSlider.css';
 
 interface Advertisement {
@@ -13,23 +13,32 @@ interface Advertisement {
 
 const SWIPE_THRESHOLD_PX = 48;
 
-function buildSlides(): Advertisement[] {
-  return getActiveProFixHeroAds()
-    .filter((ad) => !!ad.image)
-    .map((ad) => ({
-      id: ad.id,
-      image: ad.image,
-      alt: isSeededHeroAd(ad.id)
-        ? (ad.description || ad.title)
-        : (ad.title || 'Pro Fix advertisement'),
-      destination: ad.ctaTarget || '',
-    }));
+function mapBannerToSlide(banner: ProFixBanner): Advertisement {
+  return {
+    id: banner._id,
+    image: banner.image?.url || '',
+    alt: banner.title || 'Pro Fix advertisement',
+    destination: banner.ctaTarget || '',
+  };
 }
 
 export default function HeroSlider() {
   const navigate = useNavigate();
 
-  const slides = useMemo<Advertisement[]>(buildSlides, []);
+  const [slides, setSlides] = useState<Advertisement[]>([]);
+
+  useEffect(() => {
+    fetchProFixBanners({ active: true })
+      .then((banners) => {
+        setSlides(
+          banners
+            .sort((a, b) => a.priority - b.priority)
+            .filter((b) => !!b.image?.url)
+            .map(mapBannerToSlide)
+        );
+      })
+      .catch(() => {});
+  }, []);
 
   const { activeIndex, goTo, next, prev, pause, resume } = useHeroSlider({
     totalSlides: slides.length,

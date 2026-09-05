@@ -1,27 +1,97 @@
-import { useNotifications } from '../../hooks/useNotifications';
-import { deleteNotification, markNotificationRead, addNotification } from '../../store/notifications';
-import { useState, type FormEvent } from 'react';
+import { useState, useEffect, useCallback, useRef, type FormEvent } from 'react';
+import {
+  fetchAdminNotifications,
+  createNotification,
+  markNotificationRead,
+  deleteNotification,
+  type Notification,
+} from '../../api/notifications';
 
-const CATEGORIES = ['booking', 'quote', 'service', 'account', 'system'] as const;
+const CATEGORIES = ['booking', 'quote', 'service', 'account', 'system', 'offer'] as const;
 type Cat = (typeof CATEGORIES)[number];
 
+const DEFAULT_TOAST_MS = 2600;
+
 export default function ControlCenterNotificationsSection() {
-  const notifications = useNotifications();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [category, setCategory] = useState<Cat>('service');
+  const [toast, setToast] = useState<{ message: string; isError?: boolean } | null>(null);
+  const toastTimer = useRef<number | null>(null);
 
-  const handleSend = (e: FormEvent) => {
+  const showToast = useCallback((msg: string, isError = false) => {
+    if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
+    setToast({ message: msg, isError });
+    toastTimer.current = window.setTimeout(() => setToast(null), DEFAULT_TOAST_MS);
+  }, []);
+
+  useEffect(() => {
+    return () => { if (toastTimer.current !== null) window.clearTimeout(toastTimer.current); };
+  }, []);
+
+  const load = useCallback(async () => {
+    try {
+      const data = await fetchAdminNotifications();
+      setNotifications(data);
+    } catch (err: any) {
+      showToast(err.message || 'Failed to load notifications', true);
+    } finally {
+      setLoading(false);
+    }
+  }, [showToast]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleSend = async (e: FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !message.trim()) return;
-    addNotification({
-      title: title.trim(),
-      message: message.trim(),
-      category,
-    });
-    setTitle('');
-    setMessage('');
+    try {
+      const created = await createNotification({
+        title: title.trim(),
+        message: message.trim(),
+        category,
+      });
+      setNotifications((prev) => [created, ...prev]);
+      setTitle('');
+      setMessage('');
+      showToast('Notification sent');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to send', true);
+    }
   };
+
+  const handleMarkRead = async (id: string) => {
+    try {
+      const updated = await markNotificationRead(id);
+      setNotifications((prev) => prev.map((n) => (n._id === id ? updated : n)));
+    } catch (err: any) {
+      showToast(err.message || 'Failed to update', true);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteNotification(id);
+      setNotifications((prev) => prev.filter((n) => n._id !== id));
+      showToast('Notification deleted');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to delete', true);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="cc-page">
+        <header className="admin-dash-header">
+          <span className="admin-dash-eyebrow">Control Center</span>
+          <h1 className="admin-dash-title">Notifications</h1>
+        </header>
+        <div className="cc-loading">Loading notifications...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="cc-page">
@@ -73,13 +143,14 @@ export default function ControlCenterNotificationsSection() {
         <div className="cc-list">
           {notifications.map((n) => (
             <article
-              key={n.id}
+              key={n._id}
               className={`cc-card cc-card--notif${n.read ? '' : ' cc-card--notif-unread'}`}
             >
               <div className="cc-card-body">
                 <div className="cc-card-topline">
                   <span className={`cc-cat cc-cat--${n.category}`}>{n.category}</span>
                   {!n.read && <span className="cc-badge">Unread</span>}
+                  {n.sent && <span className="cc-badge cc-badge--sent">Pushed</span>}
                 </div>
                 <h3 className="cc-card-title">{n.title}</h3>
                 <p className="cc-card-meta">{n.message}</p>
@@ -89,7 +160,7 @@ export default function ControlCenterNotificationsSection() {
                 <button
                   type="button"
                   className="admin-btn"
-                  onClick={() => markNotificationRead(n.id)}
+                  onClick={() => handleMarkRead(n._id)}
                   disabled={n.read}
                 >
                   Mark read
@@ -97,13 +168,19 @@ export default function ControlCenterNotificationsSection() {
                 <button
                   type="button"
                   className="admin-btn admin-btn--danger"
-                  onClick={() => deleteNotification(n.id)}
+                  onClick={() => handleDelete(n._id)}
                 >
                   Delete
                 </button>
               </div>
             </article>
           ))}
+        </div>
+      )}
+
+      {toast && (
+        <div className={`admin-toast${toast.isError ? ' admin-toast--error' : ''}`} role="status">
+          <span className="admin-toast-dot" />{toast.message}
         </div>
       )}
     </div>

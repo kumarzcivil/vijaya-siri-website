@@ -158,3 +158,40 @@ export function updateSiteStatus(status: SiteStatus): SiteControl {
   const next = { ...control, global: status };
   return saveSiteControl(next);
 }
+
+/**
+ * Load site control from the backend API and cache in localStorage.
+ * Returns the loaded control. Falls back to localStorage defaults on error.
+ */
+export async function loadSiteControlFromAPI(): Promise<SiteControl> {
+  try {
+    const { getSiteControlAPI } = await import('../api/site-control');
+    const res = await getSiteControlAPI();
+    if (res.success && res.data) {
+      const sc = res.data.siteControl;
+      const control: SiteControl = {
+        global: sc.maintenanceMode ? 'maintenance' : 'online',
+        pages: { ...siteControlDefaults.pages, ...sc.pages },
+      };
+      saveSiteControl(control);
+      return control;
+    }
+  } catch {
+    // API unavailable — fall through to localStorage
+  }
+  return getSiteControl();
+}
+
+/**
+ * Sync a full SiteControl object from API response data into localStorage.
+ */
+export function syncSiteControlFromAPI(sc: {
+  maintenanceMode: boolean;
+  pages: Record<string, boolean>;
+}): SiteControl {
+  const control: SiteControl = {
+    global: sc.maintenanceMode ? 'maintenance' : 'online',
+    pages: { ...siteControlDefaults.pages, ...sc.pages },
+  };
+  return saveSiteControl(control);
+}

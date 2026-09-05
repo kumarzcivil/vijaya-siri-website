@@ -196,4 +196,74 @@ const updateProfile = async (req, res) => {
   }
 };
 
-export { signup, login, getMe, updateProfile };
+const adminLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminPassword = process.env.ADMIN_PASSWORD;
+
+    if (!adminEmail || !adminPassword) {
+      console.error('Admin credentials not configured in .env');
+      return res.status(500).json({
+        success: false,
+        message: 'Admin login is not configured',
+      });
+    }
+
+    if (email !== adminEmail || password !== adminPassword) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid admin credentials',
+      });
+    }
+
+    let adminUser = await User.findOne({ email: adminEmail });
+
+    if (!adminUser) {
+      adminUser = await User.create({
+        fullName: 'Admin',
+        mobile: '9999999999',
+        email: adminEmail,
+        password: adminPassword,
+        role: 'admin',
+      });
+    } else if (adminUser.role !== 'admin') {
+      adminUser.role = 'admin';
+      await adminUser.save({ validateBeforeSave: false });
+    }
+
+    adminUser.lastLogin = new Date();
+    await adminUser.save({ validateBeforeSave: false });
+
+    const token = generateToken(adminUser._id);
+
+    try {
+      const redis = getRedis();
+      await redis.set(`user:${adminUser._id}:token`, token, 'EX', 7 * 24 * 60 * 60);
+    } catch (err) {
+      console.error('Redis cache error:', err.message);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Admin login successful',
+      data: {
+        user: {
+          id: adminUser._id,
+          fullName: adminUser.fullName,
+          mobile: adminUser.mobile,
+          email: adminUser.email,
+          role: adminUser.role,
+          lastLogin: adminUser.lastLogin,
+        },
+        token,
+      },
+    });
+  } catch (error) {
+    console.error('AdminLogin error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+export { signup, login, getMe, updateProfile, adminLogin };

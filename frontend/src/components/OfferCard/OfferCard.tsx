@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { Offer } from '../../data/offers';
+import type { Offer } from '../../api/offers';
 import { useIsFeatureEnabled } from '../../hooks/useSiteControl';
 import './OfferCard.css';
 
@@ -28,26 +28,24 @@ export default function OfferCard({ offer }: { offer: Offer }) {
   const [brokenImage, setBrokenImage] = useState(false);
   const quoteEnabled = useIsFeatureEnabled('quote');
 
-  const isQuoteTarget =
-    offer.destinationType === 'internal' && offer.ctaTarget?.trim() === '/quote';
+  const isQuoteTarget = offer.ctaTarget?.trim() === '/quote';
 
   const hasDestination =
-    (offer.destinationType === 'internal' || offer.destinationType === 'external') &&
     !!offer.ctaTarget?.trim() &&
     !(isQuoteTarget && !quoteEnabled);
 
   const handleCta = useCallback(() => {
     const target = offer.ctaTarget?.trim();
     if (!target) return;
-    if (offer.destinationType === 'external') {
+    if (target.startsWith('http')) {
       window.open(target, '_blank', 'noopener,noreferrer');
     } else {
       navigate(target);
     }
-  }, [offer.ctaTarget, offer.destinationType, navigate]);
+  }, [offer.ctaTarget, navigate]);
 
   const validity = validityLabel(offer);
-  const imageSrc = offer.mobileImage || offer.image;
+  const imageSrc = offer.image || '';
 
   return (
     <article className="offer-card">
@@ -63,7 +61,7 @@ export default function OfferCard({ offer }: { offer: Offer }) {
             onError={() => setBrokenImage(true)}
           />
         )}
-        {offer.eyebrow && <span className="offer-card-eyebrow">{offer.eyebrow}</span>}
+        {offer.badge && <span className="offer-card-eyebrow">{offer.badge}</span>}
       </div>
 
       <div className="offer-card-body">

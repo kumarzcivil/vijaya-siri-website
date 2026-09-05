@@ -1,7 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { getActiveMarketingServices } from '../../data';
-import type { Service } from '../../data';
+import { useEffect, useRef, useState } from 'react';
+import { fetchMarketingServices, type MarketingService } from '../../api/marketing';
 import './DiscoverServices.css';
 
 function formatServiceNumber(index: number): string {
@@ -9,10 +7,15 @@ function formatServiceNumber(index: number): string {
 }
 
 export default function DiscoverServices() {
-  const navigate = useNavigate();
   const rowRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [revealed, setRevealed] = useState<Set<number>>(new Set());
-  const activeServices: Service[] = useMemo(() => getActiveMarketingServices(), []);
+  const [activeServices, setActiveServices] = useState<MarketingService[]>([]);
+
+  useEffect(() => {
+    fetchMarketingServices()
+      .then((data) => setActiveServices(data.filter((s) => s.status === 'active').sort((a, b) => a.displayOrder - b.displayOrder)))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -44,22 +47,15 @@ export default function DiscoverServices() {
     return () => observer.disconnect();
   }, [activeServices]);
 
-  const handleServiceClick = (service: Service) => {
-    if (service.path) {
-      navigate(service.path);
-    }
-  };
-
   return (
     <div className="discover-services">
       <div className="discover-services-list">
         {activeServices.map((service, index) => (
-          <button
-            key={service.id}
+          <div
+            key={service._id}
             ref={(el) => { rowRefs.current[index] = el; }}
             data-service-index={index}
             className={`discover-service-row ${revealed.has(index) ? 'discover-service-row--revealed' : ''}`}
-            onClick={() => handleServiceClick(service)}
             style={{ '--stagger-delay': `${index * 80}ms` } as React.CSSProperties}
           >
             <span className="discover-service-number">{formatServiceNumber(index)}</span>
@@ -67,13 +63,7 @@ export default function DiscoverServices() {
               <h3 className="discover-service-title">{service.title}</h3>
               <p className="discover-service-desc">{service.description}</p>
             </div>
-            <span className="discover-service-arrow">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="5" y1="12" x2="19" y2="12" />
-                <polyline points="12 5 19 12 12 19" />
-              </svg>
-            </span>
-          </button>
+          </div>
         ))}
       </div>
     </div>

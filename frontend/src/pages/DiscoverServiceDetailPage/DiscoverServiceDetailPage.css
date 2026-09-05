@@ -1,0 +1,149 @@
+/* ============================================
+   DISCOVER SERVICE DETAIL PAGE
+   ============================================ */
+.dsd-page {
+  min-height: 60vh;
+  padding: var(--space-2xl) 0 var(--space-3xl);
+}
+
+.dsd-content {
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+/* Back button */
+.dsd-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: var(--font-small);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: var(--space-xl);
+  transition: color var(--transition-fast);
+}
+
+.dsd-back:hover {
+  color: var(--color-primary);
+}
+
+/* Hero */
+.dsd-hero {
+  text-align: center;
+  margin-bottom: var(--space-2xl);
+}
+
+.dsd-icon-wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-lg);
+}
+
+.dsd-title {
+  font-size: var(--font-h2);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--color-text-primary);
+  letter-spacing: -0.02em;
+  line-height: var(--line-height-tight);
+}
+
+/* Body */
+.dsd-body {
+  margin-bottom: var(--space-2xl);
+}
+
+.dsd-description p {
+  font-size: var(--font-body-lg);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-relaxed);
+  margin-bottom: 1rem;
+}
+
+.dsd-description p:last-child {
+  margin-bottom: 0;
+}
+
+/* CTA */
+.dsd-actions {
+  text-align: center;
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--color-border-light);
+}
+
+.dsd-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.75rem 1.75rem;
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  border: none;
+  border-radius: var(--radius-full);
+  font-size: var(--font-body);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+.dsd-cta-btn:hover {
+  background: var(--color-primary-dark);
+  transform: translateY(-1px);
+}
+
+/* Empty state */
+.dsd-empty {
+  text-align: center;
+  padding: var(--space-3xl) 0;
+  color: var(--color-text-secondary);
+}
+
+.dsd-empty p {
+  margin-bottom: var(--space-lg);
+}
+
+.dsd-back-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: var(--font-weight-semibold);
+}
+
+.dsd-back-link:hover {
+  text-decoration: underline;
+}
+
+/* ============================================
+   MOBILE
+   ============================================ */
+@media (max-width: 767px) {
+  .dsd-page {
+    padding: var(--space-lg) 0 var(--space-2xl);
+  }
+
+  .dsd-title {
+    font-size: var(--font-h3);
+  }
+
+  .dsd-description p {
+    font-size: var(--font-body);
+  }
+}
+
+/* ============================================
+   TABLET
+   ============================================ */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .dsd-content {
+    max-width: 600px;
+  }
+}

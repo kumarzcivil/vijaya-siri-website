@@ -1,26 +1,98 @@
-import { useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Icon from '../../components/Icon/Icon';
-import {
-  getQuickFixService,
-  getQuickFixCategory,
-  getQuickFixCategoryName,
-  formatINR,
-  formatQuickFixDuration,
-} from '../../data/quickfix';
+import { fetchQuickFixServices, fetchQuickFixCategories } from '../../api/quickFix';
 import './QuickFixServiceDetailPage.css';
 
+function formatINR(amount: number): string {
+  return `\u20B9${Math.round(amount).toLocaleString('en-IN')}`;
+}
+
+function formatQuickFixDuration(d: { value: number; unit: string } | undefined): string | null {
+  if (!d) return null;
+  return `~${d.value} ${d.unit}`;
+}
+
 const WHATSAPP = 'https://wa.me/919008855088';
+
+interface Service {
+  id: string;
+  categoryId: string;
+  name: string;
+  image?: string;
+  shortDescription: string;
+  description: string;
+  includedItems: string[];
+  notes: string[];
+  pricing: { enabled: boolean; price?: number; priceNote?: string };
+  duration?: { value: number; unit: string };
+  bookingConfiguration: { requiresTimeSlot: boolean; requiresPayment: boolean };
+}
+
+interface Category {
+  id: string;
+  name: string;
+  icon: string;
+  active: boolean;
+  displayOrder: number;
+}
 
 export default function QuickFixServiceDetailPage() {
   const { serviceId } = useParams<{ serviceId: string }>();
   const navigate = useNavigate();
-  const service = getQuickFixService(serviceId);
+  const [service, setService] = useState<Service | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleBookNow = useCallback(() => {
+  useEffect(() => {
+    if (!serviceId) {
+      setLoading(false);
+      return;
+    }
+    Promise.all([
+      fetchQuickFixServices(),
+      fetchQuickFixCategories({ active: true }),
+    ])
+      .then(([svcData, catData]) => {
+        const catMap = new Map(catData.map((c) => [c._id, { id: c._id, name: c.name, icon: c.icon, active: c.active, displayOrder: c.displayOrder }]));
+        setCategories(Array.from(catMap.values()));
+        const found = svcData.find((s) => s._id === serviceId && s.active);
+        if (found) {
+          setService({
+            id: found._id,
+            categoryId: found.categoryId,
+            name: found.name,
+            image: found.image?.url,
+            shortDescription: found.shortDescription,
+            description: found.description,
+            includedItems: found.includedItems ?? [],
+            notes: found.notes ?? [],
+            pricing: found.pricing ?? { enabled: false },
+            duration: found.duration,
+            bookingConfiguration: found.bookingConfiguration,
+          });
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [serviceId]);
+
+  const handleBookNow = () => {
     if (!service) return;
     navigate(`/quick-fix/${service.id}/book`);
-  }, [navigate, service]);
+  };
+
+  if (loading) {
+    return (
+      <div className="qfd-page">
+        <div className="section-container">
+          <div className="qfd-not-found">
+            <p>Loading...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!service) {
     return (
@@ -42,8 +114,8 @@ export default function QuickFixServiceDetailPage() {
     );
   }
 
-  const category = getQuickFixCategory(service.categoryId);
-  const categoryName = getQuickFixCategoryName(service.categoryId);
+  const category = categories.find((c) => c.id === service.categoryId);
+  const categoryName = category?.name ?? service.categoryId;
   const includedItems = service.includedItems ?? [];
   const notes = service.notes ?? [];
   const price = service.pricing.enabled ? formatINR(service.pricing.price ?? 0) : null;

@@ -19,12 +19,10 @@
   border: none;
   background: transparent;
   text-align: left;
-  cursor: pointer;
   position: relative;
   width: 100%;
   transition: background var(--transition-normal);
   border-bottom: 1px solid var(--color-border-light);
-  -webkit-tap-highlight-color: transparent;
 }
 
 .discover-service-row:last-child {
@@ -46,11 +44,6 @@
   transform: translateY(12px);
 }
 
-.discover-service-row .discover-service-arrow {
-  opacity: 0;
-  transform: translateX(-8px);
-}
-
 /* Revealed state */
 .discover-service-row--revealed .discover-service-number {
   opacity: 1;
@@ -64,13 +57,6 @@
   transform: translateY(0);
   transition: opacity 0.45s ease calc(var(--stagger-delay, 0ms) + 80ms),
               transform 0.45s ease calc(var(--stagger-delay, 0ms) + 80ms);
-}
-
-.discover-service-row--revealed .discover-service-arrow {
-  opacity: 1;
-  transform: translateX(0);
-  transition: opacity 0.45s ease calc(var(--stagger-delay, 0ms) + 160ms),
-              transform 0.45s ease calc(var(--stagger-delay, 0ms) + 160ms);
 }
 
 /* Number */
@@ -101,37 +87,12 @@
   letter-spacing: -0.01em;
   line-height: var(--line-height-snug);
   margin-bottom: 0.15rem;
-  transition: color var(--transition-fast);
-}
-
-.discover-service-row:hover .discover-service-title {
-  color: var(--color-primary);
 }
 
 .discover-service-desc {
   font-size: var(--font-small);
   color: var(--color-text-tertiary);
   line-height: var(--line-height-normal);
-  transition: color var(--transition-fast);
-}
-
-.discover-service-row:hover .discover-service-desc {
-  color: var(--color-text-secondary);
-}
-
-/* Arrow */
-.discover-service-arrow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-text-tertiary);
-  flex-shrink: 0;
-  transition: color var(--transition-fast), transform var(--transition-fast);
-}
-
-.discover-service-row:hover .discover-service-arrow {
-  color: var(--color-primary);
-  transform: translateX(4px);
 }
 
 /* ========================
@@ -199,11 +160,6 @@
   .discover-service-desc {
     font-size: var(--font-caption);
   }
-
-  .discover-service-arrow svg {
-    width: 16px;
-    height: 16px;
-  }
 }
 
 /* ========================
@@ -211,15 +167,12 @@
    ======================== */
 @media (prefers-reduced-motion: reduce) {
   .discover-service-row .discover-service-number,
-  .discover-service-row .discover-service-content,
-  .discover-service-row .discover-service-arrow,
-  .discover-service-arrow {
+  .discover-service-row .discover-service-content {
     transition: none;
   }
 
   .discover-service-row .discover-service-number,
-  .discover-service-row .discover-service-content,
-  .discover-service-row .discover-service-arrow {
+  .discover-service-row .discover-service-content {
     opacity: 1;
     transform: none;
   }

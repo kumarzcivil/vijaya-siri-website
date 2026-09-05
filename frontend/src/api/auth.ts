@@ -101,3 +101,10 @@ export async function updateProfileAPI(payload: ProfileUpdateData): Promise<ApiR
     body: JSON.stringify(payload),
   });
 }
+
+export async function adminLoginAPI(payload: LoginData): Promise<ApiResponse<AuthResponse>> {
+  return apiRequest<AuthResponse>('/auth/admin/login', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}

@@ -2,7 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 import Icon from '../../components/Icon/Icon';
 import HeroSlider from '../../components/HeroSlider/HeroSlider';
-import { getActiveProFixServices, getActiveProFixCategories } from '../../data/profix';
+import { fetchProFixServices, fetchProFixCategories, type ProFixService as ApiService, type ProFixCategory as ApiCategory } from '../../api/proFix';
 import { useProFixSearch } from '../../hooks/useProFixSearch';
 import './ProFixPage.css';
 
@@ -34,15 +34,63 @@ const PROCESS_STEPS = [
   { step: '03', title: 'Get Your Estimate', description: 'Review the estimate and get the work started.' },
 ];
 
+interface PageCategory {
+  id: string;
+  name: string;
+  icon: string;
+}
+
+interface PageService {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  imageUrl?: string;
+  unit: string;
+  startingPrice: string;
+}
+
+function adaptCategory(c: ApiCategory): PageCategory {
+  return { id: c._id, name: c.name, icon: c.icon };
+}
+
+function adaptService(s: ApiService): PageService {
+  return {
+    id: s._id,
+    name: s.name,
+    category: s.category,
+    description: s.description,
+    imageUrl: s.image?.url,
+    unit: s.unit,
+    startingPrice: s.startingPrice,
+  };
+}
+
 export default function ProFixPage() {
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useProFixSearch();
+  const [services, setServices] = useState<PageService[]>([]);
+  const [categories, setCategories] = useState<PageCategory[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const trustRef = useRef<HTMLDivElement>(null);
   const howRef = useRef<HTMLDivElement>(null);
   const [trustVisible, setTrustVisible] = useState(false);
   const [howVisible, setHowVisible] = useState(false);
+
+  useEffect(() => {
+    Promise.all([
+      fetchProFixServices({ active: true }),
+      fetchProFixCategories({ active: true }),
+    ])
+      .then(([svcData, catData]) => {
+        setServices(svcData.map(adaptService));
+        setCategories(catData.map(adaptCategory));
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
   useEffect(() => {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -71,9 +119,6 @@ export default function ProFixPage() {
 
     return () => observer.disconnect();
   }, []);
-
-  const services = getActiveProFixServices();
-  const categories = getActiveProFixCategories();
 
   const filteredServices = services.filter((s) => {
     const matchesCategory = !activeCategory || s.category === activeCategory;

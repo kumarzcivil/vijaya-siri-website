@@ -3,14 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import Icon from '../../components/Icon/Icon';
 import QuickFixBannerCarousel from '../../components/QuickFixBannerCarousel/QuickFixBannerCarousel';
 import {
-  getQuickFixCategories,
-  getQuickFixActiveServices,
-  getQuickFixCategoryName,
-  formatINR,
-  formatQuickFixDuration,
-} from '../../data/quickfix';
+  fetchQuickFixCategories,
+  fetchQuickFixServices,
+} from '../../api/quickFix';
 import { useQuickFixSearch } from '../../hooks/useQuickFixSearch';
 import './QuickFixPage.css';
+
+function formatINR(amount: number): string {
+  return `\u20B9${Math.round(amount).toLocaleString('en-IN')}`;
+}
+
+function formatQuickFixDuration(d: { value: number; unit: string } | undefined): string | null {
+  if (!d) return null;
+  return `~${d.value} ${d.unit}`;
+}
 
 const PHONE_TEL = 'tel:+919008855088';
 const WHATSAPP = 'https://wa.me/919008855088';
@@ -33,6 +39,38 @@ export default function QuickFixPage() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useQuickFixSearch();
   const [brokenImageIds, setBrokenImageIds] = useState<ReadonlySet<string>>(new Set());
+
+  const [categories, setCategories] = useState<Array<{ id: string; name: string; icon: string; active: boolean; displayOrder: number }>>([]);
+  const [services, setServices] = useState<Array<{ id: string; categoryId: string; name: string; image?: string; shortDescription: string; pricing: { enabled: boolean; price?: number; priceNote?: string }; duration?: { value: number; unit: string }; featured: boolean }>>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      fetchQuickFixCategories({ active: true }),
+      fetchQuickFixServices({ active: true }),
+    ])
+      .then(([catData, svcData]) => {
+        setCategories(
+          catData.map((c) => ({ id: c._id, name: c.name, icon: c.icon, active: c.active, displayOrder: c.displayOrder }))
+        );
+        setServices(
+          svcData
+            .sort((a, b) => a.displayOrder - b.displayOrder)
+            .map((s) => ({
+              id: s._id,
+              categoryId: s.categoryId,
+              name: s.name,
+              image: s.image?.url,
+              shortDescription: s.shortDescription,
+              pricing: s.pricing,
+              duration: s.duration,
+              featured: s.featured,
+            }))
+        );
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
   const trustRef = useRef<HTMLDivElement>(null);
   const howRef = useRef<HTMLDivElement>(null);
@@ -67,16 +105,15 @@ export default function QuickFixPage() {
     return () => observer.disconnect();
   }, []);
 
-  const services = getQuickFixActiveServices();
-
   const filteredServices = services.filter((s) => {
     const matchesCategory = !activeCategory || s.categoryId === activeCategory;
     const q = searchQuery.trim().toLowerCase();
+    const categoryName = categories.find((c) => c.id === s.categoryId)?.name ?? '';
     const matchesSearch =
       !q ||
       s.name.toLowerCase().includes(q) ||
       s.shortDescription.toLowerCase().includes(q) ||
-      getQuickFixCategoryName(s.categoryId).toLowerCase().includes(q);
+      categoryName.toLowerCase().includes(q);
     return matchesCategory && matchesSearch;
   });
 
@@ -166,7 +203,7 @@ export default function QuickFixPage() {
               </span>
               <span className="qf-cat-tile-name">All</span>
             </button>
-            {getQuickFixCategories()
+            {categories
               .filter((c) => c.active)
               .sort((a, b) => a.displayOrder - b.displayOrder)
               .map((cat) => {
@@ -203,7 +240,7 @@ export default function QuickFixPage() {
           </div>
           <div className="qf-services-grid">
             {filteredServices.map((svc) => {
-              const category = getQuickFixCategories().find((c) => c.id === svc.categoryId);
+              const category = categories.find((c) => c.id === svc.categoryId);
               const price = svc.pricing.enabled ? formatINR(svc.pricing.price ?? 0) : null;
               const duration = formatQuickFixDuration(svc.duration);
               return (

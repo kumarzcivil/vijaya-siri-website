@@ -10,7 +10,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const location = useLocation();
 
   if (!isAuthenticated) {
-    const returnTo = encodeURIComponent(location.pathname + location.search);
+    const returnTo = location.pathname + location.search;
     return <Navigate to={`/login?return=${returnTo}`} replace />;
   }
 

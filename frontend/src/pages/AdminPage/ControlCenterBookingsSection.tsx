@@ -1,16 +1,43 @@
-import { useBookingsRegistry } from '../../hooks/useBookingsRegistry';
-import { updateBookingStatus, type BookingRegistryStatus } from '../../data/bookingsRegistry';
-import { formatINR as formatINRProFix } from '../../data/profix';
-import { formatINR as formatINRQuickFix } from '../../data/quickfix';
-
-const STATUS_OPTIONS: BookingRegistryStatus[] = ['upcoming', 'completed', 'cancelled'];
-
-function formatINR(amount: number, kind: 'quick-fix' | 'pro-fix'): string {
-  return kind === 'quick-fix' ? formatINRQuickFix(amount) : formatINRProFix(amount);
-}
+import { useEffect, useState } from 'react';
+import { fetchAdminBookings, fetchBookingStats, updateBookingStatus, type Booking, type BookingStats } from '../../api/bookings';
 
 export default function ControlCenterBookingsSection() {
-  const bookings = useBookingsRegistry();
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [stats, setStats] = useState<BookingStats>({ total: 0, upcoming: 0, completed: 0, cancelled: 0 });
+  const [loading, setLoading] = useState(true);
+
+  const load = () => {
+    Promise.all([fetchAdminBookings(), fetchBookingStats()])
+      .then(([b, s]) => { setBookings(b); setStats(s); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const handleStatus = async (id: string, status: string) => {
+    try {
+      const updated = await updateBookingStatus(id, status);
+      setBookings((prev) => prev.map((b) => (b._id === updated._id ? updated : b)));
+      setStats((prev) => {
+        const counts = { ...prev };
+        counts[status as keyof BookingStats] = (counts[status as keyof BookingStats] as number) + 1;
+        return counts;
+      });
+    } catch {}
+  };
+
+  if (loading) {
+    return (
+      <div className="cc-page">
+        <header className="admin-dash-header">
+          <span className="admin-dash-eyebrow">Control Center</span>
+          <h1 className="admin-dash-title">Bookings</h1>
+        </header>
+        <div className="cc-loading">Loading bookings...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="cc-page">
@@ -30,101 +57,97 @@ export default function ControlCenterBookingsSection() {
           </p>
         </div>
       ) : (
-        <div className="cc-summary-strip">
-          <div className="cc-summary-stat">
-            <span className="cc-summary-stat-value">{bookings.length}</span>
-            <span className="cc-summary-stat-label">Total</span>
+        <>
+          <div className="cc-summary-strip">
+            <div className="cc-summary-stat">
+              <span className="cc-summary-stat-value">{stats.total}</span>
+              <span className="cc-summary-stat-label">Total</span>
+            </div>
+            <div className="cc-summary-stat">
+              <span className="cc-summary-stat-value">{stats.upcoming}</span>
+              <span className="cc-summary-stat-label">Upcoming</span>
+            </div>
+            <div className="cc-summary-stat">
+              <span className="cc-summary-stat-value">{stats.completed}</span>
+              <span className="cc-summary-stat-label">Completed</span>
+            </div>
+            <div className="cc-summary-stat">
+              <span className="cc-summary-stat-value">{stats.cancelled}</span>
+              <span className="cc-summary-stat-label">Cancelled</span>
+            </div>
           </div>
-          <div className="cc-summary-stat">
-            <span className="cc-summary-stat-value">
-              {bookings.filter((b) => b.status === 'upcoming').length}
-            </span>
-            <span className="cc-summary-stat-label">Upcoming</span>
-          </div>
-          <div className="cc-summary-stat">
-            <span className="cc-summary-stat-value">
-              {bookings.filter((b) => b.status === 'completed').length}
-            </span>
-            <span className="cc-summary-stat-label">Completed</span>
-          </div>
-          <div className="cc-summary-stat">
-            <span className="cc-summary-stat-value">
-              {bookings.filter((b) => b.status === 'cancelled').length}
-            </span>
-            <span className="cc-summary-stat-label">Cancelled</span>
-          </div>
-        </div>
-      )}
 
-      {bookings.length > 0 && (
-        <div className="cc-list cc-list--bookings">
-          {bookings.map((booking) => (
-            <article key={booking.id} className="cc-card cc-card--booking">
-              <div className="cc-card-body">
-                <div className="cc-card-topline">
-                  <span className={`cc-kind cc-kind--${booking.kind}`}>
-                    {booking.kind === 'quick-fix' ? 'Quick Fix' : 'Pro Fix'}
-                  </span>
-                  {booking.bookingId && <span className="cc-ref">{booking.bookingId}</span>}
-                </div>
-                <h3 className="cc-card-title">{booking.serviceName}</h3>
-                <p className="cc-card-meta">{booking.categoryName}</p>
-                <dl className="cc-rows">
-                  <div className="cc-row">
-                    <dt>Customer</dt>
-                    <dd>{booking.customerName} · {booking.customerMobile}</dd>
+          <div className="cc-list cc-list--bookings">
+            {bookings.map((booking) => (
+              <article key={booking._id} className="cc-card cc-card--booking">
+                <div className="cc-card-body">
+                  <div className="cc-card-topline">
+                    <span className={`cc-kind cc-kind--${booking.kind}`}>
+                      {booking.kind === 'quick-fix' ? 'Quick Fix' : 'Pro Fix'}
+                    </span>
+                    {booking.customerName && <span className="cc-ref">{booking.customerName}</span>}
                   </div>
-                  {booking.location && (
+                  <h3 className="cc-card-title">{booking.serviceName}</h3>
+                  <p className="cc-card-meta">{booking.categoryName}</p>
+                  <dl className="cc-rows">
                     <div className="cc-row">
-                      <dt>Location</dt>
-                      <dd>{booking.location}</dd>
+                      <dt>Customer</dt>
+                      <dd>{booking.customerName} · {booking.customerMobile}</dd>
                     </div>
-                  )}
-                  {booking.slotDate && (
-                    <div className="cc-row">
-                      <dt>Scheduled</dt>
-                      <dd>
-                        {formatDate(booking.slotDate)}
-                        {booking.slotTime ? ` · ${booking.slotTime}` : ''}
-                      </dd>
-                    </div>
-                  )}
-                  <div className="cc-row">
-                    <dt>Amount</dt>
-                    <dd>{formatINR(booking.amount, booking.kind)}</dd>
-                  </div>
-                  {booking.paymentRef && (
-                    <div className="cc-row">
-                      <dt>Payment</dt>
-                      <dd>{booking.paymentStatus} · {booking.paymentRef}</dd>
-                    </div>
-                  )}
-                  {booking.couponCode && (
-                    <div className="cc-row">
-                      <dt>Coupon</dt>
-                      <dd>{booking.couponCode} (−{formatINR(booking.couponDiscount ?? 0, booking.kind)})</dd>
-                    </div>
-                  )}
-                </dl>
-              </div>
-              <div className="cc-card-actions cc-card-actions--status">
-                <span className="cc-status-label">Status</span>
-                <div className="cc-status-btns">
-                  {STATUS_OPTIONS.map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      className={`cc-status-btn${booking.status === s ? ` cc-status-btn--active cc-status-btn--${s}` : ''}`}
-                      onClick={() => updateBookingStatus(booking.id, s)}
-                    >
-                      {s}
-                    </button>
-                  ))}
+                    {(booking.siteAddress || booking.siteLocation) && (
+                      <div className="cc-row">
+                        <dt>Location</dt>
+                        <dd>{[booking.siteAddress, booking.siteLocation].filter(Boolean).join(', ')}</dd>
+                      </div>
+                    )}
+                    {booking.slotDate && (
+                      <div className="cc-row">
+                        <dt>Scheduled</dt>
+                        <dd>
+                          {formatDate(booking.slotDate)}
+                          {booking.slotTime ? ` · ${booking.slotTime}` : ''}
+                        </dd>
+                      </div>
+                    )}
+                    {booking.amount > 0 && (
+                      <div className="cc-row">
+                        <dt>Amount</dt>
+                        <dd>{formatINR(booking.amount)}</dd>
+                      </div>
+                    )}
+                    {booking.paymentRef && (
+                      <div className="cc-row">
+                        <dt>Payment</dt>
+                        <dd>{booking.paymentStatus} · {booking.paymentRef}</dd>
+                      </div>
+                    )}
+                    {booking.couponCode && (
+                      <div className="cc-row">
+                        <dt>Coupon</dt>
+                        <dd>{booking.couponCode} (−{formatINR(booking.couponDiscount)})</dd>
+                      </div>
+                    )}
+                  </dl>
                 </div>
-              </div>
-            </article>
-          ))}
-        </div>
+                <div className="cc-card-actions cc-card-actions--status">
+                  <span className="cc-status-label">Status</span>
+                  <div className="cc-status-btns">
+                    {(['upcoming', 'completed', 'cancelled'] as const).map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        className={`cc-status-btn${booking.status === s ? ` cc-status-btn--active cc-status-btn--${s}` : ''}`}
+                        onClick={() => handleStatus(booking._id, s)}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
@@ -134,4 +157,8 @@ function formatDate(date: string): string {
   const parsed = new Date(`${date}T00:00:00`);
   if (Number.isNaN(parsed.getTime())) return date;
   return parsed.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+function formatINR(amount: number): string {
+  return `\u20B9${Math.round(amount).toLocaleString('en-IN')}`;
 }

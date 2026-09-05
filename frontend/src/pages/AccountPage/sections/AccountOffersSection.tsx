@@ -1,18 +1,51 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import AccountSectionHeader from '../AccountSectionHeader';
-import { getActiveOffers } from '../../../data/offers';
+import { fetchOffers, type Offer as ApiOffer } from '../../../api/offers';
 import { COUPONS } from '../../../data/coupons';
+
+type UIOffer = {
+  id: string;
+  title: string;
+  description: string;
+  eyebrow: string;
+  ctaLabel: string;
+  ctaTarget: string;
+};
+
+function adaptOffer(api: ApiOffer): UIOffer {
+  return {
+    id: api._id,
+    title: api.title,
+    description: api.description,
+    eyebrow: api.badge || '',
+    ctaLabel: api.ctaLabel,
+    ctaTarget: api.ctaTarget,
+  };
+}
 
 function formatCouponDiscount(coupon: { discountType: string; discountValue: number; maximumDiscount?: number }): string {
   if (coupon.discountType === 'PERCENTAGE') {
     const base = `${coupon.discountValue}% off`;
-    return coupon.maximumDiscount ? `${base} (up to \u20B9${coupon.maximumDiscount})` : base;
+    return coupon.maximumDiscount ? `${base} (up to ₹${coupon.maximumDiscount})` : base;
   }
-  return `\u20B9${coupon.discountValue} off`;
+  return `₹${coupon.discountValue} off`;
 }
 
 export default function AccountOffersSection() {
-  const offers = getActiveOffers();
+  const [offers, setOffers] = useState<UIOffer[]>([]);
+
+  useEffect(() => {
+    fetchOffers()
+      .then((data) => {
+        setOffers(
+          data
+            .filter((o) => o.status === 'active')
+            .map(adaptOffer)
+        );
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <div>
@@ -30,7 +63,7 @@ export default function AccountOffersSection() {
               <div className="acc-coupon-body">
                 <h3 className="acc-coupon-title">{formatCouponDiscount(coupon)}</h3>
                 <p className="acc-coupon-desc">{coupon.label}</p>
-                <p className="acc-coupon-min">Minimum booking \u20B9{coupon.minimumBookingAmount}</p>
+                <p className="acc-coupon-min">Minimum booking ₹{coupon.minimumBookingAmount}</p>
               </div>
               <span className="acc-coupon-service">
                 {coupon.applicableService === 'BOTH' ? 'All services' : coupon.applicableService.replace(/_/g, ' ')}

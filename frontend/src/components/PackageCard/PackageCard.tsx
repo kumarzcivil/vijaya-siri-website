@@ -51,7 +51,7 @@ export default function PackageCard({ pkg, selected, onSelect }: PackageCardProp
         </div>
         <span className="package-features-label">Highlights</span>
         <ul className="package-features">
-          {pkg.features.map((feature, i) => (
+          {(pkg.features || []).map((feature, i) => (
             <li key={i} className="package-feature">
               <svg className="package-feature-check" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12" />

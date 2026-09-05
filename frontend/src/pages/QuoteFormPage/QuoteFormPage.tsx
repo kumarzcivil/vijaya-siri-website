@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLocation } from '../../context/LocationContext';
 import { projectTypes, type ProjectType } from '../../data/quoteFormConfig';
+import { submitQuoteAPI } from '../../api/quotes';
 import './QuoteFormPage.css';
 
 const STEPS = [
@@ -54,12 +55,6 @@ function validateEmail(v: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 }
 
-function generateRefId(): string {
-  const ts = Date.now().toString(36).toUpperCase();
-  const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
-  return `VS-${ts}-${rand}`;
-}
-
 export default function QuoteFormPage() {
   const navigate = useNavigate();
   const { selected, options: locationOptions } = useLocation();
@@ -71,7 +66,8 @@ export default function QuoteFormPage() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [refId] = useState(generateRefId);
+  const [refId, setRefId] = useState('');
+  const [submitError, setSubmitError] = useState('');
 
   const handleChange = useCallback(
     (field: keyof QuoteFormData, value: string) => {
@@ -131,7 +127,7 @@ export default function QuoteFormPage() {
   );
 
   const handleSubmit = useCallback(
-    (e: FormEvent) => {
+    async (e: FormEvent) => {
       e.preventDefault();
       if (submitted || isSubmitting) return;
 
@@ -145,14 +141,41 @@ export default function QuoteFormPage() {
         return;
       }
 
-      console.debug('[Quote] prepared', { refId });
-
       setIsSubmitting(true);
-      setSubmitted(true);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      setIsSubmitting(false);
+      setSubmitError('');
+
+      try {
+        const result = await submitQuoteAPI({
+          fullName: data.fullName.trim(),
+          mobile: data.mobile.trim(),
+          whatsapp: data.whatsapp.trim() || undefined,
+          email: data.email.trim(),
+          projectLocation: data.location,
+          projectType: data.projectType,
+          area: data.area ? Number(data.area) : undefined,
+          budget: data.budget || undefined,
+          message: data.requirements.trim() || undefined,
+        });
+
+        if (result.success && result.data) {
+          setRefId(result.data.refId);
+          setSubmitted(true);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          setSubmitError(result.message || 'Something went wrong. Please try again.');
+        }
+      } catch (err: unknown) {
+        const apiErr = err as { message?: string; errors?: Array<{ message: string }> };
+        if (apiErr.errors && apiErr.errors.length > 0) {
+          setSubmitError(apiErr.errors.map((e) => e.message).join('. '));
+        } else {
+          setSubmitError(apiErr.message || 'Failed to submit. Please try again.');
+        }
+      } finally {
+        setIsSubmitting(false);
+      }
     },
-    [submitted, isSubmitting, computeErrors, refId]
+    [submitted, isSubmitting, computeErrors, data]
   );
 
   const selectedLocationLabel = useMemo(
@@ -494,6 +517,18 @@ export default function QuoteFormPage() {
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Error */}
+          {submitError && (
+            <div className="quote-submit-error">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="15" y1="9" x2="9" y2="15" />
+                <line x1="9" y1="9" x2="15" y2="15" />
+              </svg>
+              {submitError}
             </div>
           )}
 

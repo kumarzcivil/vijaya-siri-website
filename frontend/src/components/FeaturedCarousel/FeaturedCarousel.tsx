@@ -1,7 +1,24 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import type { FeaturedProject } from '../../data';
 import ProjectCard from '../ProjectCard/ProjectCard';
 import './FeaturedCarousel.css';
+
+interface FeaturedProject {
+  id: string;
+  name: string;
+  location: string;
+  city: string;
+  type: string;
+  size: string;
+  bedrooms: string;
+  status: 'completed' | 'in-progress' | 'upcoming';
+  statusLabel: string;
+  rating: number;
+  imageUrl: string;
+  features: string[];
+  tags: string[];
+  featured: boolean;
+  displayOrder: number;
+}
 
 interface FeaturedCarouselProps {
   projects: FeaturedProject[];
@@ -101,7 +118,7 @@ export default function FeaturedCarousel({ projects }: FeaturedCarouselProps) {
     }, 3000);
   };
 
-  const displayProjects = isMobile ? projects : [...projects, ...projects, ...projects];
+  const displayProjects = isMobile || projects.length <= 1 ? projects : [...projects, ...projects, ...projects];
 
   return (
     <div

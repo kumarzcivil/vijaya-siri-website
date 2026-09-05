@@ -1,16 +1,13 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import Icon from '../../components/Icon/Icon';
 import {
-  getProFixService,
-  getProFixCategoryName,
-  getProFixSiteVisitCharge,
-  getProFixSiteVisitWaiver,
-  formatINR,
-  calculateProFixWorkCost,
-  type ProFixBillingDetails,
-  type ProFixSiteVisitOrder,
-} from '../../data/profix';
+  fetchProFixServices,
+  fetchProFixCategories,
+  type ProFixService as ApiService,
+  type ProFixPricing as ApiPricing,
+  type ProFixCategory as ApiCategory,
+} from '../../api/proFix';
 import { getQuickFixSlotDays, type QuickFixSlotDay } from '../../data/quickfixBooking';
 import { BOOKING_TIME_SLOTS } from '../../data/bookingSchedule';
 import { DEFAULT_SLOT_DURATION_MIN } from '../../data/bookingSchedule';
@@ -28,6 +25,54 @@ import { setPaymentDraft } from '../../store/payment';
 import { findBookingConflict } from '../../store/bookingConflict';
 import './ProFixBookVisitPage.css';
 
+const PROFIX_DEFAULT_SITE_VISIT_CHARGE = 300;
+
+function formatINR(amount: number): string {
+  return `\u20B9${Math.round(amount).toLocaleString('en-IN')}`;
+}
+
+function calculateProFixWorkCost(
+  pricing: ApiPricing,
+  quantity: number
+): number | null {
+  if (!pricing.enabled || pricing.mode === 'custom') return null;
+  if (pricing.mode === 'fixed') return pricing.rate ?? 0;
+  return Math.round(quantity * (pricing.rate ?? 0));
+}
+
+function getProFixSiteVisitCharge(siteVisitCharge?: number): number {
+  return siteVisitCharge ?? PROFIX_DEFAULT_SITE_VISIT_CHARGE;
+}
+
+interface ProFixSiteVisitWaiverLocal {
+  enabled: boolean;
+  label: string;
+  amount: number;
+  trigger: string;
+}
+
+function getProFixSiteVisitWaiver(
+  siteVisitWaiver?: ProFixSiteVisitWaiverLocal,
+  siteVisitCharge?: number
+): ProFixSiteVisitWaiverLocal {
+  return (
+    siteVisitWaiver ?? {
+      enabled: true,
+      label: 'Work Completion Waiver',
+      amount: siteVisitCharge ?? PROFIX_DEFAULT_SITE_VISIT_CHARGE,
+      trigger: 'work_completion',
+    }
+  );
+}
+
+interface ProFixBillingDetails {
+  name: string;
+  mobile: string;
+  siteAddress: string;
+  siteLocation: string;
+  email: string;
+}
+
 type FieldErrors = Partial<Record<keyof ProFixBillingDetails, string>>;
 
 function validateBillingDetails(details: ProFixBillingDetails): FieldErrors {
@@ -42,12 +87,95 @@ function validateBillingDetails(details: ProFixBillingDetails): FieldErrors {
   return errors;
 }
 
+interface PageService {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  imageUrl?: string;
+  unit: string;
+  startingPrice: string;
+  included: string[];
+  notes: string[];
+  pricing?: ApiPricing;
+  siteVisitCharge?: number;
+  siteVisitWaiver?: ProFixSiteVisitWaiverLocal;
+}
+
+function adaptService(s: ApiService): PageService {
+  return {
+    id: s._id,
+    name: s.name,
+    category: s.category,
+    description: s.description,
+    imageUrl: s.image?.url,
+    unit: s.unit,
+    startingPrice: s.startingPrice,
+    included: s.included ?? [],
+    notes: s.notes ?? [],
+    pricing: s.pricing,
+    siteVisitCharge: s.siteVisitCharge,
+    siteVisitWaiver: s.siteVisitWaiver,
+  };
+}
+
+function adaptCategory(c: ApiCategory): { id: string; name: string } {
+  return { id: c._id, name: c.name };
+}
+
+interface ProFixSiteVisitOrder {
+  serviceId: string;
+  serviceName: string;
+  categoryName: string;
+  quantity: number;
+  unit: string;
+  rate: number;
+  estimatedWorkCost: number;
+  siteVisitCharge: number;
+  siteVisitWaiverAmount: number;
+  effectiveSiteVisitCost: number;
+  payableNow: number;
+  billingDetails: ProFixBillingDetails;
+  estimateStatus: string;
+  paymentStatus: string;
+  paymentRef: string;
+  paymentMethod?: string;
+  slotDate?: string;
+  slotTime?: string;
+  paymentId?: string;
+  bookingId?: string;
+  customerId?: string;
+  couponCode?: string;
+  couponDiscount?: number;
+  createdAt: string;
+}
+
 export default function ProFixBookVisitPage() {
   const { serviceId } = useParams<{ serviceId: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { selected } = useLocation();
-  const service = getProFixService(serviceId);
+  const [service, setService] = useState<PageService | null>(null);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!serviceId) {
+      setLoading(false);
+      return;
+    }
+    Promise.all([
+      fetchProFixServices({ active: true }),
+      fetchProFixCategories({ active: true }),
+    ])
+      .then(([svcData, catData]) => {
+        const found = svcData.find((s) => s._id === serviceId);
+        if (found) setService(adaptService(found));
+        setCategories(catData.map(adaptCategory));
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [serviceId]);
 
   const pricing = service?.pricing;
   const pricingEnabled = !!pricing && pricing.enabled && pricing.mode !== 'custom';
@@ -64,8 +192,8 @@ export default function ProFixBookVisitPage() {
     [pricing, pricingEnabled, quantity]
   );
 
-  const siteVisitCharge = service ? getProFixSiteVisitCharge(service) : 0;
-  const waiver = service ? getProFixSiteVisitWaiver(service) : null;
+  const siteVisitCharge = service ? getProFixSiteVisitCharge(service.siteVisitCharge) : 0;
+  const waiver = service ? getProFixSiteVisitWaiver(service.siteVisitWaiver, service.siteVisitCharge) : null;
 
   const [details, setDetails] = useState<ProFixBillingDetails>({
     name: '',
@@ -122,10 +250,12 @@ export default function ProFixBookVisitPage() {
     const bookingId = generateBookingId('PRO_FIX');
     const effectiveWaiver = waiver?.enabled ? Math.min(waiver.amount, siteVisitCharge) : 0;
 
+    const categoryName = categories.find((c) => c.id === service.category)?.name ?? service.category;
+
     const pendingOrder: ProFixSiteVisitOrder = {
       serviceId: service.id,
       serviceName: service.name,
-      categoryName: getProFixCategoryName(service.category),
+      categoryName,
       quantity,
       unit: pricing.unit ?? service.unit,
       rate: pricing.rate ?? 0,
@@ -203,9 +333,10 @@ export default function ProFixBookVisitPage() {
     slotTime,
     selected,
     navigate,
+    categories,
   ]);
 
-  if (!service || !pricingEnabled || workCost === null || !pricing) {
+  if (!loading && (!service || !pricingEnabled || workCost === null || !pricing)) {
     return (
       <div className="pfbook-page">
         <div className="section-container">
@@ -231,7 +362,11 @@ export default function ProFixBookVisitPage() {
     );
   }
 
-  const categoryName = getProFixCategoryName(service.category);
+  if (loading || !service || !pricingEnabled || workCost === null || !pricing) {
+    return null;
+  }
+
+  const categoryName = categories.find((c) => c.id === service.category)?.name ?? service.category;
   const unit = pricing.unit ?? service.unit;
 
   const field = (

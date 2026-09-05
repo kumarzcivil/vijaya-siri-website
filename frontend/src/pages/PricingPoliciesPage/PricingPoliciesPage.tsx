@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
-import { getPackages, packageSpecMatrix } from '../../data/packages';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { fetchPackages, type Package } from '../../api/packages';
 import './PricingPoliciesPage.css';
 
 const scopeChangeSteps = ['Requested', 'Costed', 'Confirmed', 'Executed'];
@@ -44,6 +44,7 @@ const quotationItems = [
 ];
 
 export default function PricingPoliciesPage() {
+  const [activePackages, setActivePackages] = useState<Package[]>([]);
   const s1 = useRef<HTMLElement>(null);
   const s2 = useRef<HTMLElement>(null);
   const s3 = useRef<HTMLElement>(null);
@@ -56,6 +57,12 @@ export default function PricingPoliciesPage() {
   const s10 = useRef<HTMLElement>(null);
   const s11 = useRef<HTMLElement>(null);
   const s12 = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    fetchPackages()
+      .then((data) => setActivePackages(data.filter((p) => p.status === 'active')))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -80,8 +87,20 @@ export default function PricingPoliciesPage() {
     return () => observer.disconnect();
   }, []);
 
-  const activePackages = getPackages().filter((p) => p.active && !p.custom);
-  const includedCategories = packageSpecMatrix.categories;
+  const includedCategories = useMemo(() => {
+    const seen = new Map<string, { id: string; title: string }>();
+    for (const pkg of activePackages) {
+      for (const spec of pkg.specs) {
+        if (!seen.has(spec.category)) {
+          seen.set(spec.category, {
+            id: spec.category.toLowerCase().replace(/\s+/g, '_'),
+            title: spec.category,
+          });
+        }
+      }
+    }
+    return Array.from(seen.values());
+  }, [activePackages]);
 
   return (
     <div className="pricing-policies-page">
@@ -332,12 +351,12 @@ export default function PricingPoliciesPage() {
             <span className="pricing-eyebrow">Current Indicative Rates</span>
             <div className="pricing-rates-grid">
               {activePackages.map((pkg) => (
-                <div key={pkg.id} className="pricing-rate-card">
+                <div key={pkg._id} className="pricing-rate-card">
                   <span className="pricing-rate-name">{pkg.name}</span>
-                  {pkg.price && (
+                  {pkg.pricePerSqFt > 0 && (
                     <span className="pricing-rate-value">
-                      {pkg.pricePrefix}{pkg.price.toLocaleString('en-IN')}
-                      <span className="pricing-rate-unit"> {pkg.priceUnit}</span>
+                      {'\u20B9'}{pkg.pricePerSqFt.toLocaleString('en-IN')}
+                      <span className="pricing-rate-unit"> per sq.ft</span>
                     </span>
                   )}
                 </div>

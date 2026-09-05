@@ -1,11 +1,7 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Icon from '../../components/Icon/Icon';
-import {
-  getQuickFixService,
-  getQuickFixCategoryName,
-  formatINR,
-} from '../../data/quickfix';
+import { fetchQuickFixServices, fetchQuickFixCategories } from '../../api/quickFix';
 import {
   getQuickFixSlotDays,
   QUICK_FIX_TIME_SLOTS,
@@ -27,6 +23,10 @@ import { setPaymentDraft } from '../../store/payment';
 import { findBookingConflict } from '../../store/bookingConflict';
 import './QuickFixBookPage.css';
 
+function formatINR(amount: number): string {
+  return `\u20B9${Math.round(amount).toLocaleString('en-IN')}`;
+}
+
 type FieldErrors = Partial<Record<keyof QuickFixBookingDetails, string>>;
 
 function validateDetails(details: QuickFixBookingDetails): FieldErrors {
@@ -38,11 +38,56 @@ function validateDetails(details: QuickFixBookingDetails): FieldErrors {
   return errors;
 }
 
+interface Service {
+  id: string;
+  categoryId: string;
+  name: string;
+  image?: string;
+  pricing: { enabled: boolean; price?: number; priceNote?: string };
+  bookingConfiguration: { requiresTimeSlot: boolean; requiresPayment: boolean };
+}
+
+interface Category {
+  id: string;
+  name: string;
+}
+
 export default function QuickFixBookPage() {
   const { serviceId } = useParams<{ serviceId: string }>();
   const navigate = useNavigate();
   const { selected } = useLocation();
-  const service = getQuickFixService(serviceId);
+
+  const [service, setService] = useState<Service | null>(null);
+  const [categoryMap, setCategoryMap] = useState<Map<string, Category>>(new Map());
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!serviceId) {
+      setLoading(false);
+      return;
+    }
+    Promise.all([
+      fetchQuickFixServices(),
+      fetchQuickFixCategories({ active: true }),
+    ])
+      .then(([svcData, catData]) => {
+        const cmap = new Map(catData.map((c) => [c._id, { id: c._id, name: c.name }]));
+        setCategoryMap(cmap);
+        const found = svcData.find((s) => s._id === serviceId);
+        if (found) {
+          setService({
+            id: found._id,
+            categoryId: found.categoryId,
+            name: found.name,
+            image: found.image?.url,
+            pricing: found.pricing ?? { enabled: false },
+            bookingConfiguration: found.bookingConfiguration,
+          });
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [serviceId]);
 
   const requiresTimeSlot = service?.bookingConfiguration.requiresTimeSlot ?? false;
   const requiresPayment = service?.bookingConfiguration.requiresPayment ?? false;
@@ -110,7 +155,7 @@ export default function QuickFixBookPage() {
     const pendingBooking: QuickFixBooking = {
       serviceId: service.id,
       serviceName: service.name,
-      categoryName: getQuickFixCategoryName(service.categoryId),
+      categoryName: categoryMap.get(service.categoryId)?.name ?? service.categoryId,
       slotDate,
       slotTime,
       amount,
@@ -185,7 +230,20 @@ export default function QuickFixBookPage() {
     amount,
     selected,
     navigate,
+    categoryMap,
   ]);
+
+  if (loading) {
+    return (
+      <div className="qfk-page">
+        <div className="section-container">
+          <div className="qfk-not-found">
+            <p>Loading...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!service) {
     return (
@@ -207,7 +265,7 @@ export default function QuickFixBookPage() {
     );
   }
 
-  const categoryName = getQuickFixCategoryName(service.categoryId);
+  const categoryName = categoryMap.get(service.categoryId)?.name ?? service.categoryId;
   const selectedDayLabel = slotDays.find((d) => d.value === slotDate)?.label ?? '';
 
   const confirmButton = (

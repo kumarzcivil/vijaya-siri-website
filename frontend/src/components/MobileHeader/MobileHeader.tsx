@@ -4,9 +4,9 @@ import { useLocation as useLocationContext } from '../../context/LocationContext
 import { useActiveRoute } from '../../hooks/useActiveRoute';
 import { useProFixSearch } from '../../hooks/useProFixSearch';
 import { useQuickFixSearch } from '../../hooks/useQuickFixSearch';
+import { fetchMyNotifications, markAllNotificationsRead } from '../../api/notifications';
 import type { SiteFeature } from '../../data/siteControl';
-import { getAvailableFeatureSet } from '../../data/siteControl';
-import { useIsFeatureEnabled } from '../../hooks/useSiteControl';
+import { useAvailableFeatureSet, useIsFeatureEnabled } from '../../hooks/useSiteControl';
 import './MobileHeader.css';
 
 const menuLinks: Array<{
@@ -40,6 +40,7 @@ export default function MobileHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [locOpen, setLocOpen] = useState(false);
   const [actionsOpen, setActionsOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const { selected, options, select } = useLocationContext();
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -59,7 +60,21 @@ export default function MobileHeader() {
   const menuBtnRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLElement>(null);
 
-  const availableFeatures = getAvailableFeatureSet();
+  useEffect(() => {
+    const token = localStorage.getItem('vs_auth_token');
+    if (!token) return;
+    fetchMyNotifications()
+      .then((n) => setUnreadCount(n.filter((x) => !x.read).length))
+      .catch(() => {});
+    const interval = setInterval(() => {
+      fetchMyNotifications()
+        .then((n) => setUnreadCount(n.filter((x) => !x.read).length))
+        .catch(() => {});
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const availableFeatures = useAvailableFeatureSet();
   const quoteEnabled = useIsFeatureEnabled('quote');
   const visibleMenuLinks = menuLinks.filter(
     (link) => !link.feature || availableFeatures.has(link.feature)
@@ -160,11 +175,12 @@ export default function MobileHeader() {
           </Link>
 
           <div className="mobile-header-actions">
-            <button className="mobile-action-btn" aria-label="Notifications" onClick={() => navigate('/notifications')}>
+            <button className="mobile-action-btn mobile-notif-btn" aria-label="Notifications" onClick={() => { if (unreadCount > 0) { markAllNotificationsRead().catch(() => {}); setUnreadCount(0); } navigate('/account/notifications'); }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                 <path d="M13.73 21a2 2 0 0 1-3.46 0" />
               </svg>
+              {unreadCount > 0 && <span className="mobile-notif-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>}
             </button>
 
             <div className="mobile-actions-wrap" ref={actionsRef}>

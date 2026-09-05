@@ -2,18 +2,20 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SiteControl, SiteFeature } from '../../data/siteControl';
 import {
   getSiteControl,
-  updateSiteControlPages,
-  updateSiteStatus,
-  resetSiteControl,
+  siteControlDefaults,
+  syncSiteControlFromAPI,
 } from '../../data/siteControl';
 import type { SiteStatus } from '../../data/siteControl';
 import type { CustomerService } from '../../data/locationServiceConfig';
-import {
-  getLocationServiceConfig,
-  updateLocationAvailability,
-  updateLoginRequired,
-} from '../../data/locationServiceConfig';
 import { locations } from '../../data/locations';
+import {
+  getSiteControlAPI,
+  updateGlobalAPI,
+  updatePageAPI,
+  updateLocationAPI,
+  updateAccessAPI,
+  resetSiteControlAPI,
+} from '../../api/site-control';
 import AdminToggle from './AdminToggle';
 import './AdminPage.css';
 import './AdminShell.css';
@@ -111,9 +113,17 @@ const FEATURE_OFF_TEXTS: Record<SiteFeature, { title: string; body: string }> = 
   },
 };
 
+interface LocationAvailability {
+  quickFix: boolean;
+  proFix: boolean;
+}
+
 export default function SiteControlSection() {
   const [control, setControl] = useState<SiteControl>(() => getSiteControl());
-  const [serviceConfig, setServiceConfig] = useState(() => getLocationServiceConfig());
+  const [locations_, setLocations] = useState<Record<string, LocationAvailability>>({});
+  const [quickFixLoginRequired, setQuickFixLoginRequired] = useState(true);
+  const [proFixLoginRequired, setProFixLoginRequired] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [toggleOffFeature, setToggleOffFeature] = useState<SiteFeature | null>(null);
   const [maintenanceConfirm, setMaintenanceConfirm] = useState(false);
   const [emergencyConfirm, setEmergencyConfirm] = useState(false);
@@ -122,6 +132,8 @@ export default function SiteControlSection() {
 
   const toastTimer = useRef<number | null>(null);
   const resetTimer = useRef<number | null>(null);
+  const emergencyConfirmRef = useRef(false);
+  const toggleOffFeatureRef = useRef<SiteFeature | null>(null);
 
   const showToast = useCallback((message: string, isError = false) => {
     if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
@@ -134,6 +146,22 @@ export default function SiteControlSection() {
       if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
       if (resetTimer.current !== null) window.clearTimeout(resetTimer.current);
     };
+  }, []);
+
+  useEffect(() => {
+    getSiteControlAPI()
+      .then((res) => {
+        if (res.success && res.data) {
+          const sc = res.data.siteControl;
+          const loaded = syncSiteControlFromAPI(sc);
+          setControl(loaded);
+          setLocations(sc.locations || {});
+          setQuickFixLoginRequired(sc.quickFixLoginRequired);
+          setProFixLoginRequired(sc.proFixLoginRequired);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -152,25 +180,49 @@ export default function SiteControlSection() {
   const handleToggleRequest = useCallback((feature: SiteFeature, current: boolean, global: SiteStatus) => {
     if (current) {
       setToggleOffFeature(feature);
+      toggleOffFeatureRef.current = feature;
       return;
     }
     if (global !== 'online') return;
-    setControl(updateSiteControlPages({ [feature]: true }));
-    showToast(`${FEATURE_OFF_TEXTS[feature].title.replace('Turn Off ', '').replace('?', '')} is now available`);
+    updatePageAPI(feature, true)
+      .then((res) => {
+        if (res.success && res.data) {
+          const loaded = syncSiteControlFromAPI(res.data.siteControl);
+          setControl(loaded);
+          showToast(`${FEATURE_OFF_TEXTS[feature].title.replace('Turn Off ', '').replace('?', '')} is now available`);
+        }
+      })
+      .catch(() => showToast('Failed to update page', true));
   }, [showToast]);
 
   const handleConfirmToggleOff = useCallback(() => {
-    if (toggleOffFeature === null) return;
-    setControl(updateSiteControlPages({ [toggleOffFeature]: false }));
-    setToggleOffFeature(null);
-    showToast('Page is now unavailable to customers');
-  }, [toggleOffFeature, showToast]);
+    const feature = toggleOffFeatureRef.current;
+    if (feature === null) return;
+    updatePageAPI(feature, false)
+      .then((res) => {
+        if (res.success && res.data) {
+          const loaded = syncSiteControlFromAPI(res.data.siteControl);
+          setControl(loaded);
+          setToggleOffFeature(null);
+          toggleOffFeatureRef.current = null;
+          showToast('Page is now unavailable to customers');
+        }
+      })
+      .catch(() => showToast('Failed to update page', true));
+  }, [showToast]);
 
   const handleMaintenanceRequest = useCallback(() => {
     if (control.global === 'maintenance') {
       setMaintenanceConfirm(false);
-      setControl(updateSiteStatus('online'));
-      showToast('Website is back online');
+      updateGlobalAPI(false)
+        .then((res) => {
+          if (res.success && res.data) {
+            const loaded = syncSiteControlFromAPI(res.data.siteControl);
+            setControl(loaded);
+            showToast('Website is back online');
+          }
+        })
+        .catch(() => showToast('Failed to update global status', true));
       return;
     }
     setMaintenanceConfirm(true);
@@ -178,11 +230,19 @@ export default function SiteControlSection() {
 
   const handleConfirmMaintenance = useCallback(() => {
     setMaintenanceConfirm(false);
-    if (!emergencyConfirm) return;
+    if (!emergencyConfirmRef.current) return;
     setEmergencyConfirm(false);
-    setControl(updateSiteStatus('maintenance'));
-    showToast('Website is now in maintenance mode');
-  }, [emergencyConfirm, showToast]);
+    emergencyConfirmRef.current = false;
+    updateGlobalAPI(true)
+      .then((res) => {
+        if (res.success && res.data) {
+          const loaded = syncSiteControlFromAPI(res.data.siteControl);
+          setControl(loaded);
+          showToast('Website is now in maintenance mode');
+        }
+      })
+      .catch(() => showToast('Failed to update global status', true));
+  }, [showToast]);
 
   const handleResetClick = useCallback(() => {
     if (!resetConfirm) {
@@ -193,24 +253,80 @@ export default function SiteControlSection() {
     }
     if (resetTimer.current !== null) window.clearTimeout(resetTimer.current);
     setResetConfirm(false);
-    setControl(resetSiteControl());
-    showToast('Site Control restored to defaults');
+    resetSiteControlAPI()
+      .then((res) => {
+        if (res.success && res.data) {
+          const sc = res.data.siteControl;
+          const loaded = syncSiteControlFromAPI(sc);
+          setControl(loaded);
+          setLocations(sc.locations || {});
+          setQuickFixLoginRequired(sc.quickFixLoginRequired);
+          setProFixLoginRequired(sc.proFixLoginRequired);
+          showToast('Site Control restored to defaults');
+        }
+      })
+      .catch(() => showToast('Failed to reset', true));
   }, [resetConfirm, showToast]);
 
+  const locationsRef = useRef(locations_);
+  const quickFixLoginRequiredRef = useRef(quickFixLoginRequired);
+  const proFixLoginRequiredRef = useRef(proFixLoginRequired);
+
+  useEffect(() => { locationsRef.current = locations_; }, [locations_]);
+  useEffect(() => { quickFixLoginRequiredRef.current = quickFixLoginRequired; }, [quickFixLoginRequired]);
+  useEffect(() => { proFixLoginRequiredRef.current = proFixLoginRequired; }, [proFixLoginRequired]);
+
   const handleLocationAvailability = useCallback((locationId: string, service: CustomerService, active: boolean) => {
-    setServiceConfig(updateLocationAvailability(locationId, service, active));
-    const serviceLabel = service === 'quickFix' ? 'Quick Fix' : 'Pro Fix';
-    showToast(`${serviceLabel} is now ${active ? 'available' : 'unavailable'} for this location`);
+    const current = locationsRef.current[locationId] || { quickFix: false, proFix: false };
+    const updated = { ...current, [service]: active };
+    updateLocationAPI(locationId, updated.quickFix, updated.proFix)
+      .then((res) => {
+        if (res.success && res.data) {
+          const sc = res.data.siteControl;
+          setLocations(sc.locations || {});
+          syncSiteControlFromAPI(sc);
+          const serviceLabel = service === 'quickFix' ? 'Quick Fix' : 'Pro Fix';
+          showToast(`${serviceLabel} is now ${active ? 'available' : 'unavailable'} for ${locationId}`);
+        } else {
+          showToast('Update failed: no data returned', true);
+        }
+      })
+      .catch((err) => {
+        console.error('Location update failed:', err);
+        showToast('Failed to update location', true);
+      });
   }, [showToast]);
 
   const handleLoginRequired = useCallback((service: CustomerService, active: boolean) => {
-    setServiceConfig(updateLoginRequired(service, active));
-    const serviceLabel = service === 'quickFix' ? 'Quick Fix' : 'Pro Fix';
-    showToast(`Customer login is now ${active ? 'required' : 'not required'} for ${serviceLabel}`);
+    const qfr = service === 'quickFix' ? active : quickFixLoginRequiredRef.current;
+    const pfr = service === 'proFix' ? active : proFixLoginRequiredRef.current;
+    updateAccessAPI(qfr, pfr)
+      .then((res) => {
+        if (res.success && res.data) {
+          const sc = res.data.siteControl;
+          setQuickFixLoginRequired(sc.quickFixLoginRequired);
+          setProFixLoginRequired(sc.proFixLoginRequired);
+          syncSiteControlFromAPI(sc);
+          const serviceLabel = service === 'quickFix' ? 'Quick Fix' : 'Pro Fix';
+          showToast(`Customer login is now ${active ? 'required' : 'not required'} for ${serviceLabel}`);
+        }
+      })
+      .catch(() => showToast('Failed to update access', true));
   }, [showToast]);
 
   const globalOnline = control.global === 'online';
   const anyOff = Object.values(control.pages).some((v) => v === false);
+
+  if (loading) {
+    return (
+      <div className="admin-page admin-page--site-control">
+        <div className="admin-header">
+          <h1 className="admin-title">Site Control</h1>
+        </div>
+        <p style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-text-secondary)' }}>Loading site control...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="admin-page admin-page--site-control">
@@ -291,15 +407,16 @@ export default function SiteControlSection() {
         <div className="admin-section-header">
           <h2 className="admin-section-title">Location &amp; Service Access</h2>
           <p className="admin-section-desc">
-            Control which services customers can use in each location. A service that is
-            unavailable for a location is hidden and protected from direct URL access for
-            customers in that location.
+            Control which services customers can use in each location. Customers select
+            their location from the header dropdown. When a service is off for a
+            location, customers there will see a &ldquo;Not Available&rdquo; message and
+            can switch to a supported location.
           </p>
         </div>
 
         <div className="sc-group">
           {locations.map((loc) => {
-            const availability = serviceConfig.locations[loc.id] ?? { quickFix: false, proFix: false };
+            const availability = locations_[loc.id] ?? { quickFix: false, proFix: false };
             return (
               <div key={loc.id} className="sc-row sc-row--location">
                 <div className="sc-row-info">
@@ -339,36 +456,40 @@ export default function SiteControlSection() {
             <div className="sc-row-info">
               <span className="sc-row-label">Quick Fix Login Required</span>
               <span className="sc-row-desc">
-                When on, customers must sign in before using Quick Fix.
+                When on, customers must sign in before using Quick Fix in any location.
               </span>
             </div>
-            <span className={`admin-featured-badge${serviceConfig.quickFixLoginRequired ? ' admin-featured-badge--on' : ''}`}>
-              {serviceConfig.quickFixLoginRequired ? 'On' : 'Off'}
+            <span className={`admin-featured-badge${quickFixLoginRequired ? ' admin-featured-badge--on' : ''}`}>
+              {quickFixLoginRequired ? 'On' : 'Off'}
             </span>
             <AdminToggle
-              active={serviceConfig.quickFixLoginRequired}
-              onClick={() => handleLoginRequired('quickFix', !serviceConfig.quickFixLoginRequired)}
+              active={quickFixLoginRequired}
+              onClick={() => handleLoginRequired('quickFix', !quickFixLoginRequired)}
             />
           </div>
           <div className="sc-row">
             <div className="sc-row-info">
               <span className="sc-row-label">Pro Fix Login Required</span>
               <span className="sc-row-desc">
-                When on, customers must sign in before using Pro Fix.
+                When on, customers must sign in before using Pro Fix in any location.
               </span>
             </div>
-            <span className={`admin-featured-badge${serviceConfig.proFixLoginRequired ? ' admin-featured-badge--on' : ''}`}>
-              {serviceConfig.proFixLoginRequired ? 'On' : 'Off'}
+            <span className={`admin-featured-badge${proFixLoginRequired ? ' admin-featured-badge--on' : ''}`}>
+              {proFixLoginRequired ? 'On' : 'Off'}
             </span>
             <AdminToggle
-              active={serviceConfig.proFixLoginRequired}
-              onClick={() => handleLoginRequired('proFix', !serviceConfig.proFixLoginRequired)}
+              active={proFixLoginRequired}
+              onClick={() => handleLoginRequired('proFix', !proFixLoginRequired)}
             />
           </div>
         </div>
 
         <div className="sc-summary">
-          <h3 className="sc-summary-title">Service Availability</h3>
+          <h3 className="sc-summary-title">Customer View Summary</h3>
+          <p className="sc-summary-desc">
+            This is what customers see when they select each location. Off services
+            display a &ldquo;Not Available&rdquo; page with an option to switch location.
+          </p>
           <div className="sc-summary-table">
             <div className="sc-summary-head">
               <span>Location</span>
@@ -377,11 +498,11 @@ export default function SiteControlSection() {
               <span>Customer Login</span>
             </div>
             {locations.map((loc) => {
-              const availability = serviceConfig.locations[loc.id] ?? { quickFix: false, proFix: false };
+              const availability = locations_[loc.id] ?? { quickFix: false, proFix: false };
               const loginRequired =
                 availability.quickFix || availability.proFix
-                  ? (availability.quickFix && serviceConfig.quickFixLoginRequired) ||
-                    (availability.proFix && serviceConfig.proFixLoginRequired)
+                  ? (availability.quickFix && quickFixLoginRequired) ||
+                    (availability.proFix && proFixLoginRequired)
                   : false;
               return (
                 <div className="sc-summary-row" key={loc.id}>
@@ -501,7 +622,10 @@ export default function SiteControlSection() {
               <input
                 type="checkbox"
                 checked={emergencyConfirm}
-                onChange={(e) => setEmergencyConfirm(e.target.checked)}
+                onChange={(e) => {
+                  setEmergencyConfirm(e.target.checked);
+                  emergencyConfirmRef.current = e.target.checked;
+                }}
               />
               <span>I understand and want to enable maintenance mode.</span>
             </label>

@@ -1,11 +1,23 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useHeroSlider } from '../../hooks/useHeroSlider';
-import { getActiveQuickFixBanners } from '../../data/quickfix-banners';
-import type { QuickFixBanner } from '../../data/quickfix-banners';
+import { fetchQuickFixBanners, type QuickFixBanner as ApiBanner } from '../../api/quickFix';
 import './QuickFixBannerCarousel.css';
 
 const SWIPE_THRESHOLD_PX = 48;
+
+interface Banner {
+  id: string;
+  image: string;
+  internalName: string;
+  active: boolean;
+  displayOrder: number;
+  startDate: string;
+  endDate: string;
+  ctaLabel: string;
+  destinationType: 'none' | 'service' | 'category' | 'external';
+  destination: string;
+}
 
 interface QuickFixBannerCarouselProps {
   onCategorySelect: (categoryId: string) => void;
@@ -14,7 +26,33 @@ interface QuickFixBannerCarouselProps {
 export default function QuickFixBannerCarousel({ onCategorySelect }: QuickFixBannerCarouselProps) {
   const navigate = useNavigate();
 
-  const banners = getActiveQuickFixBanners();
+  const [banners, setBanners] = useState<Banner[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchQuickFixBanners({ active: true })
+      .then((data) => {
+        const today = new Date().toISOString().slice(0, 10);
+        const mapped = data
+          .filter((b) => b.startDate <= today && b.endDate >= today)
+          .sort((a, b) => a.displayOrder - b.displayOrder)
+          .map((b) => ({
+            id: b._id,
+            image: b.image?.url ?? '',
+            internalName: b.internalName,
+            active: b.active,
+            displayOrder: b.displayOrder,
+            startDate: b.startDate,
+            endDate: b.endDate,
+            ctaLabel: b.ctaLabel,
+            destinationType: b.destinationType,
+            destination: b.destination,
+          }));
+        setBanners(mapped);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
   const { activeIndex, goTo, next, prev, pause, resume } = useHeroSlider({
     totalSlides: banners.length,
@@ -28,13 +66,13 @@ export default function QuickFixBannerCarousel({ onCategorySelect }: QuickFixBan
   const swipingRef = useRef(false);
 
   const isNavigable = useCallback(
-    (banner: QuickFixBanner) =>
+    (banner: Banner) =>
       banner.destinationType !== 'none' && !!banner.destination,
     []
   );
 
   const handleBannerClick = useCallback(
-    (banner: QuickFixBanner) => {
+    (banner: Banner) => {
       if (!isNavigable(banner)) return;
       switch (banner.destinationType) {
         case 'service':

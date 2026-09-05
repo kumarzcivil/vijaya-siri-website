@@ -3,57 +3,36 @@ import Icon from '../../components/Icon/Icon';
 import StatusToggle from './AdminToggle';
 import { useServiceReorder } from '../../hooks/useServiceReorder';
 import {
-  getProFixCategories,
+  fetchProFixAdminCategories,
+  createProFixCategory,
   updateProFixCategory,
-  addProFixCategory,
-  resetProFixCategories,
-  moveProFixCategory,
+  toggleProFixCategory,
+  deleteProFixCategory,
   reorderProFixCategories,
-} from '../../data/profix';
-import type { ProFixCategory } from '../../data/profix';
+} from '../../api/proFix';
+import type { ProFixCategory } from '../../api/proFix';
 import './AdminPage.css';
 import './AdminShell.css';
 
 const DEFAULT_TOAST_MS = 2600;
 
 const CATEGORY_ICON_OPTIONS = [
-  'bricks',
-  'diamond',
-  'building',
-  'leaf',
-  'wrench',
-  'store',
-  'star',
-  'clipboard',
-  'check-circle',
-  'home',
-  'blueprint',
-  'shield-check',
-  'map-pin',
-  'users',
-  'receipt',
-  'armchair',
+  'bricks', 'diamond', 'building', 'leaf', 'wrench', 'store',
+  'star', 'clipboard', 'check-circle', 'home', 'blueprint',
+  'shield-check', 'map-pin', 'users', 'receipt', 'armchair',
 ];
 
-interface CategoryForm {
-  name: string;
-  icon: string;
-  active: boolean;
-}
+interface CategoryForm { name: string; icon: string; active: boolean; }
+const EMPTY_FORM: CategoryForm = { name: '', icon: CATEGORY_ICON_OPTIONS[0], active: true };
+interface ToastState { message: string; isError: boolean; }
 
-const EMPTY_FORM: CategoryForm = {
-  name: '',
-  icon: CATEGORY_ICON_OPTIONS[0],
-  active: true,
-};
-
-interface ToastState {
-  message: string;
-  isError: boolean;
+function catToFrontend(c: ProFixCategory) {
+  return { ...c, id: c._id };
 }
 
 export default function ProFixCategoriesSection() {
-  const [categories, setCategories] = useState<ProFixCategory[]>(() => getProFixCategories());
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -70,6 +49,18 @@ export default function ProFixCategoriesSection() {
     toastTimer.current = window.setTimeout(() => setToast(null), DEFAULT_TOAST_MS);
   }, []);
 
+  const loadData = useCallback(async () => {
+    try {
+      const cats = await fetchProFixAdminCategories();
+      setCategories(cats.map(catToFrontend));
+    } catch (err: any) {
+      setToast({ message: err.message || 'Failed to load', isError: true });
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
   useEffect(() => {
     return () => {
       if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
@@ -99,18 +90,32 @@ export default function ProFixCategoriesSection() {
     setEditForm(EMPTY_FORM);
   }, []);
 
-  const toggleActive = useCallback((id: string) => {
+  const toggleActive = useCallback(async (id: string) => {
     const category = categories.find((c) => c.id === id);
     if (!category) return;
-    const updated = updateProFixCategory(id, { active: !category.active });
-    setCategories(updated);
+    try {
+      await toggleProFixCategory(id);
+      setCategories((prev) => prev.map((c) => c.id === id ? { ...c, active: !c.active } : c));
+    } catch (err: any) {
+      setToast({ message: err.message || 'Failed to update', isError: true });
+    }
   }, [categories]);
 
-  const handleMove = useCallback((id: string, direction: 'up' | 'down') => {
-    const updated = moveProFixCategory(id, direction);
-    setCategories(updated);
-    showToast(direction === 'up' ? 'Category moved up' : 'Category moved down');
-  }, [showToast]);
+  const handleMove = useCallback(async (id: string, direction: 'up' | 'down') => {
+    const sorted = [...categories].sort((a, b) => a.displayOrder - b.displayOrder);
+    const idx = sorted.findIndex((c) => c.id === id);
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= sorted.length) return;
+    const ids = sorted.map((c) => c.id);
+    [ids[idx], ids[swapIdx]] = [ids[swapIdx], ids[idx]];
+    try {
+      const reordered = await reorderProFixCategories(ids);
+      setCategories(reordered.map(catToFrontend));
+      showToast(direction === 'up' ? 'Category moved up' : 'Category moved down');
+    } catch (err: any) {
+      setToast({ message: err.message || 'Failed to reorder', isError: true });
+    }
+  }, [categories, showToast]);
 
   const handleResetClick = useCallback(() => {
     if (!resetConfirm) {
@@ -121,34 +126,33 @@ export default function ProFixCategoriesSection() {
     }
     if (resetTimer.current !== null) window.clearTimeout(resetTimer.current);
     setResetConfirm(false);
-    setCategories(resetProFixCategories());
+    loadData();
     cancelEdit();
-    showToast('Pro Fix categories restored to defaults');
-  }, [resetConfirm, cancelEdit, showToast]);
+    showToast('Pro Fix categories refreshed from server');
+  }, [resetConfirm, cancelEdit, showToast, loadData]);
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     const name = editForm.name.trim();
     if (!name) {
       showToast('Category name is required', true);
       return;
     }
-    const updates = {
-      name,
-      icon: editForm.icon,
-      active: editForm.active,
-    };
+    const updates = { name, icon: editForm.icon, active: editForm.active };
 
-    if (showAddForm) {
-      addProFixCategory(updates);
-      showToast('Category added');
-    } else if (editingId) {
-      updateProFixCategory(editingId, updates);
-      showToast('Changes saved');
+    try {
+      if (showAddForm) {
+        await createProFixCategory(updates);
+        showToast('Category added');
+      } else if (editingId) {
+        await updateProFixCategory(editingId, updates);
+        showToast('Changes saved');
+      }
+      await loadData();
+      cancelEdit();
+    } catch (err: any) {
+      showToast(err.message || 'Failed to save', true);
     }
-
-    setCategories(getProFixCategories());
-    cancelEdit();
-  }, [editingId, showAddForm, editForm, cancelEdit, showToast]);
+  }, [editingId, showAddForm, editForm, cancelEdit, showToast, loadData]);
 
   const set = (patch: Partial<CategoryForm>) => setEditForm((prev) => ({ ...prev, ...patch }));
 
@@ -168,19 +172,34 @@ export default function ProFixCategoriesSection() {
     enabled: reorderEnabled,
     items: filtered,
     fullIds: sortedCategories.map((c) => c.id),
-    onCommitted: (orderedIds) => {
-      const reordered = reorderProFixCategories(orderedIds);
-      setCategories(reordered);
-      showToast('Category order updated');
+    onCommitted: async (orderedIds) => {
+      try {
+        const reordered = await reorderProFixCategories(orderedIds);
+        setCategories(reordered.map(catToFrontend));
+        showToast('Category order updated');
+      } catch (err: any) {
+        showToast(err.message || 'Failed to reorder', true);
+      }
     },
   });
+
+  if (loading) {
+    return (
+      <div className="admin-page">
+        <div className="admin-header">
+          <h1 className="admin-title">Pro Fix Categories</h1>
+          <p className="admin-subtitle">Loading categories...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="admin-page">
       <div className="admin-header">
         <h1 className="admin-title">Pro Fix Categories</h1>
         <p className="admin-subtitle">
-          These are the categories customers use to browse Pro Fix services. Changes are saved to browser storage.
+          These are the categories customers use to browse Pro Fix services. Changes are saved to the server.
         </p>
         <div className="admin-actions">
           <div className="admin-search">

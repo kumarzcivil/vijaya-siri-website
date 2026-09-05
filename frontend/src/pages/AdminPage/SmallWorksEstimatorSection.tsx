@@ -858,7 +858,7 @@ export default function SmallWorksEstimatorSection() {
               <button type="button" className="btn btn-outline" onClick={cancelDelete}>
                 Cancel
               </button>
-              <button type="button" className="btn btn-primary sw-btn-danger" onClick={confirmDelete}>
+              <button type="button" className="btn btn-danger" onClick={confirmDelete}>
                 Delete
               </button>
             </div>

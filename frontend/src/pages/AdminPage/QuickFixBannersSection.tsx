@@ -1,16 +1,15 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useServiceReorder } from '../../hooks/useServiceReorder';
 import {
-  getQuickFixBanners,
-  addQuickFixBanner,
+  fetchQuickFixAdminBanners,
+  createQuickFixBanner,
   updateQuickFixBanner,
+  toggleQuickFixBanner,
   deleteQuickFixBanner,
-  resetQuickFixBanners,
-  moveQuickFixBanner,
   reorderQuickFixBanners,
-} from '../../data/quickfix-banners';
-import { getQuickFixCategoryName } from '../../data/quickfix';
-import type { QuickFixBanner, QuickFixBannerDestinationType } from '../../data/quickfix-banners';
+} from '../../api/quickFix';
+import { fetchQuickFixAdminCategories } from '../../api/quickFix';
+import type { QuickFixBanner, QuickFixBannerDestinationType } from '../../api/quickFix';
 import BannerImageUpload from './BannerImageUpload';
 import './AdminPage.css';
 import './AdminShell.css';
@@ -22,6 +21,10 @@ interface ToastState {
   isError?: boolean;
 }
 
+function bannerToFrontend(b: QuickFixBanner) {
+  return { ...b, id: b._id, image: b.image?.url ?? '' };
+}
+
 function formatShortDate(isoDate: string): string {
   const key = isoDate.slice(0, 10);
   if (!key) return isoDate;
@@ -30,7 +33,7 @@ function formatShortDate(isoDate: string): string {
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-function bannerStatusText(banner: QuickFixBanner): string {
+function bannerStatusText(banner: any): string {
   const range = `${formatShortDate(banner.startDate)} → ${formatShortDate(banner.endDate)}`;
   if (!banner.active) return `Inactive · ${range}`;
 
@@ -48,12 +51,12 @@ function bannerStatusText(banner: QuickFixBanner): string {
   return `Active · ${range}`;
 }
 
-function destinationLabel(banner: QuickFixBanner): string {
+function destinationLabel(banner: any, getCategoryName: (id: string) => string): string {
   switch (banner.destinationType) {
     case 'service':
       return `Quick Fix service · ${banner.destination}`;
     case 'category':
-      return `Quick Fix category · ${getQuickFixCategoryName(banner.destination)}`;
+      return `Quick Fix category · ${getCategoryName(banner.destination)}`;
     case 'external':
       return `External · ${banner.destination || '(no URL)'}`;
     default:
@@ -62,9 +65,11 @@ function destinationLabel(banner: QuickFixBanner): string {
 }
 
 export default function QuickFixBannersSection() {
-  const [banners, setBanners] = useState<QuickFixBanner[]>(() => getQuickFixBanners());
+  const [banners, setBanners] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState<any[]>([]);
   const [bannerEditingId, setBannerEditingId] = useState<string | null>(null);
-  const [bannerEditForm, setBannerEditForm] = useState<Partial<QuickFixBanner>>({});
+  const [bannerEditForm, setBannerEditForm] = useState<Partial<any>>({});
   const [showBannerForm, setShowBannerForm] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [resetConfirm, setResetConfirm] = useState(false);
@@ -79,6 +84,25 @@ export default function QuickFixBannersSection() {
     setToast({ message, isError });
     toastTimer.current = window.setTimeout(() => setToast(null), DEFAULT_TOAST_MS);
   }, []);
+
+  const getCategoryName = useCallback((catId: string) => categories.find((c) => c.id === catId)?.name ?? catId, [categories]);
+
+  const loadData = useCallback(async () => {
+    try {
+      const [bannersData, cats] = await Promise.all([
+        fetchQuickFixAdminBanners(),
+        fetchQuickFixAdminCategories(),
+      ]);
+      setBanners(bannersData.map(bannerToFrontend));
+      setCategories(cats.map((c: any) => ({ ...c, id: c._id })));
+    } catch (err: any) {
+      setToast({ message: err.message || 'Failed to load banners', isError: true });
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
 
   useEffect(() => {
     return () => {
@@ -96,10 +120,10 @@ export default function QuickFixBannersSection() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [deleteConfirmId]);
 
-  const handleAddBanner = useCallback(() => {
+  const handleAddBanner = useCallback(async () => {
     const now = new Date().toISOString().slice(0, 10);
-    const banner: Omit<QuickFixBanner, 'id' | 'displayOrder'> & { displayOrder?: number } = {
-      image: bannerEditForm.image || '',
+    const payload = {
+      image: { url: bannerEditForm.image || '', publicId: '' },
       internalName: bannerEditForm.internalName?.trim() || 'Untitled banner',
       active: bannerEditForm.active ?? false,
       startDate: bannerEditForm.startDate || now,
@@ -109,22 +133,22 @@ export default function QuickFixBannersSection() {
       destination: bannerEditForm.destination || '',
     };
     try {
-      const updated = addQuickFixBanner(banner);
-      setBanners(updated);
+      await createQuickFixBanner(payload as any);
+      await loadData();
       setBannerEditForm({});
       setShowBannerForm(false);
       showToast('Advertisement added');
-    } catch {
-      showToast('Storage limit reached. Remove some banners or use smaller images before saving.', true);
+    } catch (err: any) {
+      showToast(err.message || 'Failed to add banner', true);
     }
-  }, [bannerEditForm, showToast]);
+  }, [bannerEditForm, showToast, loadData]);
 
-  const handleSaveBanner = useCallback(() => {
+  const handleSaveBanner = useCallback(async () => {
     if (!bannerEditingId) return;
     const current = banners.find((b) => b.id === bannerEditingId);
     if (!current) return;
-    const updates: Partial<QuickFixBanner> = {
-      image: bannerEditForm.image,
+    const updates: any = {
+      image: { url: bannerEditForm.image ?? current.image, publicId: '' },
       internalName: bannerEditForm.internalName?.trim() || current.internalName,
       active: bannerEditForm.active ?? current.active,
       startDate: bannerEditForm.startDate ?? current.startDate,
@@ -134,40 +158,57 @@ export default function QuickFixBannersSection() {
       destination: bannerEditForm.destination ?? current.destination,
     };
     try {
-      const updated = updateQuickFixBanner(bannerEditingId, updates);
-      setBanners(updated);
+      await updateQuickFixBanner(bannerEditingId, updates);
+      await loadData();
       setBannerEditingId(null);
       setBannerEditForm({});
       showToast('Changes saved');
-    } catch {
-      showToast('Storage limit reached. Remove some banners or use smaller images before saving.', true);
+    } catch (err: any) {
+      showToast(err.message || 'Failed to save', true);
     }
-  }, [bannerEditingId, banners, bannerEditForm, showToast]);
+  }, [bannerEditingId, banners, bannerEditForm, showToast, loadData]);
 
-  const handleDeleteBanner = useCallback((id: string) => {
+  const handleDeleteBanner = useCallback(async (id: string) => {
     if (deletingRef.current) return;
     deletingRef.current = true;
-    const updated = deleteQuickFixBanner(id);
-    setBanners(updated);
-    setDeleteConfirmId(null);
-    showToast('Banner deleted');
-  }, [showToast]);
+    try {
+      await deleteQuickFixBanner(id);
+      await loadData();
+      setDeleteConfirmId(null);
+      showToast('Banner deleted');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to delete', true);
+    } finally {
+      deletingRef.current = false;
+    }
+  }, [showToast, loadData]);
 
-  const handleToggleStatus = useCallback(
-    (id: string) => {
-      const banner = banners.find((b) => b.id === id);
-      if (!banner) return;
-      const updated = updateQuickFixBanner(id, { active: !banner.active });
-      setBanners(updated);
-    },
-    [banners]
-  );
+  const handleToggleStatus = useCallback(async (id: string) => {
+    const banner = banners.find((b) => b.id === id);
+    if (!banner) return;
+    try {
+      await toggleQuickFixBanner(id);
+      setBanners((prev) => prev.map((b) => b.id === id ? { ...b, active: !b.active } : b));
+    } catch (err: any) {
+      setToast({ message: err.message || 'Failed to update', isError: true });
+    }
+  }, [banners]);
 
-  const handleMove = useCallback((id: string, direction: 'up' | 'down') => {
-    const updated = moveQuickFixBanner(id, direction);
-    setBanners(updated);
-    showToast(direction === 'up' ? 'Banner moved up' : 'Banner moved down');
-  }, [showToast]);
+  const handleMove = useCallback(async (id: string, direction: 'up' | 'down') => {
+    const sorted = [...banners].sort((a, b) => a.displayOrder - b.displayOrder);
+    const idx = sorted.findIndex((b) => b.id === id);
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= sorted.length) return;
+    const ids = sorted.map((b) => b.id);
+    [ids[idx], ids[swapIdx]] = [ids[swapIdx], ids[idx]];
+    try {
+      const reordered = await reorderQuickFixBanners(ids);
+      setBanners(reordered.map(bannerToFrontend));
+      showToast(direction === 'up' ? 'Banner moved up' : 'Banner moved down');
+    } catch (err: any) {
+      setToast({ message: err.message || 'Failed to reorder', isError: true });
+    }
+  }, [banners, showToast]);
 
   const handleResetClick = useCallback(() => {
     if (!resetConfirm) {
@@ -178,12 +219,12 @@ export default function QuickFixBannersSection() {
     }
     if (resetTimer.current !== null) window.clearTimeout(resetTimer.current);
     setResetConfirm(false);
-    setBanners(resetQuickFixBanners());
+    loadData();
     setBannerEditingId(null);
     setBannerEditForm({});
     setDeleteConfirmId(null);
-    showToast('Quick Fix banners restored to defaults');
-  }, [resetConfirm, showToast]);
+    showToast('Quick Fix banners refreshed from server');
+  }, [resetConfirm, showToast, loadData]);
 
   const sortedBanners = [...banners].sort((a, b) => a.displayOrder - b.displayOrder);
   const bannerIndex = (id: string) => sortedBanners.findIndex((b) => b.id === id);
@@ -195,12 +236,31 @@ export default function QuickFixBannersSection() {
     enabled: !formOpen,
     items: sortedBanners,
     fullIds: sortedBanners.map((b) => b.id),
-    onCommitted: (orderedIds) => {
-      const reordered = reorderQuickFixBanners(orderedIds);
-      setBanners(reordered);
-      showToast('Banner order updated');
+    onCommitted: async (orderedIds) => {
+      try {
+        const reordered = await reorderQuickFixBanners(orderedIds);
+        setBanners(reordered.map(bannerToFrontend));
+        showToast('Banner order updated');
+      } catch (err: any) {
+        showToast(err.message || 'Failed to reorder', true);
+      }
     },
   });
+
+  if (loading) {
+    return (
+      <div className="admin-page admin-page--banners">
+        <div className="admin-section admin-section--primary">
+          <div className="admin-section-header">
+            <div>
+              <h2 className="admin-section-title">Quick Fix Hero Advertisements</h2>
+              <p className="admin-section-desc">Loading banners...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="admin-page admin-page--banners">
@@ -398,7 +458,7 @@ export default function QuickFixBannersSection() {
                     <div className="admin-project-details">
                       <h3 className="admin-project-name">{banner.internalName}</h3>
                       <p className="admin-project-meta">
-                        {bannerStatusText(banner)} · {destinationLabel(banner)}
+                        {bannerStatusText(banner)} · {destinationLabel(banner, getCategoryName)}
                       </p>
                     </div>
                     <span className={`admin-featured-badge ${banner.active ? 'admin-featured-badge--on' : ''}`}>
@@ -501,7 +561,7 @@ export default function QuickFixBannersSection() {
           >
             <h3 className="admin-modal-title">Delete Advertisement?</h3>
             <p className="admin-modal-text">
-              Are you sure you want to delete “{deletingBanner.internalName}”?
+              Are you sure you want to delete "{deletingBanner.internalName}"?
               <span>This action cannot be undone.</span>
             </p>
             <div className="admin-modal-actions">

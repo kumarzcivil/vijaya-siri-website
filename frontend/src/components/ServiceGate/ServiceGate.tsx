@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useLocation as useCustomerLocation } from '../../context/LocationContext';
 import type { CustomerService } from '../../data/locationServiceConfig';
@@ -6,6 +7,7 @@ import {
   getLocationServiceConfig,
   isServiceAvailable,
   isLoginRequired,
+  loadLocationServiceFromAPI,
 } from '../../data/locationServiceConfig';
 import { useAuth } from '../../context/AuthContext';
 import ServiceUnavailablePage from '../../pages/ServiceUnavailablePage/ServiceUnavailablePage';
@@ -24,12 +26,23 @@ export default function ServiceGate({ service, children }: ServiceGateProps) {
   const { pathname, search } = useLocation();
   const { selected } = useCustomerLocation();
   const { isAuthenticated } = useAuth();
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    loadLocationServiceFromAPI().then(() => setTick((t) => t + 1));
+  }, [selected.id]);
 
   const config = getLocationServiceConfig();
   const available = isServiceAvailable(config, selected.id, service);
 
   if (!available) {
-    return <ServiceUnavailablePage service={SERVICE_LABELS[service]} location={selected.label} />;
+    return (
+      <ServiceUnavailablePage
+        service={SERVICE_LABELS[service]}
+        location={selected.label}
+        locationId={selected.id}
+      />
+    );
   }
 
   if (isLoginRequired(config, service) && !isAuthenticated) {

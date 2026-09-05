@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import { signupAPI, loginAPI, getMeAPI, type AuthUser, type SignupData, type LoginData } from '../api/auth';
+import { signupAPI, loginAPI, adminLoginAPI, getMeAPI, type AuthUser, type SignupData, type LoginData } from '../api/auth';
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -8,6 +8,7 @@ interface AuthContextValue {
   isLoading: boolean;
   error: string | null;
   login: (data: LoginData) => Promise<void>;
+  adminLogin: (data: LoginData) => Promise<void>;
   signup: (data: SignupData) => Promise<void>;
   logout: () => void;
   clearError: () => void;
@@ -117,6 +118,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const adminLogin = useCallback(async (data: LoginData) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await adminLoginAPI(data);
+      if (res.success && res.data) {
+        setToken(res.data.token);
+        setUser(res.data.user);
+      } else {
+        throw new Error(res.message || 'Admin login failed');
+      }
+    } catch (err: any) {
+      const message = err?.message || err?.errors?.[0]?.message || 'Admin login failed';
+      setError(message);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   const logout = useCallback(() => {
     setToken(null);
     setUser(null);
@@ -154,6 +175,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         error,
         login,
+        adminLogin,
         signup,
         logout,
         clearError,

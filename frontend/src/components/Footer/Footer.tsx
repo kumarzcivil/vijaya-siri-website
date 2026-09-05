@@ -1,12 +1,12 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useLocation as useLocationContext } from '../../context/LocationContext';
-import { getAvailableFeatureSet } from '../../data/siteControl';
+import { useAvailableFeatureSet } from '../../hooks/useSiteControl';
 import { getLocationContact, getDefaultLocationContact } from '../../data/locationContacts';
 import './Footer.css';
 
 export default function Footer() {
   const location = useLocation();
-  const available = getAvailableFeatureSet();
+  const available = useAvailableFeatureSet();
   const { selected } = useLocationContext();
   const contact = getLocationContact(selected.id);
   const defaultContact = getDefaultLocationContact();

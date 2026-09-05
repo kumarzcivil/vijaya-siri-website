@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getPackages, getFeaturedProjects } from '../../data';
+import { getActivePackagesAPI, type Package } from '../../api/packages';
+import { getProjectsAPI, type Project } from '../../api/projects';
 import Breadcrumb from '../../components/Breadcrumb/Breadcrumb';
 import Hero from '../../components/Hero/Hero';
 import Statistics from '../../components/Statistics/Statistics';
@@ -14,11 +15,60 @@ import './ProjectsPage.css';
 
 export default function ProjectsPage() {
   const [selectedPackage] = useState<string>('premium');
-  const featuredProjects = getFeaturedProjects();
-  const packages = getPackages()
+  const [apiProjects, setApiProjects] = useState<Project[]>([]);
+  const [apiPkgs, setApiPkgs] = useState<Package[]>([]);
+  const [loading, setLoading] = useState(true);
+  const featuredProjects = apiProjects
+    .filter((p) => p.featured)
+    .map((p) => ({
+      id: p._id,
+      name: p.name,
+      location: p.location,
+      city: p.city,
+      type: p.type,
+      size: p.size,
+      bedrooms: p.bedrooms,
+      status: p.status,
+      statusLabel: p.status === 'completed' ? 'Completed' : p.status === 'in-progress' ? 'In Progress' : 'Upcoming',
+      rating: p.rating,
+      imageUrl: p.imageUrl,
+      features: [p.bedrooms, p.type, p.size].filter(Boolean),
+      tags: p.tags,
+      featured: p.featured,
+      displayOrder: p.displayOrder,
+    }));
+  const packages = apiPkgs
+    .map((p) => ({
+      id: p._id,
+      name: p.name,
+      comparisonName: p.comparisonName,
+      description: p.description,
+      price: p.price,
+      pricePrefix: p.pricePrefix,
+      priceUnit: p.priceUnit,
+      features: p.features || [],
+      popular: p.popular,
+      active: p.active,
+      icon: p.icon,
+      displayOrder: p.displayOrder,
+    }))
     .filter((p) => p.active)
     .sort((a, b) => a.displayOrder - b.displayOrder);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    Promise.all([
+      getProjectsAPI().catch(() => ({ success: false, data: { projects: [] } })),
+      getActivePackagesAPI().catch(() => ({ success: false, data: { packages: [] } })),
+    ]).then(([projRes, pkgRes]) => {
+      if (projRes.success && projRes.data) {
+        setApiProjects(projRes.data.projects);
+      }
+      if (pkgRes.success && pkgRes.data) {
+        setApiPkgs(pkgRes.data.packages);
+      }
+    }).finally(() => setLoading(false));
+  }, []);
 
   return (
     <div className="projects-page">
@@ -95,7 +145,13 @@ export default function ProjectsPage() {
               </p>
             </div>
           </div>
-          <FeaturedCarousel projects={featuredProjects} />
+          {loading ? (
+            <p style={{ textAlign: 'center', color: 'var(--color-text-secondary)', padding: '2rem' }}>Loading projects...</p>
+          ) : featuredProjects.length > 0 ? (
+            <FeaturedCarousel projects={featuredProjects} />
+          ) : (
+            <p style={{ textAlign: 'center', color: 'var(--color-text-secondary)', padding: '2rem' }}>No featured projects yet.</p>
+          )}
         </div>
       </section>
 

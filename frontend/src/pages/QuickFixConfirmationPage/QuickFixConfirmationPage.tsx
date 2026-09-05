@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Icon from '../../components/Icon/Icon';
-import { formatINR } from '../../data/quickfix';
-import { recordQuickFixBooking } from '../../data/bookingsRegistry';
-import { addNotification } from '../../store/notifications';
+import { createBooking } from '../../api/bookings';
+import { createNotification } from '../../api/notifications';
 import { useQuickFixBooking } from '../../hooks/useQuickFixBooking';
 import './QuickFixConfirmationPage.css';
+
+function formatINR(amount: number): string {
+  return `\u20B9${Math.round(amount).toLocaleString('en-IN')}`;
+}
 
 export default function QuickFixConfirmationPage() {
   const { serviceId } = useParams<{ serviceId: string }>();
@@ -16,13 +19,33 @@ export default function QuickFixConfirmationPage() {
   useEffect(() => {
     if (booking && !recorded.current) {
       recorded.current = true;
-      recordQuickFixBooking(booking);
-      addNotification({
+      createBooking({
+        kind: 'quick-fix',
+        serviceId: booking.serviceId,
+        serviceName: booking.serviceName,
+        categoryName: booking.categoryName,
+        slotDate: booking.slotDate,
+        slotTime: booking.slotTime,
+        amount: booking.amount,
+        paymentRequired: booking.paymentRequired,
+        paymentStatus: booking.paymentStatus === 'pay_after_service' ? 'none' : booking.paymentStatus,
+        paymentRef: booking.paymentRef,
+        paymentMethod: booking.paymentMethod || '',
+        couponCode: booking.couponCode || '',
+        couponDiscount: booking.couponDiscount || 0,
+        customerName: booking.customerDetails.name,
+        customerMobile: booking.customerDetails.mobile,
+        customerId: booking.customerId || '',
+        siteAddress: booking.customerDetails.siteAddress,
+        siteLocation: booking.customerDetails.siteLocation,
+        status: 'upcoming',
+      }).catch(() => {});
+      createNotification({
         title: 'Quick Fix booking confirmed',
         message: `Your ${booking.serviceName} booking${booking.bookingId ? ` (${booking.bookingId})` : ''} is confirmed.`,
         category: 'booking',
         customerId: booking.customerId,
-      });
+      }).catch(() => {});
     }
   }, [booking]);
 

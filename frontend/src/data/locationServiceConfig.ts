@@ -29,10 +29,11 @@ export const LOCATION_SERVICE_DEFAULTS: LocationServiceConfig = {
   locations: {
     siruguppa: { quickFix: true, proFix: true },
     adoni: { quickFix: false, proFix: false },
+    sindhanur: { quickFix: false, proFix: false },
   },
 };
 
-export const LOCATION_SERVICE_IDS: string[] = ['siruguppa', 'adoni'];
+export const LOCATION_SERVICE_IDS: string[] = ['siruguppa', 'adoni', 'sindhanur'];
 
 const UNAVAILABLE: Readonly<LocationServiceAvailability> = {
   quickFix: false,
@@ -173,4 +174,34 @@ export function updateLoginRequired(service: CustomerService, value: boolean): L
     proFixLoginRequired: service === 'proFix' ? value : config.proFixLoginRequired,
   };
   return saveLocationServiceConfig(next);
+}
+
+/**
+ * Load location service config from the backend API (site-control endpoint)
+ * and cache in localStorage.
+ */
+export async function loadLocationServiceFromAPI(): Promise<LocationServiceConfig> {
+  try {
+    const { getLocationsAPI } = await import('../api/site-control');
+    const res = await getLocationsAPI();
+    if (res.success && res.data) {
+      const loc = res.data.locations;
+      const locations: Record<string, LocationServiceAvailability> = {};
+      for (const id of LOCATION_SERVICE_IDS) {
+        const entry = loc.locations[id];
+        locations[id] = entry
+          ? { quickFix: entry.quickFix, proFix: entry.proFix }
+          : { quickFix: false, proFix: false };
+      }
+      const config: LocationServiceConfig = {
+        quickFixLoginRequired: loc.quickFixLoginRequired,
+        proFixLoginRequired: loc.proFixLoginRequired,
+        locations,
+      };
+      return saveLocationServiceConfig(config);
+    }
+  } catch {
+    // API unavailable
+  }
+  return getLocationServiceConfig();
 }

@@ -1,12 +1,58 @@
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getProjects } from '../../data';
+import { getProjectAPI, type Project } from '../../api/projects';
 import './ProjectDetailPage.css';
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const projects = getProjects();
-  const project = projects.find((p) => p.id === id);
+  const [apiProject, setApiProject] = useState<Project | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+    getProjectAPI(id)
+      .then((res) => {
+        if (res.success && res.data) {
+          setApiProject(res.data.project);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  const project = apiProject
+    ? {
+        id: apiProject._id,
+        name: apiProject.name,
+        location: apiProject.location,
+        city: apiProject.city,
+        type: apiProject.type,
+        size: apiProject.size,
+        bedrooms: apiProject.bedrooms,
+        status: apiProject.status,
+        statusLabel: apiProject.status === 'completed' ? 'Completed' : apiProject.status === 'in-progress' ? 'In Progress' : 'Upcoming',
+        rating: apiProject.rating,
+        imageUrl: apiProject.imageUrl,
+        features: [apiProject.bedrooms, apiProject.type, apiProject.size].filter(Boolean),
+        tags: apiProject.tags,
+        featured: apiProject.featured,
+        displayOrder: apiProject.displayOrder,
+      }
+    : null;
+
+  if (loading) {
+    return (
+      <div className="project-detail-page">
+        <div className="section-container">
+          <p style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-text-secondary)' }}>Loading project...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!project) {
     return (

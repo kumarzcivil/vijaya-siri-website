@@ -1,13 +1,22 @@
-import { useMemo } from 'react';
-import { getActiveOffers } from '../../data/offers';
+import { useState, useEffect } from 'react';
+import { fetchOffers, type Offer } from '../../api/offers';
 import OfferCard from '../../components/OfferCard/OfferCard';
 import QuoteCTA from '../../components/QuoteCTA/QuoteCTA';
 import { useIsFeatureEnabled } from '../../hooks/useSiteControl';
 import './OffersPage.css';
 
 export default function OffersPage() {
-  const activeOffers = useMemo(() => getActiveOffers(), []);
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const quoteEnabled = useIsFeatureEnabled('quote');
+
+  useEffect(() => {
+    fetchOffers()
+      .then((data) => setOffers(data))
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <div className="offers-page">
@@ -24,10 +33,21 @@ export default function OffersPage() {
 
       <section className="offers-section">
         <div className="section-container">
-          {activeOffers.length > 0 ? (
+          {loading ? (
+            <div className="offers-empty">
+              <p className="offers-empty-text">Loading offers...</p>
+            </div>
+          ) : error ? (
+            <div className="offers-empty">
+              <h2 className="offers-empty-title">Unable to load offers</h2>
+              <p className="offers-empty-text">
+                Please check back soon for new offers.
+              </p>
+            </div>
+          ) : offers.length > 0 ? (
             <div className="offers-grid">
-              {activeOffers.map((offer) => (
-                <OfferCard key={offer.id} offer={offer} />
+              {offers.map((offer) => (
+                <OfferCard key={offer._id} offer={offer} />
               ))}
             </div>
           ) : (

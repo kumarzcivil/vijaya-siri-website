@@ -1,15 +1,105 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { getPackages, packageSpecMatrix, rowHasDifferences } from '../../data';
-import type { SpecRow } from '../../data';
+import { fetchPackages, type Package } from '../../api/packages';
 import Icon from '../../components/Icon/Icon';
 import './ComparePackagesPage.css';
 
-const allPackages = getPackages();
-const { categories } = packageSpecMatrix;
-const fixedPackages = allPackages.filter((p) => !p.custom);
+type SpecValue = { type: 'text' | 'included' | 'excluded'; text?: string };
 
-function renderSpecValue(value: SpecRow['values'][string] | undefined) {
+interface SpecRow {
+  id: string;
+  label: string;
+  reference?: string;
+  values: Record<string, SpecValue>;
+}
+
+interface SpecCategory {
+  id: string;
+  title: string;
+  subtitle?: string;
+  rows: SpecRow[];
+}
+
+interface UIPackage {
+  _id: string;
+  name: string;
+  comparisonName: string;
+  price: number | null;
+  pricePrefix: string;
+  priceUnit: string;
+  popular?: boolean;
+}
+
+function parseSpecValue(raw: string): SpecValue {
+  const lower = raw.toLowerCase().trim();
+  if (lower === 'yes' || lower === 'included') return { type: 'included' };
+  if (lower === 'no' || lower === 'excluded') return { type: 'excluded' };
+  return { type: 'text', text: raw };
+}
+
+function buildMatrix(packages: Package[]): { uiPackages: UIPackage[]; categories: SpecCategory[] } {
+  const uiPackages: UIPackage[] = packages.map((p) => ({
+    _id: p._id,
+    name: p.name,
+    comparisonName: p.name,
+    price: p.pricePerSqFt,
+    pricePrefix: '\u20B9',
+    priceUnit: 'per sq.ft',
+    popular: p.isDefault,
+  }));
+
+  const categoryMap = new Map<string, SpecCategory>();
+
+  for (const pkg of packages) {
+    for (const spec of pkg.specs) {
+      const catId = spec.category.toLowerCase().replace(/\s+/g, '_');
+      if (!categoryMap.has(catId)) {
+        categoryMap.set(catId, {
+          id: catId,
+          title: spec.category,
+          rows: [],
+        });
+      }
+      const cat = categoryMap.get(catId)!;
+      const rowMap = new Map(cat.rows.map((r) => [r.label, r]));
+
+      for (const row of spec.rows) {
+        if (!rowMap.has(row.label)) {
+          rowMap.set(row.label, {
+            id: row.label.toLowerCase().replace(/\s+/g, '_'),
+            label: row.label,
+            values: {},
+          });
+        }
+        rowMap.get(row.label)!.values[pkg._id] = parseSpecValue(row.value);
+      }
+
+      cat.rows = Array.from(rowMap.values());
+    }
+  }
+
+  const categories = Array.from(categoryMap.values()).sort((a, b) => {
+    const orderA = packages[0]?.specs.findIndex((s) => s.category === a.title) ?? 0;
+    const orderB = packages[0]?.specs.findIndex((s) => s.category === b.title) ?? 0;
+    return orderA - orderB;
+  });
+
+  return { uiPackages, categories };
+}
+
+function rowHasDifferences(row: SpecRow, packageIds: string[]): boolean {
+  if (packageIds.length < 2) return false;
+  const values = packageIds.map((id) => {
+    const v = row.values[id];
+    if (!v) return '';
+    if (v.type === 'included') return '__YES__';
+    if (v.type === 'excluded') return '__NO__';
+    return v.text || '';
+  });
+  return new Set(values).size > 1;
+}
+
+function renderSpecValue(value: SpecValue | undefined) {
   if (!value) return <span className="spec-to-confirm">To be updated</span>;
   if (value.type === 'included') {
     return (
@@ -33,7 +123,7 @@ function renderSpecValue(value: SpecRow['values'][string] | undefined) {
   return <span className="spec-text">{value.text}</span>;
 }
 
-function formatPrice(pkg: typeof fixedPackages[0]): string {
+function formatPrice(pkg: UIPackage): string {
   if (pkg.price === null) return 'Get Quote';
   return `${pkg.pricePrefix}${pkg.price.toLocaleString('en-IN')}`;
 }
@@ -41,13 +131,27 @@ function formatPrice(pkg: typeof fixedPackages[0]): string {
 export default function ComparePackagesPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const [allPackages, setAllPackages] = useState<Package[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchPackages()
+      .then((data) => setAllPackages(data.filter((p) => p.status === 'active')))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const { uiPackages: fixedPackages, categories } = useMemo(
+    () => buildMatrix(allPackages),
+    [allPackages]
+  );
 
   const initialHighlight = searchParams.get('highlight');
   const [selectedIds, setSelectedIds] = useState<string[]>(() => {
-    if (initialHighlight && fixedPackages.some((p) => p.id === initialHighlight)) {
+    if (initialHighlight && fixedPackages.some((p) => p._id === initialHighlight)) {
       return [initialHighlight];
     }
-    return fixedPackages.map((p) => p.id);
+    return fixedPackages.map((p) => p._id);
   });
 
   const [highlightDiffs, setHighlightDiffs] = useState(false);
@@ -57,22 +161,20 @@ export default function ComparePackagesPage() {
     return initial;
   });
 
-  // Scroll to top on mount
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
 
   useEffect(() => {
     const highlight = searchParams.get('highlight');
-    if (highlight && fixedPackages.some((p) => p.id === highlight)) {
+    if (highlight && fixedPackages.some((p) => p._id === highlight)) {
       setSelectedIds((prev) => {
         if (prev.includes(highlight)) return prev;
         return [...prev, highlight];
       });
     }
-  }, [searchParams]);
+  }, [searchParams, fixedPackages]);
 
-  // Persist accordion state
   useEffect(() => {
     try {
       const stored = sessionStorage.getItem('compare_expanded');
@@ -87,8 +189,8 @@ export default function ComparePackagesPage() {
   }, [expandedCategories]);
 
   const selectedPackages = useMemo(
-    () => fixedPackages.filter((p) => selectedIds.includes(p.id)),
-    [selectedIds]
+    () => fixedPackages.filter((p) => selectedIds.includes(p._id)),
+    [selectedIds, fixedPackages]
   );
 
   const togglePackage = useCallback((id: string) => {
@@ -110,7 +212,7 @@ export default function ComparePackagesPage() {
         rows: cat.rows.filter((row) => rowHasDifferences(row, selectedIds)),
       }))
       .filter((entry) => entry.rows.length > 0);
-  }, [highlightDiffs, selectedIds]);
+  }, [highlightDiffs, selectedIds, categories]);
 
   const handleBack = () => {
     navigate('/projects#packages');
@@ -120,10 +222,21 @@ export default function ComparePackagesPage() {
     navigate('/quote');
   };
 
+  if (loading) {
+    return (
+      <div className="compare-page">
+        <div className="section-container">
+          <div className="compare-empty">
+            <p>Loading packages...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="compare-page">
       <div className="section-container">
-        {/* Back link */}
         <button type="button" className="compare-back" onClick={handleBack}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <line x1="19" y1="12" x2="5" y2="12" />
@@ -132,7 +245,6 @@ export default function ComparePackagesPage() {
           Back to Packages
         </button>
 
-        {/* Header */}
         <div className="compare-header">
           <span className="compare-label">Compare Packages</span>
           <h1 className="compare-title">Compare Packages</h1>
@@ -142,24 +254,22 @@ export default function ComparePackagesPage() {
           </p>
         </div>
 
-        {/* Sticky controls on mobile */}
         <div className="compare-controls">
-          {/* Package selector */}
           <div className="compare-selector">
             {fixedPackages.map((pkg) => {
-              const isSelected = selectedIds.includes(pkg.id);
+              const isSelected = selectedIds.includes(pkg._id);
               return (
                 <button
-                  key={pkg.id}
+                  key={pkg._id}
                   type="button"
                   className={`compare-selector-btn ${isSelected ? 'compare-selector-btn--active' : ''} ${pkg.popular ? 'compare-selector-btn--popular' : ''}`}
-                  onClick={() => togglePackage(pkg.id)}
+                  onClick={() => togglePackage(pkg._id)}
                   aria-pressed={isSelected}
                 >
                   {pkg.popular && <span className="compare-selector-badge">Most Popular</span>}
                   <span className="compare-selector-name">{pkg.comparisonName}</span>
                   <span className="compare-selector-price">{formatPrice(pkg)}</span>
-                  <span className="compare-selector-unit">{pkg.priceUnit}</span>
+                  <span className="compare-selector-unit">per sq.ft</span>
                   {isSelected ? (
                     <svg className="compare-check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="20 6 9 17 4 12" />
@@ -178,7 +288,6 @@ export default function ComparePackagesPage() {
             </div>
           </div>
 
-          {/* Highlight differences toggle */}
           <div className="compare-toggle-row">
             <button
               type="button"
@@ -202,7 +311,6 @@ export default function ComparePackagesPage() {
           </div>
         )}
 
-        {/* Desktop/Tablet: comparison table */}
         {selectedPackages.length > 0 && (
           <div className="compare-table-wrapper">
             <table className="compare-desktop-table">
@@ -212,11 +320,11 @@ export default function ComparePackagesPage() {
                     <span className="compare-th-label-text">Feature</span>
                   </th>
                   {selectedPackages.map((pkg) => (
-                    <th key={pkg.id} className={`compare-th-pkg ${pkg.popular ? 'compare-th-pkg--popular' : ''}`}>
+                    <th key={pkg._id} className={`compare-th-pkg ${pkg.popular ? 'compare-th-pkg--popular' : ''}`}>
                       {pkg.popular && <span className="compare-th-badge">Most Popular</span>}
                       <span className="compare-th-name">{pkg.comparisonName}</span>
                       <span className="compare-th-price">{formatPrice(pkg)}</span>
-                      <span className="compare-th-unit">{pkg.priceUnit}</span>
+                      <span className="compare-th-unit">per sq.ft</span>
                     </th>
                   ))}
                 </tr>
@@ -230,7 +338,6 @@ export default function ComparePackagesPage() {
           </div>
         )}
 
-        {/* Mobile: accordion cards */}
         {selectedPackages.length > 0 && (
           <div className="compare-mobile">
             {visibleCategories.map(({ cat, rows }) => {
@@ -261,9 +368,9 @@ export default function ComparePackagesPage() {
                           </div>
                           <div className="compare-mobile-spec-values">
                             {selectedPackages.map((pkg) => {
-                              const val = row.values[pkg.id];
+                              const val = row.values[pkg._id];
                               return (
-                                <div key={pkg.id} className="compare-mobile-spec-value">
+                                <div key={pkg._id} className="compare-mobile-spec-value">
                                   <span className="compare-mobile-spec-pkg">{pkg.comparisonName}</span>
                                   <div className="compare-mobile-spec-val">
                                     {renderSpecValue(val)}
@@ -282,7 +389,6 @@ export default function ComparePackagesPage() {
           </div>
         )}
 
-        {/* Bottom CTA */}
         <div className="compare-bottom-cta">
           <p className="compare-cta-heading">Ready to choose your package?</p>
           <div className="compare-cta-buttons">
@@ -298,7 +404,6 @@ export default function ComparePackagesPage() {
         </div>
       </div>
 
-      {/* Mobile sticky CTA */}
       <div className="compare-mobile-sticky-cta">
         <button type="button" className="compare-mobile-cta-btn" onClick={handleGetQuote}>
           <Icon name="phone" size={18} />
@@ -312,7 +417,7 @@ export default function ComparePackagesPage() {
 function CategorySection({ cat, rows, selectedPackages }: {
   cat: { id: string; title: string; subtitle?: string };
   rows: SpecRow[];
-  selectedPackages: typeof fixedPackages;
+  selectedPackages: UIPackage[];
 }) {
   return (
     <>
@@ -329,8 +434,8 @@ function CategorySection({ cat, rows, selectedPackages }: {
             {row.reference && <span className="compare-td-ref">{row.reference}</span>}
           </td>
           {selectedPackages.map((pkg) => (
-            <td key={pkg.id} className={`compare-td-value ${pkg.popular ? 'compare-td-value--popular' : ''}`}>
-              {renderSpecValue(row.values[pkg.id])}
+            <td key={pkg._id} className={`compare-td-value ${pkg.popular ? 'compare-td-value--popular' : ''}`}>
+              {renderSpecValue(row.values[pkg._id])}
             </td>
           ))}
         </tr>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import './AdminShell.css';
 
 type AdminGroupKey = 'pro-fix' | 'quick-fix' | 'marketing' | 'requests';
@@ -13,7 +14,7 @@ interface AdminGroup {
   key: AdminGroupKey;
   label: string;
   base: string;
-  items: AdminNavItem[];
+  items?: AdminNavItem[];
 }
 
 const ADMIN_GROUPS: AdminGroup[] = [
@@ -50,12 +51,7 @@ const ADMIN_GROUPS: AdminGroup[] = [
   {
     key: 'requests',
     label: 'Requests',
-    base: '/control-center/requests',
-    items: [
-      { to: '/control-center/requests/quote', label: 'Quote Requests' },
-      { to: '/control-center/requests/pro-fix', label: 'Pro Fix Requests' },
-      { to: '/control-center/requests/quick-fix', label: 'Quick Fix Requests' },
-    ],
+    base: '/control-center/requests/quote',
   },
 ];
 
@@ -104,6 +100,8 @@ function MenuIcon() {
 
 export default function AdminPage() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const [navOpen, setNavOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Record<AdminGroupKey, boolean>>(() => {
     const initial: Record<AdminGroupKey, boolean> = {
@@ -210,6 +208,17 @@ export default function AdminPage() {
           </NavLink>
 
           {ADMIN_GROUPS.map((group) => {
+            if (!group.items || group.items.length === 0) {
+              return (
+                <NavLink
+                  key={group.key}
+                  to={group.base}
+                  className={({ isActive }) => `admin-nav-item${isActive ? ' admin-nav-item--active' : ''}`}
+                >
+                  {group.label}
+                </NavLink>
+              );
+            }
             const groupActive = isWithin(pathname, group.base);
             const open = expandedGroups[group.key];
             return (
@@ -280,7 +289,21 @@ export default function AdminPage() {
           </NavLink>
         </nav>
 
-        <div className="admin-sidebar-foot">Vijaya Siri &middot; V3.40 Control Center</div>
+        <div className="admin-sidebar-foot">
+          <span className="admin-sidebar-version">Vijaya Siri &middot; V3.40 Control Center</span>
+          <button
+            type="button"
+            className="admin-logout-btn"
+            onClick={() => { logout(); navigate('/admin/login'); }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            Sign Out
+          </button>
+        </div>
       </aside>
 
       <div className="admin-content">

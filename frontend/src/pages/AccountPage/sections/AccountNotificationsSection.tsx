@@ -1,7 +1,12 @@
+import { useEffect, useState, useCallback } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import AccountSectionHeader from '../AccountSectionHeader';
-import { useNotifications } from '../../../hooks/useNotifications';
-import { markNotificationRead } from '../../../store/notifications';
+import {
+  fetchMyNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+  type Notification,
+} from '../../../api/notifications';
 
 function timeAgo(iso: string): string {
   const then = new Date(iso).getTime();
@@ -19,9 +24,54 @@ function timeAgo(iso: string): string {
 
 export default function AccountNotificationsSection() {
   const { customerId } = useOutletContext<{ customerId: string }>();
-  const all = useNotifications();
-  const mine = all.filter((n) => !n.customerId || n.customerId === customerId);
-  const unread = mine.filter((n) => !n.read).length;
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    try {
+      const data = await fetchMyNotifications();
+      setNotifications(data);
+    } catch {
+      // silent
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const unread = notifications.filter((n) => !n.read).length;
+
+  const handleMarkRead = async (id: string) => {
+    try {
+      const updated = await markNotificationRead(id);
+      setNotifications((prev) => prev.map((n) => (n._id === id ? updated : n)));
+    } catch {
+      // silent
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      await markAllNotificationsRead();
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    } catch {
+      // silent
+    }
+  };
+
+  if (loading) {
+    return (
+      <div>
+        <AccountSectionHeader
+          eyebrow="Updates"
+          title="Notifications"
+          description="Stay updated about your service requests, bookings, and account."
+        />
+        <p className="acc-empty-text">Loading notifications...</p>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -32,10 +82,15 @@ export default function AccountNotificationsSection() {
       />
 
       {unread > 0 && (
-        <p className="acc-unread">{unread} unread notification{unread > 1 ? 's' : ''}</p>
+        <div className="acc-unread-row">
+          <p className="acc-unread">{unread} unread notification{unread > 1 ? 's' : ''}</p>
+          <button type="button" className="acc-mark-all-btn" onClick={handleMarkAllRead}>
+            Mark all read
+          </button>
+        </div>
       )}
 
-      {mine.length === 0 ? (
+      {notifications.length === 0 ? (
         <div className="acc-empty">
           <h2 className="acc-empty-title">You&apos;re all caught up</h2>
           <p className="acc-empty-text">
@@ -44,13 +99,13 @@ export default function AccountNotificationsSection() {
         </div>
       ) : (
         <div className="acc-notif-list">
-          {mine.map((n) => (
+          {notifications.map((n) => (
             <button
               type="button"
-              key={n.id}
+              key={n._id}
               className={`acc-notif${n.read ? '' : ' acc-notif--unread'}`}
               onClick={() => {
-                if (!n.read) markNotificationRead(n.id);
+                if (!n.read) handleMarkRead(n._id);
               }}
             >
               <span className={`acc-notif-dot acc-notif-dot--${n.category}`} aria-hidden="true" />

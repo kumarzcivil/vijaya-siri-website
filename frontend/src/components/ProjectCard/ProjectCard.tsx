@@ -1,6 +1,23 @@
 import { useNavigate } from 'react-router-dom';
-import type { FeaturedProject } from '../../data';
 import './ProjectCard.css';
+
+interface FeaturedProject {
+  id: string;
+  name: string;
+  location: string;
+  city: string;
+  type: string;
+  size: string;
+  bedrooms: string;
+  status: 'completed' | 'in-progress' | 'upcoming';
+  statusLabel: string;
+  rating: number;
+  imageUrl: string;
+  features: string[];
+  tags: string[];
+  featured: boolean;
+  displayOrder: number;
+}
 
 interface ProjectCardProps {
   project: FeaturedProject;

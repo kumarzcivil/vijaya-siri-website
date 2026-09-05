@@ -1,25 +1,78 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useServiceReorder } from '../../hooks/useServiceReorder';
 import {
-  proFixCategories,
-  getProFixCategories,
-  getProFixServices,
+  fetchProFixAdminServices,
+  fetchProFixAdminCategories,
+  createProFixService,
   updateProFixService,
-  addProFixService,
-  resetProFixServices,
-  moveProFixService,
+  toggleProFixService,
+  deleteProFixService,
   reorderProFixServices,
-  getProFixCategoryName,
-  getProFixSiteVisitCharge,
-  PROFIX_DEFAULT_SITE_VISIT_CHARGE,
-  formatINR,
-} from '../../data/profix';
-import type { ProFixPricingMode, ProFixService } from '../../data/profix';
+  fetchProFixServiceStats,
+} from '../../api/proFix';
+import type { ProFixPricingMode as ApiPricingMode } from '../../api/proFix';
+import ImageUpload from './ImageUpload';
 import './AdminPage.css';
 import './AdminShell.css';
 
-const ADD_SERVICE_ID = '__add_service__';
+/* --- adapter: API service ↔ component service --- */
+interface ProFixServiceLocal {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  active: boolean;
+  displayOrder: number;
+  imageUrl: string;
+  unit: string;
+  startingPrice: string;
+  included: string[];
+  notes: string[];
+  pricing?: {
+    enabled: boolean;
+    mode: ProFixPricingMode;
+    rate?: number;
+    unit?: string;
+    quantityLabel?: string;
+    defaultQuantity?: number;
+    minQuantity?: number;
+    maxQuantity?: number;
+    step?: number;
+  };
+  siteVisitCharge?: number;
+  siteVisitWaiver?: { enabled: boolean; label: string; amount: number; trigger: string };
+}
+type ProFixPricingMode = 'area_rate' | 'quantity_rate' | 'fixed' | 'custom';
 
+interface ProFixCategoryLocal { id: string; name: string; icon: string; active: boolean; displayOrder: number }
+
+function svcToFrontend(s: any): ProFixServiceLocal {
+  return {
+    id: s._id,
+    name: s.name,
+    category: s.category,
+    description: s.description,
+    active: s.active,
+    displayOrder: s.displayOrder,
+    imageUrl: s.image?.url ?? s.imageUrl ?? '',
+    unit: s.unit ?? '',
+    startingPrice: s.startingPrice ?? '',
+    included: s.included ?? [],
+    notes: s.notes ?? [],
+    pricing: s.pricing,
+    siteVisitCharge: s.siteVisitCharge,
+    siteVisitWaiver: s.siteVisitWaiver,
+  };
+}
+function catToFrontend(c: any): ProFixCategoryLocal {
+  return { id: c._id, name: c.name, icon: c.icon, active: c.active, displayOrder: c.displayOrder };
+}
+function formatINR(amount: number): string {
+  return `\u20B9${Math.round(amount).toLocaleString('en-IN')}`;
+}
+
+const ADD_SERVICE_ID = '__add_service__';
+const DEFAULT_SITE_VISIT = 300;
 const DEFAULT_WAIVER_LABEL = 'Work Completion Waiver';
 const DEFAULT_TOAST_MS = 2600;
 
@@ -50,9 +103,9 @@ interface ToastState {
   isError: boolean;
 }
 
-function buildForm(service: ProFixService): ServiceForm {
+function buildForm(service: ProFixServiceLocal): ServiceForm {
   const pricing = service.pricing;
-  const siteVisitCharge = getProFixSiteVisitCharge(service);
+  const siteVisitCharge = service.siteVisitCharge ?? DEFAULT_SITE_VISIT;
   return {
     name: service.name,
     category: service.category,
@@ -79,7 +132,7 @@ function buildForm(service: ProFixService): ServiceForm {
 
 const EMPTY_FORM: ServiceForm = {
   name: '',
-  category: proFixCategories[0].id,
+  category: '',
   description: '',
   imageUrl: '',
   startingPrice: '',
@@ -105,7 +158,7 @@ function toOptionalNum(value: string): number | undefined {
   return parsed;
 }
 
-function priceLabel(service: ProFixService): string {
+function priceLabel(service: ProFixServiceLocal): string {
   if (service.startingPrice) return `From \u20B9${service.startingPrice}`;
   const pricing = service.pricing;
   if (pricing?.enabled && pricing.mode !== 'custom') {
@@ -133,7 +186,9 @@ function StatusToggle({ active, onClick }: { active: boolean; onClick: () => voi
 }
 
 export default function ProFixServicesSection() {
-  const [services, setServices] = useState<ProFixService[]>(() => getProFixServices());
+  const [services, setServices] = useState<ProFixServiceLocal[]>([]);
+  const [categories, setCategories] = useState<ProFixCategoryLocal[]>([]);
+  const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
@@ -143,6 +198,27 @@ export default function ProFixServicesSection() {
 
   const toastTimer = useRef<number | null>(null);
   const resetTimer = useRef<number | null>(null);
+
+  const loadData = useCallback(async () => {
+    try {
+      const [svcs, cats] = await Promise.all([fetchProFixAdminServices(), fetchProFixAdminCategories()]);
+      setServices(svcs.map(svcToFrontend));
+      setCategories(cats.map(catToFrontend));
+    } catch (err: any) {
+      setToast({ message: err.message || 'Failed to load services', isError: true });
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
+      if (resetTimer.current !== null) window.clearTimeout(resetTimer.current);
+    };
+  }, []);
 
   const showToast = useCallback((message: string, isError = false) => {
     if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
@@ -157,7 +233,7 @@ export default function ProFixServicesSection() {
     };
   }, []);
 
-  const startEdit = useCallback((service: ProFixService) => {
+  const startEdit = useCallback((service: ProFixServiceLocal) => {
     setAdding(false);
     setEditingId(service.id);
     setEditForm(buildForm(service));
@@ -166,15 +242,14 @@ export default function ProFixServicesSection() {
   const startAdd = useCallback(() => {
     setEditingId(null);
     setAdding(true);
-    const allCats = getProFixCategories();
-    const activeCats = allCats.filter((c) => c.active);
-    const defaultCategory = (activeCats[0] ?? allCats[0])?.id ?? '';
+    const activeCats = categories.filter((c) => c.active);
+    const defaultCategory = (activeCats[0] ?? categories[0])?.id ?? '';
     setEditForm({
       ...EMPTY_FORM,
       category: defaultCategory,
       billingUnit: 'Unit',
     });
-  }, []);
+  }, [categories]);
 
   const cancelEdit = useCallback(() => {
     setAdding(false);
@@ -182,18 +257,32 @@ export default function ProFixServicesSection() {
     setEditForm(EMPTY_FORM);
   }, []);
 
-  const toggleActive = useCallback((id: string) => {
+  const toggleActive = useCallback(async (id: string) => {
     const service = services.find((s) => s.id === id);
     if (!service) return;
-    const updated = updateProFixService(id, { active: !service.active });
-    setServices(updated);
+    try {
+      await toggleProFixService(id);
+      setServices((prev) => prev.map((s) => s.id === id ? { ...s, active: !s.active } : s));
+    } catch (err: any) {
+      setToast({ message: err.message || 'Failed to update', isError: true });
+    }
   }, [services]);
 
-  const handleMove = useCallback((id: string, direction: 'up' | 'down') => {
-    const updated = moveProFixService(id, direction);
-    setServices(updated);
-    showToast(direction === 'up' ? 'Service moved up' : 'Service moved down');
-  }, [showToast]);
+  const handleMove = useCallback(async (id: string, direction: 'up' | 'down') => {
+    const sorted = [...services].sort((a, b) => a.displayOrder - b.displayOrder);
+    const idx = sorted.findIndex((s) => s.id === id);
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= sorted.length) return;
+    const ids = sorted.map((s) => s.id);
+    [ids[idx], ids[swapIdx]] = [ids[swapIdx], ids[idx]];
+    try {
+      const reordered = await reorderProFixServices(ids);
+      setServices(reordered.map(svcToFrontend));
+      showToast(direction === 'up' ? 'Service moved up' : 'Service moved down');
+    } catch (err: any) {
+      setToast({ message: err.message || 'Failed to reorder', isError: true });
+    }
+  }, [services, showToast]);
 
   const handleResetClick = useCallback(() => {
     if (!resetConfirm) {
@@ -204,12 +293,12 @@ export default function ProFixServicesSection() {
     }
     if (resetTimer.current !== null) window.clearTimeout(resetTimer.current);
     setResetConfirm(false);
-    setServices(resetProFixServices());
+    loadData();
     cancelEdit();
-    showToast('Pro Fix services restored to defaults');
-  }, [resetConfirm, cancelEdit, showToast]);
+    showToast('Pro Fix services refreshed from server');
+  }, [resetConfirm, cancelEdit, showToast, loadData]);
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     if (!editingId && !adding) return;
     const name = editForm.name.trim();
     if (!name) {
@@ -220,36 +309,28 @@ export default function ProFixServicesSection() {
     const pricingOn = editForm.pricingMode !== 'custom';
     const billingUnit = editForm.billingUnit.trim();
     const startingPrice = editForm.startingPrice.trim();
-    const siteVisitCharge = toOptionalNum(editForm.siteVisitCharge);
-    const effectiveCharge = siteVisitCharge ?? PROFIX_DEFAULT_SITE_VISIT_CHARGE;
-    const waiverAmount = toOptionalNum(editForm.siteVisitWaiverAmount) ?? effectiveCharge;
+    const siteVisitCharge = toOptionalNum(editForm.siteVisitCharge) ?? DEFAULT_SITE_VISIT;
+    const waiverAmount = toOptionalNum(editForm.siteVisitWaiverAmount) ?? siteVisitCharge;
     const current = adding ? undefined : services.find((s) => s.id === editingId);
 
-    const included = editForm.includedText
-      .split('\n')
-      .map((line) => line.trim())
-      .filter(Boolean);
-    const notes = editForm.notesText
-      .split('\n')
-      .map((line) => line.trim())
-      .filter(Boolean);
+    const included = editForm.includedText.split('\n').map((l) => l.trim()).filter(Boolean);
+    const notes = editForm.notesText.split('\n').map((l) => l.trim()).filter(Boolean);
 
-    const payload = {
+    const payload: any = {
       name,
       category: editForm.category,
       description: editForm.description.trim(),
-      imageUrl: editForm.imageUrl.trim() || undefined,
       startingPrice,
       included,
       notes,
       active: editForm.active,
-      unit: billingUnit || undefined,
+      unit: billingUnit || 'Unit',
       siteVisitCharge,
       siteVisitWaiver: {
         enabled: editForm.siteVisitWaiverEnabled,
         label: current?.siteVisitWaiver?.label ?? DEFAULT_WAIVER_LABEL,
         amount: waiverAmount,
-        trigger: 'work_completion' as const,
+        trigger: 'work_completion',
       },
       pricing: {
         enabled: pricingOn,
@@ -262,28 +343,29 @@ export default function ProFixServicesSection() {
         maxQuantity: pricingOn ? toOptionalNum(editForm.pricingMax) : undefined,
         step: pricingOn ? toOptionalNum(editForm.pricingStep) : undefined,
       },
+      image: { url: editForm.imageUrl.trim(), publicId: '' },
     };
 
-    if (adding) {
-      addProFixService({
-        ...payload,
-        image: '',
-        unit: payload.unit ?? 'Unit',
-      });
-    } else if (editingId) {
-      updateProFixService(editingId, payload);
+    try {
+      if (adding) {
+        await createProFixService(payload);
+      } else if (editingId) {
+        await updateProFixService(editingId, payload);
+      }
+      if (adding) setQuery('');
+      await loadData();
+      showToast('Changes saved');
+      cancelEdit();
+    } catch (err: any) {
+      showToast(err.message || 'Failed to save', true);
     }
-
-    if (adding) setQuery('');
-
-    setServices(getProFixServices());
-    showToast('Changes saved');
-    cancelEdit();
-  }, [editingId, adding, editForm, services, cancelEdit, showToast]);
+  }, [editingId, adding, editForm, services, cancelEdit, showToast, loadData]);
 
   const pricingOn = editForm.pricingMode !== 'custom';
 
-  const allCategories = getProFixCategories();
+  const allCategories = categories;
+
+  const getCategoryName = useCallback((catId: string) => categories.find((c) => c.id === catId)?.name ?? catId, [categories]);
 
   const q = query.trim().toLowerCase();
   const sortedServices = [...services].sort((a, b) => a.displayOrder - b.displayOrder);
@@ -293,7 +375,7 @@ export default function ProFixServicesSection() {
         !q ||
         s.name.toLowerCase().includes(q) ||
         s.description.toLowerCase().includes(q) ||
-        getProFixCategoryName(s.category).toLowerCase().includes(q)
+        getCategoryName(s.category).toLowerCase().includes(q)
     );
 
   const serviceIndex = (id: string) => sortedServices.findIndex((s) => s.id === id);
@@ -310,21 +392,36 @@ export default function ProFixServicesSection() {
     enabled: reorderEnabled,
     items: display,
     fullIds: sortedServices.map((s) => s.id),
-    onCommitted: (orderedIds) => {
-      const reordered = reorderProFixServices(orderedIds);
-      setServices(reordered);
-      showToast('Service order updated');
+    onCommitted: async (orderedIds) => {
+      try {
+        const reordered = await reorderProFixServices(orderedIds);
+        setServices(reordered.map(svcToFrontend));
+        showToast('Service order updated');
+      } catch (err: any) {
+        showToast(err.message || 'Failed to reorder', true);
+      }
     },
   });
 
   const set = (patch: Partial<ServiceForm>) => setEditForm((prev) => ({ ...prev, ...patch }));
+
+  if (loading) {
+    return (
+      <div className="admin-page">
+        <div className="admin-header">
+          <h1 className="admin-title">Pro Fix Services</h1>
+          <p className="admin-subtitle">Loading services...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="admin-page">
       <div className="admin-header">
         <h1 className="admin-title">Pro Fix Services</h1>
         <p className="admin-subtitle">
-          These are the services customers see on Pro Fix. Changes are saved to browser storage.
+          These are the services customers see on Pro Fix. Changes are saved to the server.
         </p>
         <div className="admin-actions">
           <div className="admin-search">
@@ -414,22 +511,11 @@ export default function ProFixServicesSection() {
 
                   <div className="admin-field admin-field--wide">
                     <span className="admin-field-label">Image</span>
-                    <div className="admin-image-row">
-                      <div className="admin-svc-thumb admin-svc-thumb--lg">
-                        {editForm.imageUrl ? (
-                          <img src={editForm.imageUrl} alt="" />
-                        ) : (
-                          <span className="admin-svc-thumb-none">No image</span>
-                        )}
-                      </div>
-                      <input
-                        type="text"
-                        className="admin-input"
-                        value={editForm.imageUrl}
-                        onChange={(e) => set({ imageUrl: e.target.value })}
-                        placeholder="/assests/... or https://..."
-                      />
-                    </div>
+                    <ImageUpload
+                      value={editForm.imageUrl}
+                      onChange={(url) => set({ imageUrl: url })}
+                      folder="vijayasiri/profix/services"
+                    />
                   </div>
 
                   <label className="admin-field admin-field--wide">
@@ -673,7 +759,7 @@ export default function ProFixServicesSection() {
                 <div className="admin-project-details">
                   <h3 className="admin-project-name">{service.name}</h3>
                   <p className="admin-project-meta">
-                    {getProFixCategoryName(service.category)} &middot; {priceLabel(service)}
+                    {getCategoryName(service.category)} &middot; {priceLabel(service)}
                   </p>
                 </div>
                 <span className={`admin-featured-badge ${service.active ? 'admin-featured-badge--on' : ''}`}>

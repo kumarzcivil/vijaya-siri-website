@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Icon from '../../components/Icon/Icon';
-import { formatINR } from '../../data/profix';
-import { recordProFixBooking } from '../../data/bookingsRegistry';
-import { addNotification } from '../../store/notifications';
+import { createBooking } from '../../api/bookings';
+import { createNotification } from '../../api/notifications';
 import { useProFixBooking } from '../../hooks/useProFixBooking';
 import './ProFixConfirmationPage.css';
+
+function formatINR(amount: number): string {
+  return `\u20B9${Math.round(amount).toLocaleString('en-IN')}`;
+}
 
 export default function ProFixConfirmationPage() {
   const { serviceId } = useParams<{ serviceId: string }>();
@@ -16,13 +19,33 @@ export default function ProFixConfirmationPage() {
   useEffect(() => {
     if (order && !recorded.current) {
       recorded.current = true;
-      recordProFixBooking(order);
-      addNotification({
+      createBooking({
+        kind: 'pro-fix',
+        serviceId: order.serviceId,
+        serviceName: order.serviceName,
+        categoryName: order.categoryName,
+        slotDate: order.slotDate || '',
+        slotTime: order.slotTime || '',
+        amount: order.payableNow,
+        paymentRequired: order.payableNow > 0,
+        paymentStatus: order.paymentStatus === 'pay_after_service' ? 'none' : order.paymentStatus,
+        paymentRef: order.paymentRef,
+        paymentMethod: order.paymentMethod || '',
+        couponCode: order.couponCode || '',
+        couponDiscount: order.couponDiscount || 0,
+        customerName: order.billingDetails.name,
+        customerMobile: order.billingDetails.mobile,
+        customerId: order.customerId || '',
+        siteAddress: order.billingDetails.siteAddress,
+        siteLocation: order.billingDetails.siteLocation,
+        status: 'upcoming',
+      }).catch(() => {});
+      createNotification({
         title: 'Pro Fix site visit booked',
         message: `Your ${order.serviceName} site visit${order.bookingId ? ` (${order.bookingId})` : ''} is confirmed.`,
         category: 'booking',
         customerId: order.customerId,
-      });
+      }).catch(() => {});
     }
   }, [order]);
 

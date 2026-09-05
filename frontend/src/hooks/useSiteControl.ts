@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import type { SiteFeature } from '../data/siteControl';
-import { getSiteControl, siteControlDefaults } from '../data/siteControl';
+import { getSiteControl, siteControlDefaults, loadSiteControlFromAPI, SITE_FEATURES } from '../data/siteControl';
 
 const LEGAL_PATHS = ['/pricing-policies', '/privacy-policy', '/disclaimers', '/terms'];
 
@@ -38,29 +38,62 @@ export function useSiteControl(): {
   available: boolean;
   feature: SiteFeature | null;
   gated: boolean;
+  isMaintenance: boolean;
 } {
   const { pathname } = useLocation();
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    loadSiteControlFromAPI().then(() => setTick((t) => t + 1));
+  }, []);
 
   return useMemo(() => {
     if (isAdminPath(pathname) || isLegalPath(pathname)) {
-      return { available: true, feature: null, gated: false };
+      return { available: true, feature: null, gated: false, isMaintenance: false };
     }
     const feature = featureForPath(pathname);
     if (feature === null) {
-      return { available: true, feature: null, gated: false };
+      return { available: true, feature: null, gated: false, isMaintenance: false };
     }
     const control = getSiteControl();
-    const online = control.global === 'online';
+    const isMaintenance = control.global !== 'online';
     const enabled = control.pages[feature] !== false;
-    return { available: online && enabled, feature, gated: true };
-  }, [pathname]);
+    return { available: !isMaintenance && enabled, feature, gated: true, isMaintenance };
+  }, [pathname, setTick]);
 }
 
 export function useIsFeatureEnabled(feature: SiteFeature): boolean {
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    loadSiteControlFromAPI().then(() => setTick((t) => t + 1));
+  }, []);
+
   return useMemo(() => {
     const control = getSiteControl();
     if (control.global !== 'online') return false;
     const fallback = siteControlDefaults.pages[feature] !== false;
     return control.pages[feature] !== undefined ? control.pages[feature] : fallback;
-  }, [feature]);
+  }, [feature, setTick]);
+}
+
+/**
+ * Returns the current set of available features, reactive to API updates.
+ * Use this instead of getAvailableFeatureSet() in components that need
+ * to re-render when site control changes.
+ */
+export function useAvailableFeatureSet(): ReadonlySet<SiteFeature> {
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    loadSiteControlFromAPI().then(() => setTick((t) => t + 1));
+  }, []);
+
+  return useMemo(() => {
+    const control = getSiteControl();
+    if (control.global !== 'online') return new Set<SiteFeature>();
+    return new Set(
+      SITE_FEATURES.filter((f) => control.pages[f] !== false)
+    );
+  }, [setTick]);
 }

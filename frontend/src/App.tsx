@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-route
 import { useEffect } from 'react';
 import Icon from './components/Icon/Icon';
 import { LocationProvider } from './context/LocationContext';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import Header from './components/Header/Header';
 import MobileHeader from './components/MobileHeader/MobileHeader';
 import MobileNavigation from './components/MobileNavigation/MobileNavigation';
@@ -50,6 +50,7 @@ import QuickFixServicesSection from './pages/AdminPage/QuickFixServicesSection';
 import QuickFixBannersSection from './pages/AdminPage/QuickFixBannersSection';
 import MarketingStatisticsSection from './pages/AdminPage/MarketingStatisticsSection';
 import DiscoverServicesSection from './pages/AdminPage/DiscoverServicesSection';
+import DiscoverServiceDetailPage from './pages/DiscoverServiceDetailPage/DiscoverServiceDetailPage';
 import OffersSection from './pages/AdminPage/OffersSection';
 import SiteControlSection from './pages/AdminPage/SiteControlSection';
 import EstimatorModule from './pages/AdminPage/EstimatorModule';
@@ -59,10 +60,13 @@ import EstimatorQuantitySection from './pages/AdminPage/EstimatorQuantitySection
 import EstimatorMaterialSection from './pages/AdminPage/EstimatorMaterialSection';
 import EstimatorTemplatesSection from './pages/AdminPage/EstimatorTemplatesSection';
 import SmallWorksEstimatorSection from './pages/AdminPage/SmallWorksEstimatorSection';
+import FeatureGate from './components/FeatureGate/FeatureGate';
 import RouteUnavailablePage from './pages/RouteUnavailablePage/RouteUnavailablePage';
+import NotFoundPage from './pages/NotFoundPage/NotFoundPage';
 import ServiceGate from './components/ServiceGate/ServiceGate';
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
 import AnonRoute from './components/ProtectedRoute/AnonRoute';
+import AdminRoute from './components/ProtectedRoute/AdminRoute';
 import PaymentPage from './pages/PaymentPage/PaymentPage';
 import { useSiteControl } from './hooks/useSiteControl';
 import AccountDashboardHome from './pages/AccountPage/sections/AccountDashboardHome';
@@ -76,6 +80,8 @@ import SupportSection from './pages/AccountPage/sections/SupportSection';
 import ControlCenterCustomersSection from './pages/AdminPage/ControlCenterCustomersSection';
 import ControlCenterBookingsSection from './pages/AdminPage/ControlCenterBookingsSection';
 import ControlCenterNotificationsSection from './pages/AdminPage/ControlCenterNotificationsSection';
+import ControlCenterQuoteRequestsSection from './pages/AdminPage/ControlCenterQuoteRequestsSection';
+import PushAutoSubscribe from './components/PushAutoSubscribe/PushAutoSubscribe';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -89,14 +95,20 @@ function ScrollToTop() {
 
 function AppLayout() {
   const { pathname } = useLocation();
+  const { user, isAuthenticated } = useAuth();
   const isAdmin =
     pathname === '/admin' ||
     pathname.startsWith('/admin/') ||
     pathname === '/control-center' ||
     pathname.startsWith('/control-center/');
-  const { available, gated } = useSiteControl();
+  const { isMaintenance } = useSiteControl();
+
+  if (isAuthenticated && user?.role === 'admin' && !isAdmin && pathname !== '/admin/login') {
+    return <Navigate to="/admin" replace />;
+  }
   return (
     <div className={`app${isAdmin ? ' app--admin' : ''}`}>
+      <PushAutoSubscribe />
       <ScrollToTop />
       {!isAdmin && (
         <>
@@ -105,95 +117,113 @@ function AppLayout() {
         </>
       )}
       <main>
-        {gated && !available ? (
-          <RouteUnavailablePage />
+        {isMaintenance ? (
+          <RouteUnavailablePage isMaintenance />
         ) : (
           <Routes>
-            <Route path="/projects" element={<ProjectsPage />} />
-            <Route path="/projects/compare-packages" element={<ComparePackagesPage />} />
-            <Route path="/projects/:id" element={<ProjectDetailPage />} />
-            <Route path="/about" element={<AboutPage />} />
+            <Route path="/projects" element={<FeatureGate feature="projects"><ProjectsPage /></FeatureGate>} />
+            <Route path="/projects/compare-packages" element={<FeatureGate feature="packages"><ComparePackagesPage /></FeatureGate>} />
+            <Route path="/projects/:id" element={<FeatureGate feature="projects"><ProjectDetailPage /></FeatureGate>} />
+            <Route path="/about" element={<FeatureGate feature="about"><AboutPage /></FeatureGate>} />
             <Route path="/pricing-policies" element={<PricingPoliciesPage />} />
             <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
             <Route path="/disclaimers" element={<DisclaimersPage />} />
             <Route path="/terms" element={<TermsPage />} />
-            <Route path="/quote" element={<QuoteFormPage />} />
+            <Route path="/quote" element={<FeatureGate feature="quote"><QuoteFormPage /></FeatureGate>} />
             <Route
               path="/pro-fix"
               element={
-                <ServiceGate service="proFix">
-                  <ProFixPage />
-                </ServiceGate>
+                <FeatureGate feature="proFix">
+                  <ServiceGate service="proFix">
+                    <ProFixPage />
+                  </ServiceGate>
+                </FeatureGate>
               }
             />
             <Route
               path="/pro-fix/:serviceId"
               element={
-                <ServiceGate service="proFix">
-                  <ProFixServiceDetailPage />
-                </ServiceGate>
+                <FeatureGate feature="proFix">
+                  <ServiceGate service="proFix">
+                    <ProFixServiceDetailPage />
+                  </ServiceGate>
+                </FeatureGate>
               }
             />
             <Route
               path="/pro-fix/:serviceId/estimate"
               element={
-                <ServiceGate service="proFix">
-                  <ProFixEstimatePage />
-                </ServiceGate>
+                <FeatureGate feature="proFix">
+                  <ServiceGate service="proFix">
+                    <ProFixEstimatePage />
+                  </ServiceGate>
+                </FeatureGate>
               }
             />
             <Route
               path="/pro-fix/:serviceId/estimate/book"
               element={
-                <ServiceGate service="proFix">
-                  <ProFixBookVisitPage />
-                </ServiceGate>
+                <FeatureGate feature="proFix">
+                  <ServiceGate service="proFix">
+                    <ProFixBookVisitPage />
+                  </ServiceGate>
+                </FeatureGate>
               }
             />
             <Route
               path="/pro-fix/:serviceId/estimate/confirmed"
               element={
-                <ServiceGate service="proFix">
-                  <ProFixConfirmationPage />
-                </ServiceGate>
+                <FeatureGate feature="proFix">
+                  <ServiceGate service="proFix">
+                    <ProFixConfirmationPage />
+                  </ServiceGate>
+                </FeatureGate>
               }
             />
             <Route
               path="/quick-fix"
               element={
-                <ServiceGate service="quickFix">
-                  <QuickFixPage />
-                </ServiceGate>
+                <FeatureGate feature="quickFix">
+                  <ServiceGate service="quickFix">
+                    <QuickFixPage />
+                  </ServiceGate>
+                </FeatureGate>
               }
             />
             <Route
               path="/quick-fix/:serviceId"
               element={
-                <ServiceGate service="quickFix">
-                  <QuickFixServiceDetailPage />
-                </ServiceGate>
+                <FeatureGate feature="quickFix">
+                  <ServiceGate service="quickFix">
+                    <QuickFixServiceDetailPage />
+                  </ServiceGate>
+                </FeatureGate>
               }
             />
             <Route
               path="/quick-fix/:serviceId/book"
               element={
-                <ServiceGate service="quickFix">
-                  <QuickFixBookPage />
-                </ServiceGate>
+                <FeatureGate feature="quickFix">
+                  <ServiceGate service="quickFix">
+                    <QuickFixBookPage />
+                  </ServiceGate>
+                </FeatureGate>
               }
             />
             <Route
               path="/quick-fix/:serviceId/confirmed"
               element={
-                <ServiceGate service="quickFix">
-                  <QuickFixConfirmationPage />
-                </ServiceGate>
+                <FeatureGate feature="quickFix">
+                  <ServiceGate service="quickFix">
+                    <QuickFixConfirmationPage />
+                  </ServiceGate>
+                </FeatureGate>
               }
             />
             <Route path="/login" element={<AnonRoute><LoginPage /></AnonRoute>} />
             <Route path="/signup" element={<AnonRoute><SignupPage /></AnonRoute>} />
             <Route path="/payment" element={<ProtectedRoute><PaymentPage /></ProtectedRoute>} />
-            <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>}>
+            <Route path="/account" element={<FeatureGate feature="account"><ProtectedRoute><AccountPage /></ProtectedRoute></FeatureGate>}>
               <Route index element={<AccountDashboardHome />} />
               <Route path="profile" element={<ProfileSection />} />
               <Route path="addresses" element={<AddressesSection />} />
@@ -205,9 +235,10 @@ function AppLayout() {
             </Route>
             <Route path="/bookings" element={<ProtectedRoute><BookingsPage /></ProtectedRoute>} />
             <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
-            <Route path="/offers" element={<OffersPage />} />
+            <Route path="/offers" element={<FeatureGate feature="offers"><OffersPage /></FeatureGate>} />
+            <Route path="/service-detail" element={<DiscoverServiceDetailPage />} />
             <Route path="/admin/login" element={<AdminLoginPage />} />
-            <Route path="/admin" element={<AdminPage />}>
+            <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>}>
               <Route index element={<AdminDashboard />} />
               <Route path="site-control" element={<SiteControlSection />} />
               <Route path="projects" element={<AdminProjectsSection />} />
@@ -235,7 +266,7 @@ function AppLayout() {
               <Route path="marketing/offers" element={<OffersSection />} />
               <Route path="*" element={<AdminComingSoon title="Page not found" />} />
             </Route>
-            <Route path="/control-center" element={<AdminPage />}>
+            <Route path="/control-center" element={<AdminRoute><AdminPage /></AdminRoute>}>
               <Route index element={<Navigate to="/admin" replace />} />
               <Route path="bookings" element={<ControlCenterBookingsSection />} />
               <Route path="customers" element={<ControlCenterCustomersSection />} />
@@ -257,45 +288,14 @@ function AppLayout() {
               />
               <Route
                 path="requests/quote"
-                element={
-                  <ControlCenterEmptyState
-                    icon={<Icon name="receipt" size={30} />}
-                    heading="Quote Requests"
-                    description="View and manage customer quote requests."
-                    emptyTitle="No quote requests yet"
-                    emptyText="Quote requests will appear here once quote submission is connected."
-                  />
-                }
-              />
-              <Route
-                path="requests/pro-fix"
-                element={
-                  <ControlCenterEmptyState
-                    icon={<Icon name="wrench" size={30} />}
-                    heading="Pro Fix Requests"
-                    description="View and manage Pro Fix service requests."
-                    emptyTitle="No Pro Fix requests yet"
-                    emptyText="Service requests will appear here once Pro Fix bookings are connected."
-                  />
-                }
-              />
-              <Route
-                path="requests/quick-fix"
-                element={
-                  <ControlCenterEmptyState
-                    icon={<Icon name="clock" size={30} />}
-                    heading="Quick Fix Requests"
-                    description="View and manage Quick Fix service requests."
-                    emptyTitle="No Quick Fix requests yet"
-                    emptyText="Service requests will appear here once Quick Fix bookings are connected."
-                  />
-                }
+                element={<ControlCenterQuoteRequestsSection />}
               />
               <Route path="settings" element={<ControlCenterSettingsSection />} />
               <Route path="profile" element={<ControlCenterProfileSection />} />
               <Route path="*" element={<AdminComingSoon title="Page not found" />} />
             </Route>
             <Route path="/" element={<HomePage />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
         )}
       </main>

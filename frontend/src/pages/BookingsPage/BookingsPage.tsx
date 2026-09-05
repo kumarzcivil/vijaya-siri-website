@@ -1,27 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Icon from '../../components/Icon/Icon';
-import { formatINR as formatINRQuickFix } from '../../data/quickfix';
-import { formatINR as formatINRProFix } from '../../data/profix';
-import { useQuickFixBooking } from '../../hooks/useQuickFixBooking';
-import { useProFixBooking } from '../../hooks/useProFixBooking';
+import { fetchMyBookings, type Booking } from '../../api/bookings';
 import './BookingsPage.css';
 
 type BookingStatus = 'upcoming' | 'completed' | 'cancelled';
-
-interface BookingCardData {
-  id: string;
-  kind: 'quick-fix' | 'pro-fix';
-  serviceName: string;
-  categoryName: string;
-  location: string;
-  scheduledDate?: string;
-  scheduledTime?: string;
-  amount?: number;
-  status: BookingStatus;
-  paymentRef?: string;
-  detailsPath: string;
-}
 
 type TabId = 'upcoming' | 'completed' | 'cancelled';
 
@@ -56,70 +39,45 @@ function formatSchedule(date?: string, time?: string): string {
   return parts.join(' \u00B7 ');
 }
 
+function formatINR(amount: number): string {
+  return `\u20B9${Math.round(amount).toLocaleString('en-IN')}`;
+}
+
 function statusLabel(status: BookingStatus): string {
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
+function detailsPath(b: Booking): string {
+  if (b.kind === 'quick-fix') return `/quick-fix/${b.serviceId}/confirmed`;
+  return `/pro-fix/${b.serviceId}/estimate/confirmed`;
+}
+
 export default function BookingsPage() {
-  const quickFixBooking = useQuickFixBooking();
-  const proFixOrder = useProFixBooking();
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabId>('upcoming');
 
-  const bookings = useMemo<BookingCardData[]>(() => {
-    const result: BookingCardData[] = [];
+  useEffect(() => {
+    fetchMyBookings()
+      .then(setBookings)
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
-    if (quickFixBooking) {
-      const location = [quickFixBooking.customerDetails.siteAddress, quickFixBooking.customerDetails.siteLocation]
-        .filter(Boolean)
-        .join(', ');
-      result.push({
-        id: `quick-fix-${quickFixBooking.serviceId}`,
-        kind: 'quick-fix',
-        serviceName: quickFixBooking.serviceName,
-        categoryName: quickFixBooking.categoryName,
-        location,
-        scheduledDate: quickFixBooking.slotDate || undefined,
-        scheduledTime: quickFixBooking.slotTime || undefined,
-        amount: quickFixBooking.paymentRequired ? quickFixBooking.payableNow : quickFixBooking.amount,
-        status: 'upcoming',
-        paymentRef:
-          (quickFixBooking.paymentStatus === 'paid' || quickFixBooking.paymentStatus === 'submitted') &&
-          quickFixBooking.paymentRef
-            ? quickFixBooking.paymentRef
-            : undefined,
-        detailsPath: `/quick-fix/${quickFixBooking.serviceId}/confirmed`,
-      });
-    }
+  const visible = bookings.filter((b) => b.status === activeTab);
 
-    if (proFixOrder) {
-      const location = [proFixOrder.billingDetails.siteAddress, proFixOrder.billingDetails.siteLocation]
-        .filter(Boolean)
-        .join(', ');
-      result.push({
-        id: `pro-fix-${proFixOrder.serviceId}`,
-        kind: 'pro-fix',
-        serviceName: proFixOrder.serviceName,
-        categoryName: proFixOrder.categoryName,
-        location,
-        scheduledDate: proFixOrder.slotDate || undefined,
-        scheduledTime: proFixOrder.slotTime || undefined,
-        amount: proFixOrder.payableNow > 0 ? proFixOrder.payableNow : proFixOrder.siteVisitCharge,
-        status: 'upcoming',
-        paymentRef:
-          (proFixOrder.paymentStatus === 'paid' || proFixOrder.paymentStatus === 'submitted') &&
-          proFixOrder.paymentRef
-            ? proFixOrder.paymentRef
-            : undefined,
-        detailsPath: `/pro-fix/${proFixOrder.serviceId}/estimate/confirmed`,
-      });
-    }
-
-    return result;
-  }, [quickFixBooking, proFixOrder]);
-
-  const visibleBookings = bookings.filter((b) => b.status === activeTab);
-  const formatINR = (value: number, kind: 'quick-fix' | 'pro-fix') =>
-    kind === 'quick-fix' ? formatINRQuickFix(value) : formatINRProFix(value);
+  if (loading) {
+    return (
+      <div className="bookings-page">
+        <div className="section-container">
+          <div className="bookings-header">
+            <h1 className="bookings-title">My Bookings</h1>
+          </div>
+          <div className="bookings-loading">Loading bookings...</div>
+        </div>
+      </div>
+    );
+  }
 
   if (bookings.length === 0) {
     return (
@@ -178,10 +136,10 @@ export default function BookingsPage() {
           })}
         </div>
 
-        {visibleBookings.length > 0 ? (
+        {visible.length > 0 ? (
           <div className="bookings-list">
-            {visibleBookings.map((booking) => (
-              <article key={booking.id} className="bookings-card">
+            {visible.map((booking) => (
+              <article key={booking._id} className="bookings-card">
                 <div className="bookings-card-top">
                   <div className="bookings-card-kind">
                     {booking.kind === 'quick-fix' ? 'Quick Fix' : 'Pro Fix'}
@@ -195,33 +153,33 @@ export default function BookingsPage() {
                 <p className="bookings-card-category">{booking.categoryName}</p>
 
                 <dl className="bookings-card-rows">
-                  {booking.paymentRef && (
+                  {(booking.paymentStatus === 'paid' || booking.paymentStatus === 'submitted') && booking.paymentRef && (
                     <div className="bookings-row">
                       <dt>Reference</dt>
                       <dd>{booking.paymentRef}</dd>
                     </div>
                   )}
-                  {booking.location && (
+                  {(booking.siteAddress || booking.siteLocation) && (
                     <div className="bookings-row">
                       <dt>Location</dt>
-                      <dd>{booking.location}</dd>
+                      <dd>{[booking.siteAddress, booking.siteLocation].filter(Boolean).join(', ')}</dd>
                     </div>
                   )}
-                  {booking.scheduledDate && (
+                  {booking.slotDate && (
                     <div className="bookings-row">
                       <dt>Scheduled</dt>
-                      <dd>{formatSchedule(booking.scheduledDate, booking.scheduledTime)}</dd>
+                      <dd>{formatSchedule(booking.slotDate, booking.slotTime || undefined)}</dd>
                     </div>
                   )}
-                  {booking.amount !== undefined && (
+                  {booking.amount > 0 && (
                     <div className="bookings-row">
                       <dt>Amount</dt>
-                      <dd>{formatINR(booking.amount, booking.kind)}</dd>
+                      <dd>{formatINR(booking.amount)}</dd>
                     </div>
                   )}
                 </dl>
 
-                <Link to={booking.detailsPath} className="bookings-details-btn">
+                <Link to={detailsPath(booking)} className="bookings-details-btn">
                   View Details
                   <Icon name="arrow-right" size={16} />
                 </Link>

@@ -3,14 +3,14 @@ import Icon from '../../components/Icon/Icon';
 import StatusToggle from './AdminToggle';
 import { useServiceReorder } from '../../hooks/useServiceReorder';
 import {
-  getQuickFixCategories,
+  fetchQuickFixAdminCategories,
+  createQuickFixCategory,
   updateQuickFixCategory,
-  addQuickFixCategory,
-  resetQuickFixCategories,
-  moveQuickFixCategory,
+  toggleQuickFixCategory,
+  deleteQuickFixCategory,
   reorderQuickFixCategories,
-} from '../../data/quickfix';
-import type { QuickFixCategory } from '../../data/quickfix';
+} from '../../api/quickFix';
+import type { QuickFixCategory } from '../../api/quickFix';
 import './AdminPage.css';
 import './AdminShell.css';
 
@@ -52,8 +52,13 @@ interface ToastState {
   isError: boolean;
 }
 
+function catToFrontend(c: QuickFixCategory) {
+  return { ...c, id: c._id };
+}
+
 export default function QuickFixCategoriesSection() {
-  const [categories, setCategories] = useState<QuickFixCategory[]>(() => getQuickFixCategories());
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -70,6 +75,18 @@ export default function QuickFixCategoriesSection() {
     toastTimer.current = window.setTimeout(() => setToast(null), DEFAULT_TOAST_MS);
   }, []);
 
+  const loadData = useCallback(async () => {
+    try {
+      const cats = await fetchQuickFixAdminCategories();
+      setCategories(cats.map(catToFrontend));
+    } catch (err: any) {
+      setToast({ message: err.message || 'Failed to load', isError: true });
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
   useEffect(() => {
     return () => {
       if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
@@ -77,7 +94,7 @@ export default function QuickFixCategoriesSection() {
     };
   }, []);
 
-  const startEdit = useCallback((category: QuickFixCategory) => {
+  const startEdit = useCallback((category: any) => {
     setShowAddForm(false);
     setEditingId(category.id);
     setEditForm({
@@ -99,18 +116,32 @@ export default function QuickFixCategoriesSection() {
     setEditForm(EMPTY_FORM);
   }, []);
 
-  const toggleActive = useCallback((id: string) => {
+  const toggleActive = useCallback(async (id: string) => {
     const category = categories.find((c) => c.id === id);
     if (!category) return;
-    const updated = updateQuickFixCategory(id, { active: !category.active });
-    setCategories(updated);
+    try {
+      await toggleQuickFixCategory(id);
+      setCategories((prev) => prev.map((c) => c.id === id ? { ...c, active: !c.active } : c));
+    } catch (err: any) {
+      setToast({ message: err.message || 'Failed to update', isError: true });
+    }
   }, [categories]);
 
-  const handleMove = useCallback((id: string, direction: 'up' | 'down') => {
-    const updated = moveQuickFixCategory(id, direction);
-    setCategories(updated);
-    showToast(direction === 'up' ? 'Category moved up' : 'Category moved down');
-  }, [showToast]);
+  const handleMove = useCallback(async (id: string, direction: 'up' | 'down') => {
+    const sorted = [...categories].sort((a, b) => a.displayOrder - b.displayOrder);
+    const idx = sorted.findIndex((c) => c.id === id);
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= sorted.length) return;
+    const ids = sorted.map((c) => c.id);
+    [ids[idx], ids[swapIdx]] = [ids[swapIdx], ids[idx]];
+    try {
+      const reordered = await reorderQuickFixCategories(ids);
+      setCategories(reordered.map(catToFrontend));
+      showToast(direction === 'up' ? 'Category moved up' : 'Category moved down');
+    } catch (err: any) {
+      setToast({ message: err.message || 'Failed to reorder', isError: true });
+    }
+  }, [categories, showToast]);
 
   const handleResetClick = useCallback(() => {
     if (!resetConfirm) {
@@ -121,12 +152,12 @@ export default function QuickFixCategoriesSection() {
     }
     if (resetTimer.current !== null) window.clearTimeout(resetTimer.current);
     setResetConfirm(false);
-    setCategories(resetQuickFixCategories());
+    loadData();
     cancelEdit();
-    showToast('Quick Fix categories restored to defaults');
-  }, [resetConfirm, cancelEdit, showToast]);
+    showToast('Quick Fix categories refreshed from server');
+  }, [resetConfirm, cancelEdit, showToast, loadData]);
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     const name = editForm.name.trim();
     if (!name) {
       showToast('Category name is required', true);
@@ -138,17 +169,20 @@ export default function QuickFixCategoriesSection() {
       active: editForm.active,
     };
 
-    if (showAddForm) {
-      addQuickFixCategory(updates);
-      showToast('Category added');
-    } else if (editingId) {
-      updateQuickFixCategory(editingId, updates);
-      showToast('Changes saved');
+    try {
+      if (showAddForm) {
+        await createQuickFixCategory(updates);
+        showToast('Category added');
+      } else if (editingId) {
+        await updateQuickFixCategory(editingId, updates);
+        showToast('Changes saved');
+      }
+      await loadData();
+      cancelEdit();
+    } catch (err: any) {
+      showToast(err.message || 'Failed to save', true);
     }
-
-    setCategories(getQuickFixCategories());
-    cancelEdit();
-  }, [editingId, showAddForm, editForm, cancelEdit, showToast]);
+  }, [editingId, showAddForm, editForm, cancelEdit, showToast, loadData]);
 
   const set = (patch: Partial<CategoryForm>) => setEditForm((prev) => ({ ...prev, ...patch }));
 
@@ -162,25 +196,40 @@ export default function QuickFixCategoriesSection() {
 
   const formOpen = showAddForm || editingId !== null;
 
-  const reorderEnabled = !formOpen;
+  const reorderEnabled = !formOpen && query.trim() === '';
 
   const reorder = useServiceReorder({
     enabled: reorderEnabled,
     items: filtered,
     fullIds: sortedCategories.map((c) => c.id),
-    onCommitted: (orderedIds) => {
-      const reordered = reorderQuickFixCategories(orderedIds);
-      setCategories(reordered);
-      showToast('Category order updated');
+    onCommitted: async (orderedIds) => {
+      try {
+        const reordered = await reorderQuickFixCategories(orderedIds);
+        setCategories(reordered.map(catToFrontend));
+        showToast('Category order updated');
+      } catch (err: any) {
+        showToast(err.message || 'Failed to reorder', true);
+      }
     },
   });
+
+  if (loading) {
+    return (
+      <div className="admin-page">
+        <div className="admin-header">
+          <h1 className="admin-title">Quick Fix Categories</h1>
+          <p className="admin-subtitle">Loading categories...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="admin-page">
       <div className="admin-header">
         <h1 className="admin-title">Quick Fix Categories</h1>
         <p className="admin-subtitle">
-          These are the categories customers use to browse Quick Fix services. Changes are saved to browser storage.
+          These are the categories customers use to browse Quick Fix services. Changes are saved to the server.
         </p>
         <div className="admin-actions">
           <div className="admin-search">
@@ -282,6 +331,12 @@ export default function QuickFixCategoriesSection() {
         </div>
       )}
 
+      {query.trim() !== '' && (
+        <p className="admin-reorder-hint" id="reorder-search-hint">
+          Clear search to reorder
+        </p>
+      )}
+
       <div
         className={`admin-projects-list${reorder.listClassName}`}
         ref={reorder.listRef}
@@ -289,7 +344,7 @@ export default function QuickFixCategoriesSection() {
         {filtered.map((category) => (
           <div
             key={category.id}
-            className={`admin-project-row admin-cat-row ${category.active ? 'admin-project-row--featured' : ''}${reorder.drag?.id === category.id ? ' admin-project-row--dragging' : ''}${reorder.pressId === category.id ? ' admin-project-row--pressing' : ''}`}
+            className={`admin-project-row admin-cat-row ${category.active ? 'admin-project-row--featured' : ''}${reorder.drag?.id === category.id ? ' admin-project-row--dragging' : ''}`}
             ref={reorder.rowRef(category.id)}
             style={reorder.rowStyle(category.id)}
             onPointerMove={reorder.onRowPointerMove}
@@ -303,7 +358,7 @@ export default function QuickFixCategoriesSection() {
                 role="button"
                 aria-label="Reorder category"
                 aria-disabled={!reorderEnabled || undefined}
-                title={reorderEnabled ? 'Drag or hold to reorder' : 'Reorder disabled while editing'}
+                title={reorderEnabled ? 'Drag or hold to reorder' : 'Reorder disabled while searching'}
                 onPointerDown={(e) => reorder.onHandlePointerDown(e, category.id)}
                 onContextMenu={(e) => {
                   if (reorderEnabled) e.preventDefault();

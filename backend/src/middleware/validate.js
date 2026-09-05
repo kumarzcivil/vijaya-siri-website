@@ -121,4 +121,77 @@ const addressValidation = [
   handleValidationErrors,
 ];
 
-export { signupValidation, loginValidation, addressValidation };
+const adminLoginValidation = [
+  body('email')
+    .trim()
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Please enter a valid email address')
+    .normalizeEmail(),
+  body('password')
+    .notEmpty()
+    .withMessage('Password is required'),
+  handleValidationErrors,
+];
+
+const quoteValidation = [
+  body('fullName')
+    .trim()
+    .notEmpty()
+    .withMessage('Full name is required')
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Full name must be between 2 and 100 characters'),
+  body('mobile')
+    .trim()
+    .notEmpty()
+    .withMessage('Mobile number is required')
+    .matches(/^[6-9]\d{9}$/)
+    .withMessage('Please enter a valid 10-digit Indian mobile number'),
+  body('whatsapp')
+    .optional({ checkFalsy: true })
+    .trim()
+    .matches(/^[6-9]\d{9}$/)
+    .withMessage('Please enter a valid 10-digit WhatsApp number'),
+  body('email')
+    .trim()
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Please enter a valid email address')
+    .normalizeEmail(),
+  body('projectDescription')
+    .optional()
+    .trim()
+    .isLength({ max: 2000 })
+    .withMessage('Project description cannot exceed 2000 characters'),
+  body('projectLocation')
+    .trim()
+    .notEmpty()
+    .withMessage('Project location is required')
+    .isIn(['siruguppa', 'adoni', 'sindhanur'])
+    .withMessage('Location must be Siruguppa, Adoni, or Sindhanur'),
+  body('projectType')
+    .trim()
+    .notEmpty()
+    .withMessage('Project type is required')
+    .isIn(['new-home', 'renovation', 'interior', 'commercial', 'civil-works'])
+    .withMessage('Invalid project type'),
+  body('area')
+    .optional({ checkFalsy: true })
+    .isFloat({ min: 10, max: 100000 })
+    .withMessage('Area must be between 10 and 100,000 sq.ft'),
+  body('budget')
+    .optional()
+    .trim()
+    .isLength({ max: 50 })
+    .withMessage('Budget cannot exceed 50 characters'),
+  body('message')
+    .optional()
+    .trim()
+    .isLength({ max: 2000 })
+    .withMessage('Message cannot exceed 2000 characters'),
+  handleValidationErrors,
+];
+
+export { signupValidation, loginValidation, addressValidation, adminLoginValidation, quoteValidation };

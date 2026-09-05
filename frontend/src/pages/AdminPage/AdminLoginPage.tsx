@@ -1,11 +1,8 @@
 import { useState, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import Icon from '../../components/Icon/Icon';
 import './AdminLoginPage.css';
-
-function validateEmail(v: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
-}
 
 interface AdminLoginErrors {
   email?: string;
@@ -17,30 +14,33 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<AdminLoginErrors>({});
-  const [notified, setNotified] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { adminLogin, isLoading, error: authError, clearError, isAuthenticated, user } = useAuth();
+  const navigate = useNavigate();
+
+  if (isAuthenticated && user?.role === 'admin') {
+    return <Navigate to="/admin" replace />;
+  }
 
   const handleEmailChange = (value: string) => {
     setEmail(value);
     setErrors((prev) => ({ ...prev, email: undefined }));
-    setNotified(false);
+    clearError();
   };
 
   const handlePasswordChange = (value: string) => {
     setPassword(value);
     setErrors((prev) => ({ ...prev, password: undefined }));
-    setNotified(false);
+    clearError();
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return;
-    setNotified(false);
+    clearError();
 
     const nextErrors: AdminLoginErrors = {};
     if (!email.trim()) {
       nextErrors.email = 'Please enter your admin email';
-    } else if (!validateEmail(email)) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       nextErrors.email = 'Enter a valid email address';
     }
     if (!password) {
@@ -50,11 +50,12 @@ export default function AdminLoginPage() {
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
-    setIsSubmitting(true);
-    window.setTimeout(() => {
-      setIsSubmitting(false);
-      setNotified(true);
-    }, 400);
+    try {
+      await adminLogin({ email: email.trim(), password });
+      navigate('/admin', { replace: true });
+    } catch {
+      // error is set in context
+    }
   };
 
   return (
@@ -78,6 +79,12 @@ export default function AdminLoginPage() {
         <p className="admin-login-subtitle">
           Sign in to manage Vijaya Siri operations.
         </p>
+
+        {authError && (
+          <div className="login-error-banner" role="alert">
+            {authError}
+          </div>
+        )}
 
         <form className="admin-login-form" onSubmit={handleSubmit} noValidate>
           <div className="admin-login-field">
@@ -145,16 +152,10 @@ export default function AdminLoginPage() {
             )}
           </div>
 
-          <button type="submit" className="admin-login-submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Validating\u2026' : 'Sign In'}
+          <button type="submit" className="admin-login-submit" disabled={isLoading}>
+            {isLoading ? 'Signing In\u2026' : 'Sign In'}
           </button>
         </form>
-
-        {notified && (
-          <div className="admin-login-notice" role="status">
-            Admin authentication is not connected yet.
-          </div>
-        )}
 
         <Link to="/" className="admin-login-back">
           Back to Website
