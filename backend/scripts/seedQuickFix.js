@@ -1,5 +1,6 @@
 import "dotenv/config";
 import mongoose from 'mongoose';
+import connectDB from './connectDB.js';
 
 import QuickFixCategory from '../src/models/quickFix/QuickFixCategory.js';
 import QuickFixService from '../src/models/quickFix/QuickFixService.js';
@@ -180,8 +181,7 @@ const banners = [
 ];
 
 async function seed() {
-  await mongoose.connect(process.env.MONGODB_URI);
-  console.log('Connected to MongoDB');
+  await connectDB();
 
   const catCount = await QuickFixCategory.countDocuments();
   if (catCount > 0) {

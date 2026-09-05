@@ -524,12 +524,27 @@
    ============================================ */
 
 @media (max-width: 767px) {
+  .sw-page {
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+  }
+
   .sw-summary-grid {
     grid-template-columns: 1fr;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .sw-summary-grid.table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .sw-boq-edit-grid {
     grid-template-columns: repeat(2, 1fr);
+    width: 100%;
+    min-width: 0;
   }
 
   .sw-wide {
@@ -547,6 +562,12 @@
 }
 
 @media (max-width: 540px) {
+  .sw-page {
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+  }
+
   .sw-boq-edit-grid {
     grid-template-columns: 1fr;
   }

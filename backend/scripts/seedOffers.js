@@ -1,5 +1,6 @@
 import "dotenv/config";
 import mongoose from 'mongoose';
+import connectDB from './connectDB.js';
 import Offer from '../src/models/Offer.js';
 
 const offers = [
@@ -11,8 +12,7 @@ const offers = [
 
 const seed = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI);
-    console.log('Connected to MongoDB');
+    await connectDB();
 
     await Offer.deleteMany({});
     console.log('Cleared existing offers');

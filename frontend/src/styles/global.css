@@ -14,6 +14,7 @@ html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
 body {
@@ -98,5 +99,50 @@ input, select, textarea {
   .section-spacing {
     padding-top: 3rem;
     padding-bottom: 3rem;
+  }
+}
+
+/* ============================================
+   RESPONSIVE UTILITIES
+   ============================================ */
+
+/* Table overflow containment — prevents page scroll from tables */
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-wrap table {
+  min-width: 600px;
+}
+
+/* Form overflow prevention */
+@media (max-width: 767px) {
+  form,
+  .form-grid,
+  .edit-grid {
+    width: 100%;
+    min-width: 0;
+  }
+
+  input,
+  select,
+  textarea {
+    max-width: 100%;
+  }
+}
+
+/* Modal viewport containment */
+@media (max-width: 767px) {
+  .modal-backdrop {
+    padding: 0.75rem;
+  }
+
+  .modal {
+    width: calc(100% - 1.5rem);
+    max-width: none;
+    max-height: calc(100vh - 1.5rem);
+    overflow-y: auto;
   }
 }

@@ -2282,6 +2282,9 @@
 @media (max-width: 767px) {
   .est-panel {
     padding: var(--space-lg);
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
   }
 
   .est-panel-stack {
@@ -2297,6 +2300,16 @@
   .est-field--wide,
   .est-field--3wide {
     grid-column: span 1;
+  }
+
+  .est-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .est-table {
+    min-width: 500px;
   }
 
   .est-card-icon {

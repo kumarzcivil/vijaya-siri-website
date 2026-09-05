@@ -594,6 +594,9 @@
   grid-template-columns: repeat(5, 1fr);
   gap: var(--space-md);
   margin-bottom: var(--space-lg);
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
 }
 
 .cc-summary-stat {
@@ -808,12 +811,21 @@
     justify-content: center;
   }
 
+  .cc-send-form {
+    padding: var(--space-md);
+  }
+
   .cc-send-row {
     flex-direction: column;
   }
 
   .cc-send-select {
     max-width: none;
+    width: 100%;
+  }
+
+  .cc-send-form .admin-textarea {
+    min-height: 60px;
   }
 
   .cc-row {
@@ -823,6 +835,35 @@
 
   .cc-row dt {
     width: auto;
+  }
+
+  .cc-settings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cc-settings-card {
+    padding: var(--space-md);
+  }
+
+  .cc-quote-detail-row dt {
+    width: auto;
+  }
+
+  .cc-quote-detail-row dd {
+    text-align: left;
+  }
+
+  .cc-card--booking {
+    flex-direction: column;
+  }
+
+  .cc-card--booking .cc-card-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cc-card--booking .cc-status-btns {
+    flex-wrap: wrap;
   }
 }
 

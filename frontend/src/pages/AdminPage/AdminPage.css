@@ -493,6 +493,10 @@
 
 /* Responsive */
 @media (max-width: 767px) {
+  .admin-page {
+    padding: var(--space-xl) var(--page-padding-mobile) var(--space-3xl);
+  }
+
   .admin-project-row {
     flex-wrap: wrap;
     align-items: center;
@@ -502,72 +506,8 @@
 
   .admin-project-row--edit {
     padding: 10px;
-  }
-
-  .admin-cat-row {
-    padding: 4px 10px;
-  }
-
-  .admin-svc-row .admin-featured-badge {
-    display: none;
-  }
-
-  .admin-cat-row .admin-featured-badge {
-    display: none;
-  }
-
-  .admin-cat-row .admin-project-name {
-    font-weight: var(--font-weight-semibold);
-  }
-
-  .admin-cat-row .admin-project-info .admin-svc-thumb--icon {
-    width: 36px;
-    height: 36px;
-  }
-
-  .admin-cat-row.admin-project-row--featured {
-    border-color: var(--color-border);
-    background: var(--color-primary-50);
-  }
-
-  .admin-drag-handle {
-    width: 40px;
-    height: 40px;
-  }
-
-  .admin-drag-handle svg {
-    width: 14px;
-    height: 14px;
-  }
-
-  .admin-project-info .admin-svc-thumb {
-    width: 40px;
-    height: 40px;
-  }
-
-  .admin-project-name {
-    font-size: 0.9375rem;
-  }
-
-  .admin-project-meta {
-    font-size: 0.6875rem;
-  }
-
-  .admin-featured-badge {
-    font-size: 0.6875rem;
-    padding: 0.25rem 0.5rem;
-  }
-
-  .admin-header .admin-btn {
-    height: 34px;
-    padding-top: 0;
-    padding-bottom: 0;
-  }
-
-  .admin-project-info {
-    flex: 1 1 auto;
-    min-width: 0;
-    gap: var(--space-sm);
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .admin-project-actions {
@@ -575,10 +515,6 @@
     justify-content: flex-end;
     flex-wrap: wrap;
     gap: 0.375rem;
-  }
-
-  .admin-project-order {
-    width: 1.55rem;
   }
 
   .admin-btn {
@@ -623,6 +559,8 @@
 
   .admin-actions {
     width: 100%;
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
 
   .admin-section-header {
@@ -648,9 +586,81 @@
   .admin-edit-actions {
     flex-wrap: wrap;
   }
+
+  .admin-search {
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+    height: 34px;
+  }
+
+  .admin-search-input {
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+  }
+
+  .admin-project-name {
+    font-size: 0.9375rem;
+    white-space: normal;
+  }
+
+  .admin-project-meta {
+    font-size: 0.6875rem;
+    white-space: normal;
+  }
+
+  .admin-drag-handle {
+    width: 40px;
+    height: 40px;
+  }
+
+  .admin-drag-handle svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .admin-project-info .admin-svc-thumb {
+    width: 40px;
+    height: 40px;
+  }
+
+  .admin-project-info {
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: var(--space-sm);
+  }
+
+  .admin-featured-badge {
+    font-size: 0.6875rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .admin-header .admin-btn {
+    height: 34px;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  .admin-locations-list {
+    gap: var(--space-md);
+  }
+
+  .admin-location-card {
+    padding: 1rem;
+  }
+
+  .admin-location-head {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
 }
 
 @media (min-width: 768px) and (max-width: 1023px) {
+  .admin-page {
+    padding: var(--space-3xl) var(--page-padding-tablet) var(--space-5xl);
+  }
+
   .admin-edit-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -689,6 +699,10 @@
 
   .admin-header {
     margin-bottom: var(--space-2xl);
+  }
+
+  .admin-search {
+    min-width: 200px;
   }
 }
 
@@ -1415,12 +1429,20 @@
   padding: 0 0.25rem;
 }
 
+.sc-summary-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .sc-summary-table {
   display: flex;
   flex-direction: column;
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius-lg);
   overflow: hidden;
+  min-width: 0;
+  width: 100%;
 }
 
 .sc-summary-head,

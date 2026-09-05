@@ -1,5 +1,6 @@
 import "dotenv/config";
 import mongoose from 'mongoose';
+import connectDB from './connectDB.js';
 
 import Package from '../src/models/Package.js';
 
@@ -272,8 +273,7 @@ const packages = [
 ];
 
 async function seed() {
-  await mongoose.connect(process.env.MONGODB_URI);
-  console.log('Connected to MongoDB');
+  await connectDB();
 
   const count = await Package.countDocuments();
   if (count > 0) {

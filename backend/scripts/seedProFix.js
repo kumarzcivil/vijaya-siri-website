@@ -1,5 +1,6 @@
 import "dotenv/config";
 import mongoose from 'mongoose';
+import connectDB from './connectDB.js';
 
 import ProFixCategory from '../src/models/proFix/ProFixCategory.js';
 import ProFixService from '../src/models/proFix/ProFixService.js';
@@ -173,8 +174,7 @@ const banners = [
 ];
 
 async function seed() {
-  await mongoose.connect(process.env.MONGODB_URI);
-  console.log('Connected to MongoDB');
+  await connectDB();
 
   const catCount = await ProFixCategory.countDocuments();
   if (catCount > 0) {
