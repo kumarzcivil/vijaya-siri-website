@@ -42,7 +42,7 @@ app.use(helmet({
 }));
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "https://vijaya-siri-website.vercel.app/",
+    origin: process.env.CLIENT_URL || "https://vijaya-siri-website.vercel.app",
     credentials: true,
   }),
 );
