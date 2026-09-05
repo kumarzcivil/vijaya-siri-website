@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL || 'https://vijaya-siri-website.onrender.com/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'https://vijaya-siri-website-my-repo.onrender.com/api';
 
 interface ApiResponse<T> {
   success: boolean;
