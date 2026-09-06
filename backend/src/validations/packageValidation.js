@@ -7,11 +7,22 @@ export const packageValidation = [
     .withMessage('Package name is required')
     .isLength({ max: 100 })
     .withMessage('Name cannot exceed 100 characters'),
+  body('comparisonName')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('Comparison name cannot exceed 100 characters'),
   body('pricePerSqFt')
     .isNumeric()
     .withMessage('Price per sq.ft is required')
     .custom((v) => v >= 0)
     .withMessage('Price cannot be negative'),
+  body('pricePrefix')
+    .optional()
+    .trim(),
+  body('priceUnit')
+    .optional()
+    .trim(),
   body('tagline')
     .optional()
     .trim()
@@ -22,6 +33,21 @@ export const packageValidation = [
     .trim()
     .isLength({ max: 2000 })
     .withMessage('Description cannot exceed 2000 characters'),
+  body('features')
+    .optional()
+    .isArray()
+    .withMessage('Features must be an array'),
+  body('features.*')
+    .optional()
+    .isString()
+    .trim(),
+  body('icon')
+    .optional()
+    .trim(),
+  body('popular')
+    .optional()
+    .isBoolean()
+    .withMessage('popular must be boolean'),
   body('status')
     .optional()
     .isIn(['active', 'inactive'])

@@ -38,34 +38,34 @@ export default function ProjectsPage() {
       displayOrder: p.displayOrder,
     }));
   const packages = apiPkgs
+    .filter((p) => p.status === 'active')
     .map((p) => ({
       id: p._id,
       name: p.name,
-      comparisonName: p.comparisonName,
+      comparisonName: p.comparisonName || p.name,
       description: p.description,
-      price: p.price,
-      pricePrefix: p.pricePrefix,
-      priceUnit: p.priceUnit,
+      price: p.pricePerSqFt,
+      pricePrefix: p.pricePrefix || '₹',
+      priceUnit: p.priceUnit || 'per sq.ft',
       features: p.features || [],
-      popular: p.popular,
-      active: p.active,
-      icon: p.icon,
-      displayOrder: p.displayOrder,
+      popular: p.popular || p.isDefault,
+      active: true,
+      icon: p.icon || 'home',
+      displayOrder: p.priority || 0,
     }))
-    .filter((p) => p.active)
     .sort((a, b) => a.displayOrder - b.displayOrder);
   const navigate = useNavigate();
 
   useEffect(() => {
     Promise.all([
       getProjectsAPI().catch(() => ({ success: false, data: { projects: [] } })),
-      getActivePackagesAPI().catch(() => ({ success: false, data: { packages: [] } })),
+      getActivePackagesAPI().catch(() => []),
     ]).then(([projRes, pkgRes]) => {
       if (projRes.success && projRes.data) {
         setApiProjects(projRes.data.projects);
       }
-      if (pkgRes.success && pkgRes.data) {
-        setApiPkgs(pkgRes.data.packages);
+      if (Array.isArray(pkgRes)) {
+        setApiPkgs(pkgRes);
       }
     }).finally(() => setLoading(false));
   }, []);

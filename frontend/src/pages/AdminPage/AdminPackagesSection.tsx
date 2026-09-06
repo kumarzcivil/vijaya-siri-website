@@ -171,6 +171,9 @@ export default function AdminPackagesSection() {
                   <span className={`admin-featured-badge ${pkg.status === 'active' ? 'admin-featured-badge--on' : ''}`}>
                     {pkg.status === 'active' ? 'Active' : 'Inactive'}
                   </span>
+                  {pkg.popular && (
+                    <span className="admin-featured-badge admin-featured-badge--popular">Popular</span>
+                  )}
                   {pkg.isDefault && (
                     <span className="admin-featured-badge admin-featured-badge--popular">Default</span>
                   )}
@@ -206,9 +209,15 @@ export default function AdminPackagesSection() {
 
 function PackageForm({ initial, onSave, onCancel }: { initial?: Package; onSave: (data: Partial<Package>) => void; onCancel: () => void }) {
   const [name, setName] = useState(initial?.name ?? '');
+  const [comparisonName, setComparisonName] = useState(initial?.comparisonName ?? initial?.name ?? '');
   const [pricePerSqFt, setPricePerSqFt] = useState(initial?.pricePerSqFt?.toString() ?? '');
+  const [pricePrefix, setPricePrefix] = useState(initial?.pricePrefix ?? '₹');
+  const [priceUnit, setPriceUnit] = useState(initial?.priceUnit ?? 'per sq.ft');
   const [tagline, setTagline] = useState(initial?.tagline ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
+  const [features, setFeatures] = useState((initial?.features || []).join('\n'));
+  const [icon, setIcon] = useState(initial?.icon ?? 'home');
+  const [popular, setPopular] = useState(initial?.popular ?? false);
   const [status, setStatus] = useState<string>(initial?.status ?? 'active');
   const [isDefault, setIsDefault] = useState(initial?.isDefault ?? false);
 
@@ -216,9 +225,15 @@ function PackageForm({ initial, onSave, onCancel }: { initial?: Package; onSave:
     if (!name.trim()) return;
     onSave({
       name: name.trim(),
+      comparisonName: comparisonName.trim() || name.trim(),
       pricePerSqFt: pricePerSqFt ? Number(pricePerSqFt) : 0,
+      pricePrefix: pricePrefix.trim(),
+      priceUnit: priceUnit.trim(),
       tagline: tagline.trim(),
       description: description.trim(),
+      features: features.split('\n').map((f) => f.trim()).filter(Boolean),
+      icon: icon.trim() || 'home',
+      popular,
       status: status as 'active' | 'inactive',
       isDefault,
     });
@@ -233,8 +248,24 @@ function PackageForm({ initial, onSave, onCancel }: { initial?: Package; onSave:
             <input type="text" className="admin-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Premium" />
           </label>
           <label className="admin-field">
+            <span className="admin-field-label">Comparison Name</span>
+            <input type="text" className="admin-input" value={comparisonName} onChange={(e) => setComparisonName(e.target.value)} placeholder="e.g. Premium" />
+          </label>
+          <label className="admin-field">
             <span className="admin-field-label">Price (₹/sq.ft)</span>
             <input type="number" className="admin-input" value={pricePerSqFt} onChange={(e) => setPricePerSqFt(e.target.value)} placeholder="e.g. 1995" min="0" />
+          </label>
+          <label className="admin-field">
+            <span className="admin-field-label">Price Prefix</span>
+            <input type="text" className="admin-input" value={pricePrefix} onChange={(e) => setPricePrefix(e.target.value)} placeholder="₹" />
+          </label>
+          <label className="admin-field">
+            <span className="admin-field-label">Price Unit</span>
+            <input type="text" className="admin-input" value={priceUnit} onChange={(e) => setPriceUnit(e.target.value)} placeholder="per sq.ft" />
+          </label>
+          <label className="admin-field">
+            <span className="admin-field-label">Icon</span>
+            <input type="text" className="admin-input" value={icon} onChange={(e) => setIcon(e.target.value)} placeholder="home" />
           </label>
           <label className="admin-field">
             <span className="admin-field-label">Tagline</span>
@@ -248,6 +279,13 @@ function PackageForm({ initial, onSave, onCancel }: { initial?: Package; onSave:
             </select>
           </label>
           <label className="admin-field">
+            <span className="admin-field-label">Popular</span>
+            <select className="admin-input" value={popular ? 'true' : 'false'} onChange={(e) => setPopular(e.target.value === 'true')}>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+          </label>
+          <label className="admin-field">
             <span className="admin-field-label">Default</span>
             <select className="admin-input" value={isDefault ? 'true' : 'false'} onChange={(e) => setIsDefault(e.target.value === 'true')}>
               <option value="true">Yes</option>
@@ -257,6 +295,10 @@ function PackageForm({ initial, onSave, onCancel }: { initial?: Package; onSave:
           <label className="admin-field admin-field--wide">
             <span className="admin-field-label">Description</span>
             <textarea className="admin-textarea" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
+          </label>
+          <label className="admin-field admin-field--wide">
+            <span className="admin-field-label">Features (one per line)</span>
+            <textarea className="admin-textarea" rows={5} value={features} onChange={(e) => setFeatures(e.target.value)} placeholder={"Trusted brand steel & cement\nStandard floor tiles upto ₹50/sqft\nEssential kitchen & bathroom fittings"} />
           </label>
         </div>
         <div className="admin-edit-actions">

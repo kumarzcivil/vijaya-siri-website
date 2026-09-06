@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL || 'https://vijaya-siri-website-qvmi.onrender.com/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 interface ApiResponse<T> {
   success: boolean;
@@ -36,9 +36,15 @@ export interface PackageSpec {
 export interface Package {
   _id: string;
   name: string;
+  comparisonName: string;
   pricePerSqFt: number;
+  pricePrefix: string;
+  priceUnit: string;
   tagline: string;
   description: string;
+  features: string[];
+  icon: string;
+  popular: boolean;
   status: 'active' | 'inactive';
   priority: number;
   isDefault: boolean;

@@ -16,6 +16,7 @@ export function usePushSubscription(customerId?: string) {
   const [supported, setSupported] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [permission, setPermission] = useState<'default' | 'granted' | 'denied'>('default');
 
   useEffect(() => {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
@@ -25,6 +26,10 @@ export function usePushSubscription(customerId?: string) {
     }
     setSupported(true);
     console.log('[Push] Push notifications supported');
+
+    // Check current permission status without requesting new permission
+    const currentPerm = Notification.permission;
+    setPermission(currentPerm as 'default' | 'granted' | 'denied');
 
     navigator.serviceWorker.ready.then((reg) => {
       console.log('[Push] Service worker ready, scope:', reg.scope);
@@ -40,7 +45,7 @@ export function usePushSubscription(customerId?: string) {
       console.error('[Push] Error checking subscription:', err);
       setLoading(false);
     });
-  }, []);
+  }, [customerId]);
 
   const subscribe = useCallback(async () => {
     if (!supported) {

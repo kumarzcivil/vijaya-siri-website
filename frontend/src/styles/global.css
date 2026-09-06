@@ -145,4 +145,106 @@ input, select, textarea {
     max-height: calc(100vh - 1.5rem);
     overflow-y: auto;
   }
+
+.push-subscription-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-bg-white);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.push-subscription-wrapper .push-not-supported {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-caption);
+}
+
+.push-subscription-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-md);
+  background: var(--color-bg-white);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  min-width: 120px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.push-permission-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-md);
+  font-size: var(--font-caption);
+}
+
+.push-permission-status.push-denied {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #dc2626;
+}
+
+.push-permission-status.push-subscribed {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.push-subscribe-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-md);
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-caption);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: background var(--transition-fast), transform var(--transition-fast);
+  white-space: nowrap;
+}
+
+.push-subscribe-btn:hover {
+  background: var(--color-primary-hover);
+  transform: translateY(-1px);
+}
+
+.push-subscribe-btn:focus-visible {
+  outline: 2px solid var(--color-navy);
+  outline-offset: 2px;
+}
+
+.push-loading {
+  display: inline-block;
+  font-size: var(--font-caption);
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 767px) {
+  .push-subscription-wrapper {
+    padding: var(--space-xs) var(--space-sm);
+  }
+
+  .push-subscription-status {
+    min-width: 100%;
+    padding: var(--space-xs);
+  }
+
+  .push-subscribe-btn {
+    width: 100%;
+    justify-content: center;
+    padding: var(--space-sm) 0;
+  }
+}
 }
