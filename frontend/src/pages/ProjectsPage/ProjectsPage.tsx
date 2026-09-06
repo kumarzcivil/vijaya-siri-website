@@ -32,6 +32,7 @@ export default function ProjectsPage() {
       statusLabel: p.status === 'completed' ? 'Completed' : p.status === 'in-progress' ? 'In Progress' : 'Upcoming',
       rating: p.rating,
       imageUrl: p.imageUrl,
+      images: p.images || [],
       features: [p.bedrooms, p.type, p.size].filter(Boolean),
       tags: p.tags,
       featured: p.featured,

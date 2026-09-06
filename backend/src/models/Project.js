@@ -59,6 +59,17 @@ const projectSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    images: {
+      type: [{
+        url: { type: String, required: true },
+        isCover: { type: Boolean, default: false },
+      }],
+      default: [],
+      validate: {
+        validator: (v) => v.length <= 6,
+        message: 'A project can have at most 6 images',
+      },
+    },
     featured: {
       type: Boolean,
       default: false,

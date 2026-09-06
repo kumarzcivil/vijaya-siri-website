@@ -7,6 +7,7 @@ import {
   deleteProjectAPI,
   type Project,
   type ProjectFormData,
+  type ProjectImage,
 } from '../../api/projects';
 import './AdminPage.css';
 
@@ -38,51 +39,120 @@ const EMPTY_FORM: ProjectForm = {
   featured: false,
 };
 
-function ImageUpload({
-  previewUrl,
-  onFileSelect,
+interface ImageEntry {
+  file: File;
+  preview: string;
+}
+
+function MultiImageUpload({
+  existingImages,
+  newEntries,
+  coverIndex,
+  onAdd,
   onRemove,
+  onRemoveExisting,
+  onSetCover,
 }: {
-  previewUrl: string;
-  onFileSelect: (file: File) => void;
-  onRemove: () => void;
+  existingImages: ProjectImage[];
+  newEntries: ImageEntry[];
+  coverIndex: number;
+  onAdd: (files: File[]) => void;
+  onRemove: (idx: number) => void;
+  onRemoveExisting: (idx: number) => void;
+  onSetCover: (idx: number) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const total = existingImages.length + newEntries.length;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) onFileSelect(file);
+    const files = Array.from(e.target.files || []);
+    const remaining = 6 - total;
+    if (remaining > 0) {
+      onAdd(files.slice(0, remaining));
+    }
     e.target.value = '';
   };
 
   return (
-    <div className="admin-project-upload">
-      <div className="admin-project-upload-preview">
-        {previewUrl ? (
-          <img src={previewUrl} alt="Preview" draggable={false} />
-        ) : (
-          <span className="admin-hero-upload-empty">No image selected</span>
-        )}
-      </div>
-      <div className="admin-hero-upload-actions">
-        <label className="admin-btn admin-btn--upload">
-          Choose Image
-          <input
-            ref={inputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={handleChange}
-            className="admin-hero-upload-input"
-          />
-        </label>
-        {previewUrl && (
-          <button className="admin-btn admin-btn--cancel" onClick={onRemove} type="button">
-            Remove
-          </button>
+    <div className="admin-multi-upload">
+      <div className="admin-multi-grid">
+        {existingImages.map((img, idx) => (
+          <div
+            key={`existing-${idx}`}
+            className={`admin-multi-thumb ${idx === coverIndex ? 'admin-multi-thumb--cover' : ''}`}
+          >
+            <img src={img.url} alt={`Image ${idx + 1}`} draggable={false} />
+            <div className="admin-multi-actions">
+              <button
+                type="button"
+                className="admin-multi-btn admin-multi-btn--cover"
+                title={idx === coverIndex ? 'Cover image' : 'Set as cover'}
+                onClick={() => onSetCover(idx)}
+              >
+                {idx === coverIndex ? '★' : '☆'}
+              </button>
+              <button
+                type="button"
+                className="admin-multi-btn admin-multi-btn--remove"
+                title="Remove"
+                onClick={() => onRemoveExisting(idx)}
+              >
+                ×
+              </button>
+            </div>
+            {idx === coverIndex && <span className="admin-multi-cover-badge">Cover</span>}
+          </div>
+        ))}
+        {newEntries.map((entry, idx) => {
+          const globalIdx = existingImages.length + idx;
+          return (
+            <div
+              key={`new-${idx}`}
+              className={`admin-multi-thumb ${globalIdx === coverIndex ? 'admin-multi-thumb--cover' : ''}`}
+            >
+              <img src={entry.preview} alt={`New ${idx + 1}`} draggable={false} />
+              <div className="admin-multi-actions">
+                <button
+                  type="button"
+                  className="admin-multi-btn admin-multi-btn--cover"
+                  title={globalIdx === coverIndex ? 'Cover image' : 'Set as cover'}
+                  onClick={() => onSetCover(globalIdx)}
+                >
+                  {globalIdx === coverIndex ? '★' : '☆'}
+                </button>
+                <button
+                  type="button"
+                  className="admin-multi-btn admin-multi-btn--remove"
+                  title="Remove"
+                  onClick={() => onRemove(idx)}
+                >
+                  ×
+                </button>
+              </div>
+              {globalIdx === coverIndex && <span className="admin-multi-cover-badge">Cover</span>}
+            </div>
+          );
+        })}
+        {total < 6 && (
+          <label className="admin-multi-add">
+            <input
+              ref={inputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              onChange={handleChange}
+              className="admin-hero-upload-input"
+            />
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            <span>Add Image</span>
+          </label>
         )}
       </div>
       <p className="admin-hero-upload-note">
-        JPG, PNG or WebP. Image will be resized to ~500KB and stored on Cloudinary.
+        Up to 6 images. JPG, PNG or WebP. Click ☆ to set cover image. First image is used as cover by default.
       </p>
     </div>
   );
@@ -96,12 +166,13 @@ export default function AdminProjectsSection() {
   const [apiError, setApiError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<ProjectForm>(EMPTY_FORM);
-  const [editFile, setEditFile] = useState<File | null>(null);
-  const [editPreview, setEditPreview] = useState('');
+  const [editNewEntries, setEditNewEntries] = useState<ImageEntry[]>([]);
+  const [editExistingImages, setEditExistingImages] = useState<ProjectImage[]>([]);
+  const [editCoverIndex, setEditCoverIndex] = useState(0);
   const [isCreating, setIsCreating] = useState(false);
   const [createForm, setCreateForm] = useState<ProjectForm>(EMPTY_FORM);
-  const [createFile, setCreateFile] = useState<File | null>(null);
-  const [createPreview, setCreatePreview] = useState('');
+  const [createNewEntries, setCreateNewEntries] = useState<ImageEntry[]>([]);
+  const [createCoverIndex, setCreateCoverIndex] = useState(0);
 
   const fetchProjects = useCallback(async () => {
     try {
@@ -125,16 +196,17 @@ export default function AdminProjectsSection() {
     setIsCreating(true);
     setEditingId(null);
     setCreateForm({ ...EMPTY_FORM, displayOrder: projects.length ? Math.max(...projects.map(p => p.displayOrder)) + 1 : 1 });
-    setCreateFile(null);
-    setCreatePreview('');
+    setCreateNewEntries([]);
+    setCreateCoverIndex(0);
     setApiError(null);
   };
 
   const handleCancelCreate = () => {
     setIsCreating(false);
     setCreateForm(EMPTY_FORM);
-    setCreateFile(null);
-    setCreatePreview('');
+    createNewEntries.forEach((e) => URL.revokeObjectURL(e.preview));
+    setCreateNewEntries([]);
+    setCreateCoverIndex(0);
   };
 
   const handleSaveCreate = async () => {
@@ -145,11 +217,13 @@ export default function AdminProjectsSection() {
 
     setSaving(true);
     try {
-      await createProjectAPI(createForm, createFile);
+      const files = createNewEntries.map((e) => e.file);
+      await createProjectAPI(createForm, files.length > 0 ? files : null, createCoverIndex);
       setIsCreating(false);
       setCreateForm(EMPTY_FORM);
-      setCreateFile(null);
-      setCreatePreview('');
+      createNewEntries.forEach((e) => URL.revokeObjectURL(e.preview));
+      setCreateNewEntries([]);
+      setCreateCoverIndex(0);
       await fetchProjects();
     } catch (err: any) {
       setApiError(err?.message || 'Failed to create project');
@@ -173,8 +247,11 @@ export default function AdminProjectsSection() {
       tags: project.tags.join(', '),
       featured: project.featured,
     });
-    setEditFile(null);
-    setEditPreview(project.imageUrl);
+    const existing = project.images && project.images.length > 0 ? project.images : [];
+    setEditExistingImages(existing);
+    setEditNewEntries([]);
+    const coverIdx = existing.findIndex((img) => img.isCover);
+    setEditCoverIndex(coverIdx >= 0 ? coverIdx : 0);
     setApiError(null);
     setIsCreating(false);
   };
@@ -182,8 +259,10 @@ export default function AdminProjectsSection() {
   const handleCancelEdit = () => {
     setEditingId(null);
     setEditForm(EMPTY_FORM);
-    setEditFile(null);
-    setEditPreview('');
+    editNewEntries.forEach((e) => URL.revokeObjectURL(e.preview));
+    setEditNewEntries([]);
+    setEditExistingImages([]);
+    setEditCoverIndex(0);
   };
 
   const handleSaveEdit = async () => {
@@ -193,11 +272,20 @@ export default function AdminProjectsSection() {
 
     setSaving(true);
     try {
-      await updateProjectAPI(editingId, editForm, editFile);
+      const files = editNewEntries.map((e) => e.file);
+      await updateProjectAPI(
+        editingId,
+        editForm,
+        files.length > 0 ? files : null,
+        editExistingImages,
+        editCoverIndex
+      );
       setEditingId(null);
       setEditForm(EMPTY_FORM);
-      setEditFile(null);
-      setEditPreview('');
+      editNewEntries.forEach((e) => URL.revokeObjectURL(e.preview));
+      setEditNewEntries([]);
+      setEditExistingImages([]);
+      setEditCoverIndex(0);
       await fetchProjects();
     } catch (err: any) {
       setApiError(err?.message || 'Failed to update project');
@@ -221,22 +309,63 @@ export default function AdminProjectsSection() {
     navigate(`/projects/${id}`);
   };
 
-  const handleCreateFileSelect = (file: File) => {
-    setCreateFile(file);
-    setCreatePreview(URL.createObjectURL(file));
+  const handleCreateAddImages = (files: File[]) => {
+    const entries = files.map((file) => ({
+      file,
+      preview: URL.createObjectURL(file),
+    }));
+    setCreateNewEntries((prev) => [...prev, ...entries]);
   };
 
-  const handleEditFileSelect = (file: File) => {
-    setEditFile(file);
-    setEditPreview(URL.createObjectURL(file));
+  const handleCreateRemoveImage = (idx: number) => {
+    setCreateNewEntries((prev) => {
+      URL.revokeObjectURL(prev[idx].preview);
+      const next = prev.filter((_, i) => i !== idx);
+      if (createCoverIndex >= (editExistingImages.length + next.length)) {
+        setCreateCoverIndex(0);
+      }
+      return next;
+    });
   };
+
+  const handleEditAddImages = (files: File[]) => {
+    const entries = files.map((file) => ({
+      file,
+      preview: URL.createObjectURL(file),
+    }));
+    setEditNewEntries((prev) => [...prev, ...entries]);
+  };
+
+  const handleEditRemoveImage = (idx: number) => {
+    setEditNewEntries((prev) => {
+      URL.revokeObjectURL(prev[idx].preview);
+      return prev.filter((_, i) => i !== idx);
+    });
+  };
+
+  const handleEditRemoveExisting = (idx: number) => {
+    setEditExistingImages((prev) => {
+      const next = prev.filter((_, i) => i !== idx);
+      if (editCoverIndex >= next.length + editNewEntries.length) {
+        setEditCoverIndex(0);
+      }
+      return next;
+    });
+  };
+
+  const handleCreateSetCover = (idx: number) => setCreateCoverIndex(idx);
+  const handleEditSetCover = (idx: number) => setEditCoverIndex(idx);
 
   const renderForm = (
     form: ProjectForm,
     setForm: (f: ProjectForm) => void,
-    previewUrl: string,
-    onFileSelect: (file: File) => void,
-    onRemove: () => void,
+    existingImages: ProjectImage[],
+    newEntries: ImageEntry[],
+    coverIndex: number,
+    onAdd: (files: File[]) => void,
+    onRemove: (idx: number) => void,
+    onRemoveExisting: (idx: number) => void,
+    onSetCover: (idx: number) => void,
   ) => (
     <div className="admin-edit-grid">
       <label className="admin-field">
@@ -290,8 +419,16 @@ export default function AdminProjectsSection() {
         </span>
       </label>
       <div className="admin-field admin-field--wide">
-        <span className="admin-field-label">Image</span>
-        <ImageUpload previewUrl={previewUrl} onFileSelect={onFileSelect} onRemove={onRemove} />
+        <span className="admin-field-label">Images (up to 6)</span>
+        <MultiImageUpload
+          existingImages={existingImages}
+          newEntries={newEntries}
+          coverIndex={coverIndex}
+          onAdd={onAdd}
+          onRemove={onRemove}
+          onRemoveExisting={onRemoveExisting}
+          onSetCover={onSetCover}
+        />
       </div>
     </div>
   );
@@ -316,7 +453,7 @@ export default function AdminProjectsSection() {
       <div className="admin-header">
         <h1 className="admin-title">Projects</h1>
         <p className="admin-subtitle">
-          Manage featured projects. Images are uploaded to Cloudinary and resized to ~500KB.
+          Manage featured projects. Up to 6 images per project. Images are stored on Cloudinary.
         </p>
         <div className="admin-actions">
           {!isCreating && (
@@ -337,7 +474,12 @@ export default function AdminProjectsSection() {
         {isCreating && (
           <div className="admin-project-row admin-project-row--create">
             <div className="admin-edit-form">
-              {renderForm(createForm, setCreateForm, createPreview, handleCreateFileSelect, () => { setCreateFile(null); setCreatePreview(''); })}
+              {renderForm(
+                createForm, setCreateForm,
+                [], createNewEntries, createCoverIndex,
+                handleCreateAddImages, handleCreateRemoveImage,
+                () => {}, handleCreateSetCover
+              )}
               <div className="admin-edit-actions">
                 <button className="admin-btn admin-btn--save" onClick={handleSaveCreate} disabled={saving} type="button">
                   {saving ? 'Creating...' : 'Create Project'}
@@ -354,7 +496,12 @@ export default function AdminProjectsSection() {
           <div key={project._id} className={`admin-project-row ${project.featured ? 'admin-project-row--featured' : ''}`}>
             {editingId === project._id ? (
               <div className="admin-edit-form">
-                {renderForm(editForm, setEditForm, editPreview, handleEditFileSelect, () => { setEditFile(null); setEditPreview(''); })}
+                {renderForm(
+                  editForm, setEditForm,
+                  editExistingImages, editNewEntries, editCoverIndex,
+                  handleEditAddImages, handleEditRemoveImage,
+                  handleEditRemoveExisting, handleEditSetCover
+                )}
                 <div className="admin-edit-actions">
                   <button className="admin-btn admin-btn--save" onClick={handleSaveEdit} disabled={saving} type="button">
                     {saving ? 'Saving...' : 'Save Changes'}
@@ -379,6 +526,9 @@ export default function AdminProjectsSection() {
                     <p className="admin-project-meta">
                       {project.status} &middot; Rating: {project.rating} &middot; {project.bedrooms}
                     </p>
+                    {project.images && project.images.length > 1 && (
+                      <p className="admin-project-meta">{project.images.length} images</p>
+                    )}
                   </div>
                   <span className={`admin-featured-badge ${project.featured ? 'admin-featured-badge--on' : ''}`}>
                     {project.featured ? 'Featured' : 'Hidden'}

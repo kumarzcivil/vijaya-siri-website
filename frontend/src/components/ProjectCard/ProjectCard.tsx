@@ -13,6 +13,7 @@ interface FeaturedProject {
   statusLabel: string;
   rating: number;
   imageUrl: string;
+  images: Array<{ url: string; isCover: boolean }>;
   features: string[];
   tags: string[];
   featured: boolean;

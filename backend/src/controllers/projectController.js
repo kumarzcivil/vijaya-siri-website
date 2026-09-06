@@ -126,12 +126,22 @@ const createProject = async (req, res) => {
       displayOrder,
       tags,
       featured,
+      coverIndex,
     } = req.body;
 
     let imageUrl = "";
-    if (req.file) {
-      const result = await uploadToCloudinary(req.file);
-      imageUrl = result.secure_url;
+    const images = [];
+
+    if (req.files && req.files.length > 0) {
+      const uploadPromises = req.files.map((file) => uploadToCloudinary(file));
+      const results = await Promise.all(uploadPromises);
+      results.forEach((result, idx) => {
+        images.push({
+          url: result.secure_url,
+          isCover: String(idx) === String(coverIndex || 0),
+        });
+      });
+      imageUrl = images[0]?.url || "";
     }
 
     const project = await Project.create({
@@ -153,6 +163,7 @@ const createProject = async (req, res) => {
           : tags
         : [],
       imageUrl,
+      images,
       featured: featured === "true" || featured === true,
     });
 
@@ -191,11 +202,40 @@ const updateProject = async (req, res) => {
       displayOrder,
       tags,
       featured,
+      coverIndex,
+      existingImages,
     } = req.body;
 
-    if (req.file) {
-      const result = await uploadToCloudinary(req.file);
-      project.imageUrl = result.secure_url;
+    if (req.files && req.files.length > 0) {
+      const uploadPromises = req.files.map((file) => uploadToCloudinary(file));
+      const results = await Promise.all(uploadPromises);
+      const newImages = results.map((result, idx) => ({
+        url: result.secure_url,
+        isCover: String(idx) === String(coverIndex || 0),
+      }));
+
+      if (existingImages) {
+        const parsed = typeof existingImages === "string" ? JSON.parse(existingImages) : existingImages;
+        project.images = [...parsed, ...newImages];
+      } else {
+        project.images = newImages;
+      }
+    } else if (existingImages) {
+      const parsed = typeof existingImages === "string" ? JSON.parse(existingImages) : existingImages;
+      project.images = parsed;
+    }
+
+    if (project.images.length > 0 && coverIndex !== undefined) {
+      const ci = parseInt(coverIndex) || 0;
+      project.images = project.images.map((img, idx) => ({
+        ...img,
+        isCover: idx === ci,
+      }));
+    }
+
+    if (project.images.length > 0) {
+      const cover = project.images.find((img) => img.isCover) || project.images[0];
+      project.imageUrl = cover.url;
     }
 
     if (name !== undefined) project.name = name;

@@ -1572,3 +1572,120 @@
   font-size: 0.75rem;
   margin: 0;
 }
+
+/* ============================================
+   MULTI-IMAGE UPLOAD — Project gallery
+   ============================================ */
+.admin-multi-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.admin-multi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.75rem;
+}
+
+.admin-multi-thumb {
+  position: relative;
+  aspect-ratio: 4/3;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 2px solid var(--color-border);
+  transition: border-color var(--transition-fast);
+}
+
+.admin-multi-thumb--cover {
+  border-color: var(--color-primary);
+}
+
+.admin-multi-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.admin-multi-actions {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.admin-multi-thumb:hover .admin-multi-actions {
+  opacity: 1;
+}
+
+.admin-multi-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  transition: all var(--transition-fast);
+}
+
+.admin-multi-btn--cover {
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--color-text-secondary);
+}
+
+.admin-multi-btn--cover:hover {
+  background: var(--color-primary);
+  color: white;
+}
+
+.admin-multi-btn--remove {
+  background: rgba(220, 53, 69, 0.9);
+  color: white;
+}
+
+.admin-multi-btn--remove:hover {
+  background: #c82333;
+}
+
+.admin-multi-cover-badge {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  padding: 2px 8px;
+  background: var(--color-primary);
+  color: white;
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  border-radius: var(--radius-pill);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.admin-multi-add {
+  aspect-ratio: 4/3;
+  border-radius: var(--radius-md);
+  border: 2px dashed var(--color-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  cursor: pointer;
+  color: var(--color-text-tertiary);
+  font-size: 11px;
+  transition: all var(--transition-fast);
+}
+
+.admin-multi-add:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+}

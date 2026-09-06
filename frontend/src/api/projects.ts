@@ -1,10 +1,15 @@
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'https://vijaya-siri-website-qvmi.onrender.com /api';
 
 interface ApiResponse<T> {
   success: boolean;
   message: string;
   data?: T;
   errors?: Array<{ field: string; message: string }>;
+}
+
+export interface ProjectImage {
+  url: string;
+  isCover: boolean;
 }
 
 export interface Project {
@@ -20,6 +25,7 @@ export interface Project {
   displayOrder: number;
   tags: string[];
   imageUrl: string;
+  images: ProjectImage[];
   featured: boolean;
   createdAt: string;
   updatedAt: string;
@@ -86,7 +92,8 @@ export async function getProjectAPI(id: string): Promise<ApiResponse<{ project: 
 
 export async function createProjectAPI(
   formData: ProjectFormData,
-  imageFile?: File | null
+  imageFiles?: File[] | null,
+  coverIndex?: number
 ): Promise<ApiResponse<{ project: Project }>> {
   const body = new FormData();
   body.append('name', formData.name);
@@ -100,8 +107,11 @@ export async function createProjectAPI(
   body.append('displayOrder', String(formData.displayOrder));
   body.append('tags', formData.tags);
   body.append('featured', String(formData.featured));
-  if (imageFile) {
-    body.append('image', imageFile);
+  if (coverIndex !== undefined) {
+    body.append('coverIndex', String(coverIndex));
+  }
+  if (imageFiles && imageFiles.length > 0) {
+    imageFiles.forEach((file) => body.append('images', file));
   }
 
   return apiRequest<{ project: Project }>('/projects', {
@@ -113,7 +123,9 @@ export async function createProjectAPI(
 export async function updateProjectAPI(
   id: string,
   formData: ProjectFormData,
-  imageFile?: File | null
+  imageFiles?: File[] | null,
+  existingImages?: ProjectImage[],
+  coverIndex?: number
 ): Promise<ApiResponse<{ project: Project }>> {
   const body = new FormData();
   body.append('name', formData.name);
@@ -127,8 +139,14 @@ export async function updateProjectAPI(
   body.append('displayOrder', String(formData.displayOrder));
   body.append('tags', formData.tags);
   body.append('featured', String(formData.featured));
-  if (imageFile) {
-    body.append('image', imageFile);
+  if (coverIndex !== undefined) {
+    body.append('coverIndex', String(coverIndex));
+  }
+  if (existingImages) {
+    body.append('existingImages', JSON.stringify(existingImages));
+  }
+  if (imageFiles && imageFiles.length > 0) {
+    imageFiles.forEach((file) => body.append('images', file));
   }
 
   return apiRequest<{ project: Project }>(`/projects/${id}`, {

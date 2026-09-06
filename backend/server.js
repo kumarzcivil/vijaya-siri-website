@@ -34,7 +34,7 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https:", "http:"],
-      connectSrc: ["'self'", "http://localhost:5000", "http://localhost:5173/"],
+      connectSrc: ["'self'", "https://vijaya-siri-website-qvmi.onrender.com ", "https://vijaya-siri-website-two.vercel.app/"],
       workerSrc: ["'self'", "blob:"],
     },
   },
