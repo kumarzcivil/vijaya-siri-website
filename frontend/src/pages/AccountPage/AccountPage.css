@@ -1170,6 +1170,140 @@ button.acc-tile {
 }
 
 /* ============================================
+   PROFILE FORM — Mobile Responsive
+   ============================================ */
+
+/* Small phones (< 375px) */
+@media (max-width: 374px) {
+  .acc-form-card {
+    padding: var(--space-md) var(--space-sm);
+    border-radius: var(--radius-md);
+  }
+
+  .acc-form-title {
+    font-size: 0.9rem;
+  }
+
+  .acc-input {
+    padding: 0.55rem 0.6rem;
+    font-size: 0.8125rem;
+  }
+
+  .acc-input-prefix {
+    padding: 0.55rem 0.5rem;
+    font-size: 0.75rem;
+    min-width: 38px;
+  }
+
+  .acc-btn {
+    width: 100%;
+    padding: 0.65rem 1rem;
+  }
+
+  .acc-form-actions {
+    justify-content: stretch;
+  }
+
+  .acc-notice {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: 0.75rem;
+  }
+}
+
+/* All phones and small tablets (max 480px) */
+@media (max-width: 480px) {
+  .account-layout {
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .account-sidebar {
+    width: 100%;
+    border-radius: var(--radius-lg);
+  }
+
+  .account-nav {
+    gap: 2px;
+  }
+
+  .account-nav-item {
+    padding: 0.5rem;
+    font-size: 0.6875rem;
+    border-bottom: 2px solid transparent;
+    border-left: none;
+  }
+
+  .account-nav-icon {
+    display: none;
+  }
+
+  .account-content {
+    width: 100%;
+  }
+
+  .acc-form-card {
+    padding: var(--space-md);
+  }
+
+  .acc-field {
+    gap: 0.25rem;
+  }
+
+  .acc-input {
+    padding: 0.6rem 0.7rem;
+    font-size: 0.875rem;
+    min-height: 44px;
+  }
+
+  .acc-input-group {
+    gap: 0;
+  }
+
+  .acc-input-prefix {
+    padding: 0.6rem 0.55rem;
+    font-size: 0.8125rem;
+    min-width: 42px;
+  }
+
+  .acc-input--phone {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+
+  .acc-btn {
+    width: 100%;
+    padding: 0.7rem 1rem;
+    min-height: 44px;
+  }
+
+  .acc-form-actions {
+    justify-content: stretch;
+  }
+
+  .acc-notice {
+    padding: var(--space-sm);
+    font-size: 0.8125rem;
+  }
+}
+
+/* Tablets (481px – 767px) */
+@media (min-width: 481px) and (max-width: 767px) {
+  .account-sidebar {
+    width: 100%;
+  }
+
+  .account-nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .account-nav-item {
+    flex-shrink: 0;
+  }
+}
+
+/* ============================================
    EMPTY STATE
    ============================================ */
 .acc-empty {
