@@ -230,6 +230,105 @@
 }
 
 /* ============================================
+   PACKAGE OVERVIEW CARDS
+   ============================================ */
+.compare-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.compare-overview-card {
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  position: relative;
+  text-align: center;
+  transition: box-shadow var(--transition-normal), border-color var(--transition-normal);
+}
+
+.compare-overview-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.compare-overview-card--popular {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+.compare-overview-badge {
+  display: inline-block;
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  font-size: 0.6rem;
+  font-weight: var(--font-weight-bold);
+  padding: 0.15rem 0.6rem;
+  border-radius: var(--radius-pill);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.6rem;
+}
+
+.compare-overview-name {
+  font-size: var(--font-h4);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin-bottom: 0.35rem;
+}
+
+.compare-overview-price {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.3rem;
+  margin-bottom: 0.5rem;
+}
+
+.compare-overview-amount {
+  font-size: var(--font-h3);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--color-primary);
+  letter-spacing: -0.02em;
+}
+
+.compare-overview-unit {
+  font-size: var(--font-caption);
+  color: var(--color-text-tertiary);
+  font-weight: var(--font-weight-medium);
+}
+
+.compare-overview-tagline {
+  font-size: var(--font-small);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-relaxed);
+  margin-bottom: 0.75rem;
+}
+
+.compare-overview-features {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+}
+
+.compare-overview-feature {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: var(--font-small);
+  color: var(--color-text-secondary);
+  padding: 0.25rem 0;
+  line-height: 1.4;
+}
+
+.compare-overview-feature svg {
+  color: var(--color-success);
+  flex-shrink: 0;
+}
+
+/* ============================================
    EMPTY STATE
    ============================================ */
 .compare-empty {
@@ -793,6 +892,38 @@
 
   /* Toggle */
   .compare-toggle-label {
+    font-size: var(--font-caption);
+  }
+
+  /* Overview cards */
+  .compare-overview-grid {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.6rem;
+  }
+
+  .compare-overview-card {
+    padding: 0.9rem 0.75rem;
+  }
+
+  .compare-overview-badge {
+    font-size: 0.5rem;
+    top: -7px;
+    padding: 0.1rem 0.35rem;
+  }
+
+  .compare-overview-name {
+    font-size: var(--font-body);
+  }
+
+  .compare-overview-amount {
+    font-size: var(--font-h4);
+  }
+
+  .compare-overview-tagline {
+    font-size: var(--font-caption);
+  }
+
+  .compare-overview-feature {
     font-size: var(--font-caption);
   }
 

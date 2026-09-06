@@ -27,6 +27,9 @@ interface UIPackage {
   price: number | null;
   pricePrefix: string;
   priceUnit: string;
+  tagline: string;
+  description: string;
+  features: string[];
   popular?: boolean;
 }
 
@@ -45,6 +48,9 @@ function buildMatrix(packages: Package[]): { uiPackages: UIPackage[]; categories
     price: p.pricePerSqFt,
     pricePrefix: p.pricePrefix || '\u20B9',
     priceUnit: p.priceUnit || 'per sq.ft',
+    tagline: p.tagline || '',
+    description: p.description || '',
+    features: p.features || [],
     popular: p.popular || p.isDefault,
   }));
 
@@ -146,7 +152,6 @@ export default function ComparePackagesPage() {
     [allPackages]
   );
 
-  const initialHighlight = searchParams.get('highlight');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [highlightDiffs, setHighlightDiffs] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>(() => {
@@ -159,7 +164,6 @@ export default function ComparePackagesPage() {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
 
-  // Auto-select all packages once they load
   useEffect(() => {
     if (fixedPackages.length > 0 && selectedIds.length === 0) {
       const highlight = searchParams.get('highlight');
@@ -318,81 +322,110 @@ export default function ComparePackagesPage() {
         )}
 
         {selectedPackages.length > 0 && (
-          <div className="compare-table-wrapper">
-            <table className="compare-desktop-table">
-              <thead>
-                <tr>
-                  <th className="compare-th-label">
-                    <span className="compare-th-label-text">Feature</span>
-                  </th>
-                  {selectedPackages.map((pkg) => (
-                    <th key={pkg._id} className={`compare-th-pkg ${pkg.popular ? 'compare-th-pkg--popular' : ''}`}>
-                      {pkg.popular && <span className="compare-th-badge">Most Popular</span>}
-                      <span className="compare-th-name">{pkg.comparisonName}</span>
-                      <span className="compare-th-price">{formatPrice(pkg)}</span>
-                      <span className="compare-th-unit">per sq.ft</span>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {visibleCategories.map(({ cat, rows }) => (
-                  <CategorySection key={cat.id} cat={cat} rows={rows} selectedPackages={selectedPackages} />
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {selectedPackages.length > 0 && (
-          <div className="compare-mobile">
-            {visibleCategories.map(({ cat, rows }) => {
-              const isExpanded = expandedCategories[cat.id] !== false;
-              return (
-                <div key={cat.id} className="compare-mobile-category">
-                  <button
-                    type="button"
-                    className="compare-mobile-cat-header"
-                    onClick={() => toggleCategory(cat.id)}
-                    aria-expanded={isExpanded}
-                  >
-                    <div className="compare-mobile-cat-header-left">
-                      <h3 className="compare-mobile-cat-title">{cat.title}</h3>
-                      {cat.subtitle && <span className="compare-mobile-cat-subtitle">{cat.subtitle}</span>}
-                    </div>
-                    <svg className={`compare-mobile-cat-arrow ${isExpanded ? 'compare-mobile-cat-arrow--open' : ''}`} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
-                  </button>
-                  {isExpanded && (
-                    <div className="compare-mobile-cat-body">
-                      {rows.map((row) => (
-                        <div key={row.id} className="compare-mobile-spec">
-                          <div className="compare-mobile-spec-header">
-                            <span className="compare-mobile-spec-label">{row.label}</span>
-                            {row.reference && <span className="compare-mobile-spec-ref">{row.reference}</span>}
-                          </div>
-                          <div className="compare-mobile-spec-values">
-                            {selectedPackages.map((pkg) => {
-                              const val = row.values[pkg._id];
-                              return (
-                                <div key={pkg._id} className="compare-mobile-spec-value">
-                                  <span className="compare-mobile-spec-pkg">{pkg.comparisonName}</span>
-                                  <div className="compare-mobile-spec-val">
-                                    {renderSpecValue(val)}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
+          <>
+            {/* Package Overview Cards */}
+            <div className="compare-overview-grid">
+              {selectedPackages.map((pkg) => (
+                <div key={pkg._id} className={`compare-overview-card ${pkg.popular ? 'compare-overview-card--popular' : ''}`}>
+                  {pkg.popular && <span className="compare-overview-badge">Most Popular</span>}
+                  <h3 className="compare-overview-name">{pkg.comparisonName}</h3>
+                  <div className="compare-overview-price">
+                    <span className="compare-overview-amount">{formatPrice(pkg)}</span>
+                    <span className="compare-overview-unit">{pkg.priceUnit}</span>
+                  </div>
+                  {pkg.tagline && <p className="compare-overview-tagline">{pkg.tagline}</p>}
+                  {pkg.features.length > 0 && (
+                    <ul className="compare-overview-features">
+                      {pkg.features.map((f, i) => (
+                        <li key={i} className="compare-overview-feature">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                          {f}
+                        </li>
                       ))}
-                    </div>
+                    </ul>
                   )}
                 </div>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+
+            {/* Desktop Table */}
+            <div className="compare-table-wrapper">
+              <table className="compare-desktop-table">
+                <thead>
+                  <tr>
+                    <th className="compare-th-label">
+                      <span className="compare-th-label-text">Feature</span>
+                    </th>
+                    {selectedPackages.map((pkg) => (
+                      <th key={pkg._id} className={`compare-th-pkg ${pkg.popular ? 'compare-th-pkg--popular' : ''}`}>
+                        {pkg.popular && <span className="compare-th-badge">Most Popular</span>}
+                        <span className="compare-th-name">{pkg.comparisonName}</span>
+                        <span className="compare-th-price">{formatPrice(pkg)}</span>
+                        <span className="compare-th-unit">per sq.ft</span>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleCategories.map(({ cat, rows }) => (
+                    <CategorySection key={cat.id} cat={cat} rows={rows} selectedPackages={selectedPackages} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="compare-mobile">
+              {visibleCategories.map(({ cat, rows }) => {
+                const isExpanded = expandedCategories[cat.id] !== false;
+                return (
+                  <div key={cat.id} className="compare-mobile-category">
+                    <button
+                      type="button"
+                      className="compare-mobile-cat-header"
+                      onClick={() => toggleCategory(cat.id)}
+                      aria-expanded={isExpanded}
+                    >
+                      <div className="compare-mobile-cat-header-left">
+                        <h3 className="compare-mobile-cat-title">{cat.title}</h3>
+                        {cat.subtitle && <span className="compare-mobile-cat-subtitle">{cat.subtitle}</span>}
+                      </div>
+                      <svg className={`compare-mobile-cat-arrow ${isExpanded ? 'compare-mobile-cat-arrow--open' : ''}`} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="6 9 12 15 18 9" />
+                      </svg>
+                    </button>
+                    {isExpanded && (
+                      <div className="compare-mobile-cat-body">
+                        {rows.map((row) => (
+                          <div key={row.id} className="compare-mobile-spec">
+                            <div className="compare-mobile-spec-header">
+                              <span className="compare-mobile-spec-label">{row.label}</span>
+                              {row.reference && <span className="compare-mobile-spec-ref">{row.reference}</span>}
+                            </div>
+                            <div className="compare-mobile-spec-values">
+                              {selectedPackages.map((pkg) => {
+                                const val = row.values[pkg._id];
+                                return (
+                                  <div key={pkg._id} className="compare-mobile-spec-value">
+                                    <span className="compare-mobile-spec-pkg">{pkg.comparisonName}</span>
+                                    <div className="compare-mobile-spec-val">
+                                      {renderSpecValue(val)}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
 
         <div className="compare-bottom-cta">
