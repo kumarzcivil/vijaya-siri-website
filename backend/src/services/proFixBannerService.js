@@ -3,7 +3,7 @@ import ProFixBanner from '../models/proFix/ProFixBanner.js';
 class ProFixBannerService {
   async list(query = {}) {
     const filter = {};
-    if (query.active !== undefined) filter.active = query.active === 'true';
+    if (query.active !== undefined) filter.status = query.active === 'true' ? 'active' : 'inactive';
     if (query.search) {
       filter.$or = [
         { title: { $regex: query.search, $options: 'i' } },
@@ -40,7 +40,7 @@ class ProFixBannerService {
   async getStats() {
     const [total, active] = await Promise.all([
       ProFixBanner.countDocuments(),
-      ProFixBanner.countDocuments({ active: true }),
+      ProFixBanner.countDocuments({ status: 'active' }),
     ]);
     return { total, active, inactive: total - active };
   }
