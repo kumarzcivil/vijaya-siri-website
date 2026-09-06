@@ -34,7 +34,7 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https:", "http:"],
-      connectSrc: ["'self'", "https://vijaya-siri-website.onrender.com", "https://vijaya-siri-website.vercel.app/"],
+      connectSrc: ["'self'", "https://vijaya-siri-website-qvmi.onrender.com", "https://vijaya-siri-website-two.vercel.app/"],
       workerSrc: ["'self'", "blob:"],
     },
   },
@@ -42,7 +42,7 @@ app.use(helmet({
 }));
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "https://vijaya-siri-website.vercel.app",
+    origin: "*",
     credentials: true,
   }),
 );
