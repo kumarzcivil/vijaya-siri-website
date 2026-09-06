@@ -41,11 +41,11 @@ function buildMatrix(packages: Package[]): { uiPackages: UIPackage[]; categories
   const uiPackages: UIPackage[] = packages.map((p) => ({
     _id: p._id,
     name: p.name,
-    comparisonName: p.name,
+    comparisonName: p.comparisonName || p.name,
     price: p.pricePerSqFt,
-    pricePrefix: '\u20B9',
-    priceUnit: 'per sq.ft',
-    popular: p.isDefault,
+    pricePrefix: p.pricePrefix || '\u20B9',
+    priceUnit: p.priceUnit || 'per sq.ft',
+    popular: p.popular || p.isDefault,
   }));
 
   const categoryMap = new Map<string, SpecCategory>();
@@ -147,13 +147,7 @@ export default function ComparePackagesPage() {
   );
 
   const initialHighlight = searchParams.get('highlight');
-  const [selectedIds, setSelectedIds] = useState<string[]>(() => {
-    if (initialHighlight && fixedPackages.some((p) => p._id === initialHighlight)) {
-      return [initialHighlight];
-    }
-    return fixedPackages.map((p) => p._id);
-  });
-
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [highlightDiffs, setHighlightDiffs] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
@@ -164,6 +158,18 @@ export default function ComparePackagesPage() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
+
+  // Auto-select all packages once they load
+  useEffect(() => {
+    if (fixedPackages.length > 0 && selectedIds.length === 0) {
+      const highlight = searchParams.get('highlight');
+      if (highlight && fixedPackages.some((p) => p._id === highlight)) {
+        setSelectedIds([highlight]);
+      } else {
+        setSelectedIds(fixedPackages.map((p) => p._id));
+      }
+    }
+  }, [fixedPackages, selectedIds.length, searchParams]);
 
   useEffect(() => {
     const highlight = searchParams.get('highlight');
