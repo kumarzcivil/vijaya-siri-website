@@ -236,7 +236,7 @@ export default function QuickFixServicesSection() {
     const payload = {
       name,
       categoryId: editForm.categoryId,
-      image: editForm.image.trim() || undefined,
+      image: editForm.image.trim() ? { url: editForm.image.trim(), publicId: '' } : undefined,
       shortDescription: editForm.shortDescription.trim(),
       description: editForm.description.trim(),
       includedItems: editForm.includedText
