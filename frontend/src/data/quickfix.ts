@@ -53,7 +53,7 @@ export const quickFixCategories: QuickFixCategory[] = [
   { id: 'electrical', name: 'Electrical', icon: 'star', active: true, displayOrder: 1 },
   { id: 'plumbing', name: 'Plumbing', icon: 'clipboard', active: true, displayOrder: 2 },
   { id: 'carpentry', name: 'Carpentry', icon: 'wrench', active: true, displayOrder: 3 },
-  { id: 'appliances', name: 'Appliances', icon: 'armchair', active: true, displayOrder: 4 },
+  { id: 'appliances', name: 'Carpentry', icon: 'armchair', active: true, displayOrder: 4 },
   { id: 'cleaning', name: 'Cleaning', icon: 'leaf', active: true, displayOrder: 5 },
   { id: 'pest-control', name: 'Pest Control', icon: 'shield-check', active: true, displayOrder: 6 },
   { id: 'painting', name: 'Painting', icon: 'diamond', active: true, displayOrder: 7 },
