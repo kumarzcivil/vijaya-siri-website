@@ -9,10 +9,11 @@ export default function PushAutoSubscribe() {
   const [permission, setPermission] = useState<'default' | 'granted' | 'denied'>('default');
 
   useEffect(() => {
+    if (typeof Notification === 'undefined') return;
     if (Notification.permission === 'granted') setPermission('granted');
     else if (Notification.permission === 'denied') setPermission('denied');
     else setPermission('default');
-  }, [Notification.permission]);
+  }, []);
 
   const handleSubscribe = async () => {
     if (!supported) return;
