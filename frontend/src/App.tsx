@@ -68,7 +68,6 @@ import ServiceGate from './components/ServiceGate/ServiceGate';
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
 import AnonRoute from './components/ProtectedRoute/AnonRoute';
 import AdminRoute from './components/ProtectedRoute/AdminRoute';
-import LogPanel from './components/LogPanel/LogPanel';
 import PaymentPage from './pages/PaymentPage/PaymentPage';
 import CartPage from './pages/CartPage/CartPage';
 import CheckoutPage from './pages/CheckoutPage/CheckoutPage';
@@ -312,7 +311,6 @@ function AppLayout() {
           <MobileNavigation />
         </>
       )}
-      <LogPanel />
     </div>
   );
 }

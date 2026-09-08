@@ -243,10 +243,12 @@ export default function ProFixServiceDetailPage() {
                     </>
                   )}
                 </button>
-                <button className="pfsd-cta" onClick={handleCreateEstimate} type="button">
-                  Create Estimate
-                  <Icon name="arrow-right" size={16} />
-                </button>
+                {!pricingEnabled && (
+                  <button className="pfsd-cta" onClick={handleCreateEstimate} type="button">
+                    Create Estimate
+                    <Icon name="arrow-right" size={16} />
+                  </button>
+                )}
               </div>
               <div className="pfsd-booking-support">
                 <a
