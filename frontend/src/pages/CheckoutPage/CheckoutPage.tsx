@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../hooks/useCart';
 import { useAuth } from '../../context/AuthContext';
@@ -8,7 +8,7 @@ import { createBooking } from '../../api/bookings';
 import { createNotification } from '../../api/notifications';
 import { getPaymentPreferences, type PaymentPreference } from '../../data/customerStore';
 import Icon from '../../components/Icon/Icon';
-import { SkeletonRow } from '../../components/Skeleton/Skeleton';
+import { Skeleton, SkeletonRow } from '../../components/Skeleton/Skeleton';
 import { logger } from '../../utils/logger';
 import './CheckoutPage.css';
 
@@ -50,11 +50,19 @@ export default function CheckoutPage() {
   const [couponLoading, setCouponLoading] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [toast, setToast] = useState<{ message: string; isError?: boolean } | null>(null);
+  const toastTimer = useRef<number | null>(null);
+
+  const showToast = useCallback((message: string, isError = false) => {
+    if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
+    setToast({ message, isError });
+    toastTimer.current = window.setTimeout(() => setToast(null), 3000);
+  }, []);
 
   const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'UPI' | 'CARD' | 'NETBANKING'>('CASH');
   const [savedPrefs, setSavedPrefs] = useState<PaymentPreference[]>([]);
   const [selectedPrefId, setSelectedPrefId] = useState('');
+  const [loadingPrefs, setLoadingPrefs] = useState(true);
 
   useEffect(() => {
     if (items.length === 0) {
@@ -65,12 +73,19 @@ export default function CheckoutPage() {
       setCustomerName(user.name || '');
       setCustomerMobile(user.mobile || user.phone || '');
 
-      const prefs = getPaymentPreferences(user._id || user.id || '');
-      setSavedPrefs(prefs);
-      const defaultPref = prefs.find((p) => p.isDefault);
-      if (defaultPref) {
-        setPaymentMethod(defaultPref.method);
-        setSelectedPrefId(defaultPref.id);
+      try {
+        const customerId = user._id || user.id || '';
+        const prefs = Array.isArray(getPaymentPreferences(customerId)) ? getPaymentPreferences(customerId) : [];
+        setSavedPrefs(prefs);
+        const defaultPref = prefs.find((p) => p.isDefault);
+        if (defaultPref) {
+          setPaymentMethod(defaultPref.method);
+          setSelectedPrefId(defaultPref.id);
+        }
+      } catch {
+        setSavedPrefs([]);
+      } finally {
+        setLoadingPrefs(false);
       }
     }
   }, [items.length, navigate, user]);
@@ -79,9 +94,10 @@ export default function CheckoutPage() {
     if (!user) return;
     setLoadingAddresses(true);
     getAddressesAPI()
-      .then((data) => {
-        setAddresses(data);
-        const def = data.find((a: Address) => a.isDefault);
+      .then((res) => {
+        const list = res.data?.addresses || [];
+        setAddresses(list);
+        const def = list.find((a: Address) => a.isDefault);
         if (def) setSelectedAddressId(def._id);
       })
       .catch(() => {})
@@ -119,10 +135,9 @@ export default function CheckoutPage() {
   const finalAmount = Math.max(0, total - couponDiscount);
 
   const handleSubmit = async () => {
-    setError('');
-    if (!customerName.trim()) { setError('Name is required'); return; }
-    if (!customerMobile.trim() || !/^\d{10}$/.test(customerMobile.trim())) { setError('Valid 10-digit mobile number is required'); return; }
-    if (!siteAddress.trim()) { setError('Site address is required'); return; }
+    if (!customerName.trim()) { showToast('Name is required', true); return; }
+    if (!customerMobile.trim() || !/^\d{10}$/.test(customerMobile.trim())) { showToast('Valid 10-digit mobile number is required', true); return; }
+    if (!siteAddress.trim()) { showToast('Site address is required', true); return; }
 
     setSubmitting(true);
     try {
@@ -164,7 +179,7 @@ export default function CheckoutPage() {
       navigate('/bookings', { replace: true });
     } catch (err: any) {
       logger.error('Checkout', `Booking creation failed: ${err.message}`);
-      setError(err.message || 'Failed to create bookings. Please try again.');
+      showToast(err.message || 'Failed to create bookings. Please try again.', true);
     } finally {
       setSubmitting(false);
     }
@@ -260,49 +275,68 @@ export default function CheckoutPage() {
                 <span className="checkout-section-num">3</span>
                 Payment Method
               </h2>
-              {savedPrefs.length > 0 && (
-                <div className="checkout-saved-methods">
-                  <span className="checkout-label">Saved Payment Methods</span>
-                  <div className="checkout-saved-list">
-                    {savedPrefs.map((pref) => (
-                      <button
-                        key={pref.id}
-                        type="button"
-                        className={`checkout-method-card ${selectedPrefId === pref.id ? 'checkout-method-card--active' : ''}`}
-                        onClick={() => { setPaymentMethod(pref.method); setSelectedPrefId(pref.id); }}
-                      >
-                        <span className="checkout-method-label">{pref.label}</span>
-                        <span className="checkout-method-desc">
-                          {pref.method === 'UPI' && pref.upiId}
-                          {pref.method === 'CARD' && pref.cardLast4 && `**** ${pref.cardLast4}`}
-                          {pref.method === 'NETBANKING' && pref.bankName}
-                          {pref.method === 'CASH' && 'Cash Payment'}
-                        </span>
-                        {pref.isDefault && <span className="checkout-addr-default">Default</span>}
-                      </button>
+              {loadingPrefs ? (
+                <div className="checkout-method-skeleton">
+                  <div className="checkout-skeleton-row">
+                    <Skeleton width="120px" height="14px" />
+                  </div>
+                  <div className="checkout-method-grid">
+                    {[1, 2, 3, 4].map((i) => (
+                      <div key={i} className="checkout-method-card">
+                        <Skeleton width="24px" height="24px" borderRadius="50%" />
+                        <Skeleton width="60px" height="14px" />
+                        <Skeleton width="90px" height="10px" />
+                      </div>
                     ))}
                   </div>
                 </div>
+              ) : (
+                <>
+                  {savedPrefs.length > 0 && (
+                    <div className="checkout-saved-methods">
+                      <span className="checkout-label">Saved Payment Methods</span>
+                      <div className="checkout-saved-list">
+                        {savedPrefs.map((pref) => (
+                          <button
+                            key={pref.id}
+                            type="button"
+                            className={`checkout-method-card ${selectedPrefId === pref.id ? 'checkout-method-card--active' : ''}`}
+                            onClick={() => { setPaymentMethod(pref.method); setSelectedPrefId(pref.id); }}
+                          >
+                            <span className="checkout-method-label">{pref.label}</span>
+                            <span className="checkout-method-desc">
+                              {pref.method === 'UPI' && pref.upiId}
+                              {pref.method === 'CARD' && pref.cardLast4 && `**** ${pref.cardLast4}`}
+                              {pref.method === 'NETBANKING' && pref.bankName}
+                              {pref.method === 'CASH' && 'Cash Payment'}
+                            </span>
+                            {pref.isDefault && <span className="checkout-addr-default">Default</span>}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div className="checkout-method-grid">
+                    {([
+                      { id: 'CASH' as const, label: 'Cash', desc: 'Pay at time of service', icon: 'cash' },
+                      { id: 'UPI' as const, label: 'UPI', desc: 'Google Pay, PhonePe, Paytm', icon: 'phone' },
+                      { id: 'CARD' as const, label: 'Card', desc: 'Credit / Debit card', icon: 'receipt' },
+                      { id: 'NETBANKING' as const, label: 'Net Banking', desc: 'All major banks', icon: 'building' },
+                    ]).map((m) => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        className={`checkout-method-card ${paymentMethod === m.id && !selectedPrefId ? 'checkout-method-card--active' : ''}`}
+                        onClick={() => { setPaymentMethod(m.id); setSelectedPrefId(''); }}
+                      >
+                        <Icon name={m.icon} size={24} />
+                        <span className="checkout-method-label">{m.label}</span>
+                        <span className="checkout-method-desc">{m.desc}</span>
+                      </button>
+                    ))}
+                  </div>
+                </>
               )}
-              <div className="checkout-method-grid">
-                {([
-                  { id: 'CASH' as const, label: 'Cash', desc: 'Pay at time of service', icon: 'cash' },
-                  { id: 'UPI' as const, label: 'UPI', desc: 'Google Pay, PhonePe, Paytm', icon: 'phone' },
-                  { id: 'CARD' as const, label: 'Card', desc: 'Credit / Debit card', icon: 'receipt' },
-                  { id: 'NETBANKING' as const, label: 'Net Banking', desc: 'All major banks', icon: 'building' },
-                ]).map((m) => (
-                  <button
-                    key={m.id}
-                    type="button"
-                    className={`checkout-method-card ${paymentMethod === m.id && !selectedPrefId ? 'checkout-method-card--active' : ''}`}
-                    onClick={() => { setPaymentMethod(m.id); setSelectedPrefId(''); }}
-                  >
-                    <Icon name={m.icon} size={24} />
-                    <span className="checkout-method-label">{m.label}</span>
-                    <span className="checkout-method-desc">{m.desc}</span>
-                  </button>
-                ))}
-              </div>
             </section>
 
             {/* Schedule */}
@@ -349,17 +383,39 @@ export default function CheckoutPage() {
           {/* Summary sidebar */}
           <aside className="checkout-summary">
             <h2 className="checkout-summary-title">Order Summary</h2>
-            <div className="checkout-summary-items">
-              {items.map((item) => (
-                <div key={`${item.kind}-${item.serviceId}`} className="checkout-summary-item">
-                  <div className="checkout-summary-item-info">
-                    <span className="checkout-summary-item-name">{item.serviceName}</span>
-                    <span className="checkout-summary-item-qty">{item.quantity} x {formatINR(item.price)} / {item.unit}</span>
+            {loadingAddresses || loadingPrefs ? (
+              <div className="checkout-summary-skeleton">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="checkout-summary-item">
+                    <div className="checkout-summary-item-info">
+                      <Skeleton width="70%" height="12px" />
+                      <Skeleton width="50%" height="10px" />
+                    </div>
+                    <Skeleton width="40px" height="12px" />
                   </div>
-                  <span className="checkout-summary-item-total">{formatINR(item.price * item.quantity)}</span>
+                ))}
+                <div className="checkout-summary-divider" />
+                <div className="checkout-summary-row">
+                  <Skeleton width="60px" height="12px" />
+                  <Skeleton width="50px" height="12px" />
                 </div>
-              ))}
-            </div>
+                <div className="checkout-summary-row checkout-summary-row--total">
+                  <Skeleton width="40px" height="14px" />
+                  <Skeleton width="60px" height="14px" />
+                </div>
+              </div>
+            ) : (
+              <div className="checkout-summary-items">
+                {items.map((item) => (
+                  <div key={`${item.kind}-${item.serviceId}`} className="checkout-summary-item">
+                    <div className="checkout-summary-item-info">
+                      <span className="checkout-summary-item-name">{item.serviceName}</span>
+                      <span className="checkout-summary-item-qty">{item.quantity} x {formatINR(item.price)} / {item.unit}</span>
+                    </div>
+                    <span className="checkout-summary-item-total">{formatINR(item.price * item.quantity)}</span>
+                  </div>
+                ))}
+              </div>
             <div className="checkout-summary-rows">
               <div className="checkout-summary-row">
                 <span>Subtotal</span>
@@ -377,7 +433,6 @@ export default function CheckoutPage() {
                 <span>{formatINR(finalAmount)}</span>
               </div>
             </div>
-            {error && <p className="checkout-error">{error}</p>}
             <button className="checkout-submit" onClick={handleSubmit} disabled={submitting || items.length === 0} type="button">
               {submitting ? 'Placing Order...' : `Place Order \u00B7 ${formatINR(finalAmount)}`}
             </button>
@@ -385,6 +440,11 @@ export default function CheckoutPage() {
           </aside>
         </div>
       </div>
+      {toast && (
+        <div className={`checkout-toast${toast.isError ? ' checkout-toast--error' : ''}`} role="status">
+          <span className="checkout-toast-dot" />{toast.message}
+        </div>
+      )}
     </div>
   );
 }

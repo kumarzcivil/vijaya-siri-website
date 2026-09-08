@@ -83,18 +83,18 @@ export async function getVapidKey(): Promise<string> {
 
 export async function subscribePush(subscription: PushSubscription, customerId?: string): Promise<void> {
   const sub = subscription.toJSON();
-  console.log('[API] Sending subscription to backend:', {
-    endpoint: sub.endpoint?.substring(0, 60) + '...',
-    hasP256dh: !!sub.keys?.p256dh,
-    hasAuth: !!sub.keys?.auth,
-    customerId: customerId || '(anonymous)',
-  });
+  // console.log('[API] Sending subscription to backend:', {
+  //   endpoint: sub.endpoint?.substring(0, 60) + '...',
+  //   hasP256dh: !!sub.keys?.p256dh,
+  //   hasAuth: !!sub.keys?.auth,
+  //   customerId: customerId || '(anonymous)',
+  // });
   await request<unknown>('POST', '/notifications/subscribe', {
     endpoint: sub.endpoint,
     keys: sub.keys,
     customerId: customerId || '',
   });
-  console.log('[API] Subscription saved successfully');
+  // console.log('[API] Subscription saved successfully');
 }
 
 export async function unsubscribePush(endpoint: string): Promise<void> {
