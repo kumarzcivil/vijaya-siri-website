@@ -292,9 +292,19 @@ export default function ProFixServiceDetailPage() {
                 </div>
               )}
               <p className="pfsd-booking-note">
-                {pricingEnabled
-                  ? "Indicative rate. Create an estimate to see your total."
-                  : "Pricing depends on your requirements. Our team will prepare a detailed estimate."}
+                {pricingEnabled ? (
+                  <>
+                    <span className="pfsd-highlight">Indicative rate.</span>{" "}
+                    Create an estimate to see your total.
+                  </>
+                ) : (
+                  <>
+                    Pricing depends on your requirements.{" "}
+                    <span className="pfsd-highlight">
+                      Our team will prepare a detailed estimate.
+                    </span>
+                  </>
+                )}
               </p>
               <div className="pfsd-cta-group">
                 {isCustomPricing && (
