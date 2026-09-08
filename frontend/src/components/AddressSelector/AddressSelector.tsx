@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getAddressesAPI, type Address } from '../../api/addresses';
 import { useAuth } from '../../context/AuthContext';
 import './AddressSelector.css';
@@ -12,6 +12,8 @@ export default function AddressSelector({ onSelect }: AddressSelectorProps) {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const onSelectRef = useRef(onSelect);
+  onSelectRef.current = onSelect;
 
   useEffect(() => {
     if (!user) {
@@ -25,12 +27,12 @@ export default function AddressSelector({ onSelect }: AddressSelectorProps) {
         const def = list.find((a) => a.isDefault);
         if (def) {
           setSelectedId(def._id);
-          onSelect(formatAddressLine(def), formatLocation(def));
+          onSelectRef.current(formatAddressLine(def), formatLocation(def));
         }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [user, onSelect]);
+  }, [user]);
 
   if (!user || loading) return null;
   if (addresses.length === 0) return null;
