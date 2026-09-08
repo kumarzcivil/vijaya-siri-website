@@ -405,38 +405,41 @@ export default function CheckoutPage() {
                 </div>
               </div>
             ) : (
-              <div className="checkout-summary-items">
-                {items.map((item) => (
-                  <div key={`${item.kind}-${item.serviceId}`} className="checkout-summary-item">
-                    <div className="checkout-summary-item-info">
-                      <span className="checkout-summary-item-name">{item.serviceName}</span>
-                      <span className="checkout-summary-item-qty">{item.quantity} x {formatINR(item.price)} / {item.unit}</span>
+              <>
+                <div className="checkout-summary-items">
+                  {items.map((item) => (
+                    <div key={`${item.kind}-${item.serviceId}`} className="checkout-summary-item">
+                      <div className="checkout-summary-item-info">
+                        <span className="checkout-summary-item-name">{item.serviceName}</span>
+                        <span className="checkout-summary-item-qty">{item.quantity} x {formatINR(item.price)} / {item.unit}</span>
+                      </div>
+                      <span className="checkout-summary-item-total">{formatINR(item.price * item.quantity)}</span>
                     </div>
-                    <span className="checkout-summary-item-total">{formatINR(item.price * item.quantity)}</span>
-                  </div>
-                ))}
-              </div>
-            <div className="checkout-summary-rows">
-              <div className="checkout-summary-row">
-                <span>Subtotal</span>
-                <span>{formatINR(total)}</span>
-              </div>
-              {couponDiscount > 0 && (
-                <div className="checkout-summary-row checkout-summary-row--discount">
-                  <span>Coupon ({couponCode})</span>
-                  <span>-{formatINR(couponDiscount)}</span>
+                  ))}
                 </div>
-              )}
-              <div className="checkout-summary-divider" />
-              <div className="checkout-summary-row checkout-summary-row--total">
-                <span>Total</span>
-                <span>{formatINR(finalAmount)}</span>
-              </div>
-            </div>
-            <button className="checkout-submit" onClick={handleSubmit} disabled={submitting || items.length === 0} type="button">
-              {submitting ? 'Placing Order...' : `Place Order \u00B7 ${formatINR(finalAmount)}`}
-            </button>
-            <p className="checkout-note">Pay at the time of service via cash or UPI.</p>
+                <div className="checkout-summary-rows">
+                  <div className="checkout-summary-row">
+                    <span>Subtotal</span>
+                    <span>{formatINR(total)}</span>
+                  </div>
+                  {couponDiscount > 0 && (
+                    <div className="checkout-summary-row checkout-summary-row--discount">
+                      <span>Coupon ({couponCode})</span>
+                      <span>-{formatINR(couponDiscount)}</span>
+                    </div>
+                  )}
+                  <div className="checkout-summary-divider" />
+                  <div className="checkout-summary-row checkout-summary-row--total">
+                    <span>Total</span>
+                    <span>{formatINR(finalAmount)}</span>
+                  </div>
+                </div>
+                <button className="checkout-submit" onClick={handleSubmit} disabled={submitting || items.length === 0} type="button">
+                  {submitting ? 'Placing Order...' : `Place Order \u00B7 ${formatINR(finalAmount)}`}
+                </button>
+                <p className="checkout-note">Pay at the time of service via cash or UPI.</p>
+              </>
+            )}
           </aside>
         </div>
       </div>
