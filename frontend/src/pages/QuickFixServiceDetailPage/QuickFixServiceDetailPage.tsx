@@ -81,7 +81,8 @@ export default function QuickFixServiceDetailPage() {
 
   const handleBookNow = () => {
     if (!service) return;
-    navigate(`/quick-fix/${service.id}/book`);
+    handleAddToCart();
+    navigate('/checkout');
   };
 
   const handleAddToCart = () => {
