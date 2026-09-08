@@ -1,33 +1,53 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import Icon from '../../components/Icon/Icon';
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import Icon from "../../components/Icon/Icon";
 import {
   fetchProFixServices,
   fetchProFixCategories,
   type ProFixService as ApiService,
   type ProFixCategory as ApiCategory,
-} from '../../api/proFix';
-import { useCart } from '../../hooks/useCart';
-import './ProFixServiceDetailPage.css';
+} from "../../api/proFix";
+import { useCart } from "../../hooks/useCart";
+import "./ProFixServiceDetailPage.css";
 
-const WHATSAPP = 'https://wa.me/919008855088';
+const WHATSAPP = "https://wa.me/919008855088";
 
 const TRUST_ITEMS = [
-  { id: 'verified', icon: 'shield-check' },
-  { id: 'pricing', icon: 'receipt' },
-  { id: 'ontime', icon: 'clock' },
+  { id: "verified", icon: "shield-check" },
+  { id: "pricing", icon: "receipt" },
+  { id: "ontime", icon: "clock" },
 ] as const;
 
 const proFixBenefits = [
-  { id: 'verified', title: 'Verified Professionals', description: 'Skilled and background-checked experts.' },
-  { id: 'materials', title: 'Quality Materials', description: 'Only premium-grade materials used.' },
-  { id: 'pricing', title: 'Transparent Pricing', description: 'No hidden costs, clear quotes upfront.' },
-  { id: 'ontime', title: 'On-time Delivery', description: 'Projects completed on schedule.' },
-  { id: 'satisfaction', title: 'Satisfaction Guaranteed', description: 'Your satisfaction is our priority.' },
+  {
+    id: "verified",
+    title: "Verified Professionals",
+    description: "Skilled and background-checked experts.",
+  },
+  {
+    id: "materials",
+    title: "Quality Materials",
+    description: "Only premium-grade materials used.",
+  },
+  {
+    id: "pricing",
+    title: "Transparent Pricing",
+    description: "No hidden costs, clear quotes upfront.",
+  },
+  {
+    id: "ontime",
+    title: "On-time Delivery",
+    description: "Projects completed on schedule.",
+  },
+  {
+    id: "satisfaction",
+    title: "Satisfaction Guaranteed",
+    description: "Your satisfaction is our priority.",
+  },
 ];
 
 function formatINR(amount: number): string {
-  return `\u20B9${Math.round(amount).toLocaleString('en-IN')}`;
+  return `\u20B9${Math.round(amount).toLocaleString("en-IN")}`;
 }
 
 interface PageService {
@@ -75,9 +95,9 @@ function adaptService(s: ApiService): PageService {
     siteVisitCharge: s.siteVisitCharge ?? 300,
     siteVisitWaiver: s.siteVisitWaiver ?? {
       enabled: true,
-      label: 'Work Completion Waiver',
+      label: "Work Completion Waiver",
       amount: s.siteVisitCharge ?? 300,
-      trigger: 'work_completion',
+      trigger: "work_completion",
     },
   };
 }
@@ -90,7 +110,9 @@ export default function ProFixServiceDetailPage() {
   const { serviceId } = useParams<{ serviceId: string }>();
   const navigate = useNavigate();
   const [service, setService] = useState<PageService | null>(null);
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>(
+    [],
+  );
   const [loading, setLoading] = useState(true);
   const { addItem, isInCart } = useCart();
 
@@ -118,26 +140,26 @@ export default function ProFixServiceDetailPage() {
   }, [navigate, service]);
 
   const handleAddToCart = useCallback(() => {
-    if (!service) return;
-    const pricing = service.pricing;
-    const price = pricing?.enabled && pricing.mode !== 'custom' ? (pricing.rate ?? 0) : 0;
+    if (!service || service.pricing?.mode !== "custom") return;
+
     addItem({
       id: `pf-${service.id}`,
-      kind: 'pro-fix',
+      kind: "pro-fix",
       serviceId: service.id,
       serviceName: service.name,
-      categoryName: categories.find((c) => c.id === service.category)?.name ?? '',
+      categoryName:
+        categories.find((c) => c.id === service.category)?.name ?? "",
       image: service.imageUrl,
-      price,
-      quantity: pricing?.defaultQuantity ?? 1,
+      price: 0,
+      quantity: 1,
       unit: service.unit,
       siteVisitCharge: service.siteVisitCharge,
-      minQuantity: pricing?.minQuantity ?? 1,
-      maxQuantity: pricing?.maxQuantity ?? 99,
+      minQuantity: 1,
+      maxQuantity: 99,
     });
   }, [service, categories, addItem]);
 
-  const inCart = service ? isInCart(service.id, 'pro-fix') : false;
+  const inCart = service ? isInCart(service.id, "pro-fix") : false;
 
   if (!loading && !service) {
     return (
@@ -146,8 +168,21 @@ export default function ProFixServiceDetailPage() {
           <div className="pfsd-not-found">
             <h2>Service Not Found</h2>
             <p>The Pro Fix service you are looking for does not exist.</p>
-            <button className="pfsd-back" onClick={() => navigate('/pro-fix')} type="button">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <button
+              className="pfsd-back"
+              onClick={() => navigate("/pro-fix")}
+              type="button"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <line x1="19" y1="12" x2="5" y2="12" />
                 <polyline points="12 19 5 12 12 5" />
               </svg>
@@ -162,18 +197,34 @@ export default function ProFixServiceDetailPage() {
   if (loading || !service) {
     return null;
   }
-
   const pricing = service.pricing;
-  const pricingEnabled = !!pricing?.enabled && pricing.mode !== 'custom';
-  const categoryName = categories.find((c) => c.id === service.category)?.name ?? service.category;
+
+  const pricingEnabled = !!pricing?.enabled && pricing.mode !== "custom";
+
+  const isCustomPricing = pricing?.mode === "custom";
+  const categoryName =
+    categories.find((c) => c.id === service.category)?.name ?? service.category;
   const included = service.included ?? [];
   const notes = service.notes ?? [];
 
   return (
     <div className="pfsd-page">
       <div className="section-container">
-        <button className="pfsd-back" onClick={() => navigate('/pro-fix')} type="button">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <button
+          className="pfsd-back"
+          onClick={() => navigate("/pro-fix")}
+          type="button"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <line x1="19" y1="12" x2="5" y2="12" />
             <polyline points="12 19 5 12 12 5" />
           </svg>
@@ -182,10 +233,18 @@ export default function ProFixServiceDetailPage() {
 
         <div className="pfsd-hero">
           {service.imageUrl ? (
-            <img src={service.imageUrl} alt={service.name} className="pfsd-hero-img" />
+            <img
+              src={service.imageUrl}
+              alt={service.name}
+              className="pfsd-hero-img"
+            />
           ) : (
             <div className="pfsd-hero-placeholder">
-              <Icon name="building" size={56} className="pfsd-hero-placeholder-icon" />
+              <Icon
+                name="building"
+                size={56}
+                className="pfsd-hero-placeholder-icon"
+              />
             </div>
           )}
         </div>
@@ -206,7 +265,11 @@ export default function ProFixServiceDetailPage() {
               </div>
               <div className="pfsd-meta-item">
                 <dt>Pricing</dt>
-                <dd>{pricingEnabled ? `Rate-based / ${pricing?.unit ?? service.unit}` : 'Custom Estimate'}</dd>
+                <dd>
+                  {pricingEnabled
+                    ? `Rate-based / ${pricing?.unit ?? service.unit}`
+                    : "Custom Estimate"}
+                </dd>
               </div>
             </dl>
           </header>
@@ -216,8 +279,12 @@ export default function ProFixServiceDetailPage() {
               <span className="pfsd-booking-label">Pricing</span>
               {pricingEnabled ? (
                 <div className="pfsd-booking-price">
-                  <span className="pfsd-booking-amount">{formatINR(pricing?.rate ?? 0)}</span>
-                  <span className="pfsd-booking-unit">/ {pricing?.unit ?? service.unit}</span>
+                  <span className="pfsd-booking-amount">
+                    {formatINR(pricing?.rate ?? 0)}
+                  </span>
+                  <span className="pfsd-booking-unit">
+                    / {pricing?.unit ?? service.unit}
+                  </span>
                 </div>
               ) : (
                 <div className="pfsd-booking-price">
@@ -226,25 +293,37 @@ export default function ProFixServiceDetailPage() {
               )}
               <p className="pfsd-booking-note">
                 {pricingEnabled
-                  ? 'Indicative rate. Create an estimate to see your total.'
-                  : 'Pricing depends on your requirements. Our team will prepare a detailed estimate.'}
+                  ? "Indicative rate. Create an estimate to see your total."
+                  : "Pricing depends on your requirements. Our team will prepare a detailed estimate."}
               </p>
               <div className="pfsd-cta-group">
-                <button className="pfsd-cta pfsd-cta--cart" onClick={handleAddToCart} type="button" disabled={inCart}>
-                  {inCart ? (
-                    <>
-                      <Icon name="check-circle" size={16} />
-                      In Cart
-                    </>
-                  ) : (
-                    <>
-                      <Icon name="shopping-cart" size={16} />
-                      Add to Cart
-                    </>
-                  )}
-                </button>
-                {!pricingEnabled && (
-                  <button className="pfsd-cta" onClick={handleCreateEstimate} type="button">
+                {isCustomPricing && (
+                  <button
+                    className="pfsd-cta pfsd-cta--cart"
+                    onClick={handleAddToCart}
+                    type="button"
+                    disabled={inCart}
+                  >
+                    {inCart ? (
+                      <>
+                        <Icon name="check-circle" size={16} />
+                        In Cart
+                      </>
+                    ) : (
+                      <>
+                        <Icon name="shopping-cart" size={16} />
+                        Add to Cart
+                      </>
+                    )}
+                  </button>
+                )}
+
+                {pricingEnabled && (
+                  <button
+                    className="pfsd-cta"
+                    onClick={handleCreateEstimate}
+                    type="button"
+                  >
                     Create Estimate
                     <Icon name="arrow-right" size={16} />
                   </button>
@@ -258,19 +337,31 @@ export default function ProFixServiceDetailPage() {
                   className="pfsd-chat-btn"
                   aria-label="Chat with us on WhatsApp"
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
                     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
                   </svg>
                   Chat with us
                 </a>
-                <span className="pfsd-booking-reassure">Free estimate &middot; No obligation</span>
+                <span className="pfsd-booking-reassure">
+                  Free estimate &middot; No obligation
+                </span>
               </div>
             </div>
           </aside>
 
           {included.length > 0 && (
-            <section className="pfsd-included" aria-labelledby="pfsd-included-title">
-              <h2 className="pfsd-section-title" id="pfsd-included-title">What&apos;s Included</h2>
+            <section
+              className="pfsd-included"
+              aria-labelledby="pfsd-included-title"
+            >
+              <h2 className="pfsd-section-title" id="pfsd-included-title">
+                What&apos;s Included
+              </h2>
               <ul className="pfsd-included-list">
                 {included.map((item) => (
                   <li key={item} className="pfsd-included-item">
@@ -284,7 +375,9 @@ export default function ProFixServiceDetailPage() {
               {notes.length > 0 && (
                 <div className="pfsd-notes">
                   {notes.map((note) => (
-                    <p key={note} className="pfsd-note">{note}</p>
+                    <p key={note} className="pfsd-note">
+                      {note}
+                    </p>
                   ))}
                 </div>
               )}
@@ -304,7 +397,9 @@ export default function ProFixServiceDetailPage() {
                     </span>
                     <div className="pfsd-trust-text">
                       <span className="pfsd-trust-name">{benefit.title}</span>
-                      <span className="pfsd-trust-desc">{benefit.description}</span>
+                      <span className="pfsd-trust-desc">
+                        {benefit.description}
+                      </span>
                     </div>
                   </div>
                 );
