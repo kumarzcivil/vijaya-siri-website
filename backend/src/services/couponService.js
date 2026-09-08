@@ -2,7 +2,7 @@ import Coupon from '../models/Coupon.js';
 
 class CouponService {
   async list(query = {}) {
-    const filter: Record<string, unknown> = {};
+    const filter = {};
     if (query.status) filter.status = query.status;
     if (query.search) {
       filter.$or = [

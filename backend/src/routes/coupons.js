@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import auth from '../../middleware/auth.js';
-import isAdmin from '../../middleware/isAdmin.js';
-import couponController from '../../controllers/couponController.js';
+import auth from '../middleware/auth.js';
+import isAdmin from '../middleware/isAdmin.js';
+import couponController from '../controllers/couponController.js';
 
 const router = Router();
 const adminAuth = [auth, isAdmin];

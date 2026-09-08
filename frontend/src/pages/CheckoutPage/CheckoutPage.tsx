@@ -261,61 +261,45 @@ export default function CheckoutPage() {
                 Payment Method
               </h2>
               {savedPrefs.length > 0 && (
-                <div style={{ marginBottom: '1rem' }}>
-                  <span className="checkout-label" style={{ display: 'block', marginBottom: '0.5rem' }}>Saved Payment Methods</span>
-                  <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <div className="checkout-saved-methods">
+                  <span className="checkout-label">Saved Payment Methods</span>
+                  <div className="checkout-saved-list">
                     {savedPrefs.map((pref) => (
                       <button
                         key={pref.id}
                         type="button"
+                        className={`checkout-method-card ${selectedPrefId === pref.id ? 'checkout-method-card--active' : ''}`}
                         onClick={() => { setPaymentMethod(pref.method); setSelectedPrefId(pref.id); }}
-                        style={{
-                          padding: '0.75rem 1rem',
-                          border: `2px solid ${selectedPrefId === pref.id ? 'var(--color-brand, #4F46E5)' : 'var(--color-border, #E5E7EB)'}`,
-                          borderRadius: '8px',
-                          background: selectedPrefId === pref.id ? 'var(--color-brand-50, #EEF2FF)' : 'white',
-                          cursor: 'pointer',
-                          textAlign: 'left',
-                          minWidth: '140px',
-                        }}
                       >
-                        <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{pref.label}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#6B7280', marginTop: '2px' }}>
+                        <span className="checkout-method-label">{pref.label}</span>
+                        <span className="checkout-method-desc">
                           {pref.method === 'UPI' && pref.upiId}
                           {pref.method === 'CARD' && pref.cardLast4 && `**** ${pref.cardLast4}`}
                           {pref.method === 'NETBANKING' && pref.bankName}
                           {pref.method === 'CASH' && 'Cash Payment'}
-                        </div>
-                        {pref.isDefault && (
-                          <span style={{ fontSize: '0.65rem', color: 'var(--color-brand, #4F46E5)', fontWeight: 600 }}>DEFAULT</span>
-                        )}
+                        </span>
+                        {pref.isDefault && <span className="checkout-addr-default">Default</span>}
                       </button>
                     ))}
                   </div>
                 </div>
               )}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '0.75rem' }}>
+              <div className="checkout-method-grid">
                 {([
-                  { id: 'CASH', label: 'Cash', icon: 'banknotes' },
-                  { id: 'UPI', label: 'UPI', icon: 'device-phone-mobile' },
-                  { id: 'CARD', label: 'Card', icon: 'credit-card' },
-                  { id: 'NETBANKING', label: 'Net Banking', icon: 'building-library' },
-                ] as const).map((m) => (
+                  { id: 'CASH' as const, label: 'Cash', desc: 'Pay at time of service', icon: 'cash' },
+                  { id: 'UPI' as const, label: 'UPI', desc: 'Google Pay, PhonePe, Paytm', icon: 'phone' },
+                  { id: 'CARD' as const, label: 'Card', desc: 'Credit / Debit card', icon: 'receipt' },
+                  { id: 'NETBANKING' as const, label: 'Net Banking', desc: 'All major banks', icon: 'building' },
+                ]).map((m) => (
                   <button
                     key={m.id}
                     type="button"
+                    className={`checkout-method-card ${paymentMethod === m.id && !selectedPrefId ? 'checkout-method-card--active' : ''}`}
                     onClick={() => { setPaymentMethod(m.id); setSelectedPrefId(''); }}
-                    style={{
-                      padding: '0.75rem 1rem',
-                      border: `2px solid ${paymentMethod === m.id && !selectedPrefId ? 'var(--color-brand, #4F46E5)' : 'var(--color-border, #E5E7EB)'}`,
-                      borderRadius: '8px',
-                      background: paymentMethod === m.id && !selectedPrefId ? 'var(--color-brand-50, #EEF2FF)' : 'white',
-                      cursor: 'pointer',
-                      textAlign: 'center',
-                    }}
                   >
-                    <Icon name={m.icon} size={24} style={{ display: 'block', margin: '0 auto 0.35rem' }} />
-                    <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{m.label}</span>
+                    <Icon name={m.icon} size={24} />
+                    <span className="checkout-method-label">{m.label}</span>
+                    <span className="checkout-method-desc">{m.desc}</span>
                   </button>
                 ))}
               </div>
