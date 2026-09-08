@@ -6,10 +6,7 @@ import {
   getOrCreateCustomerId,
   type PriceSummary,
 } from '../../data/payment';
-import {
-  applyCoupon,
-  type AppliedCoupon,
-} from '../../data/coupons';
+import { validateCoupon, type ValidateCouponResponse } from '../../api/coupons';
 import { DEFAULT_SLOT_DURATION_MIN } from '../../data/bookingSchedule';
 import { findBookingConflict } from '../../store/bookingConflict';
 import { usePaymentDraft } from '../../hooks/usePaymentDraft';
@@ -80,20 +77,20 @@ export default function PaymentPage() {
     }
   }, [draft, navigate]);
 
-  const handleApplyCoupon = useCallback(() => {
-    if (!draft) return;
-    const result = applyCoupon({
-      code: couponInput,
-      serviceType: draft.serviceType,
-      bookingAmount: priceBase,
-      locationId: draft.locationId,
-    });
-    if (result.ok) {
-      setApplied(result.applied);
-      setCouponMessage({ type: 'success', text: 'Coupon applied successfully.' });
-    } else {
-      setApplied(null);
-      setCouponMessage({ type: 'error', text: result.error.message });
+  const handleApplyCoupon = useCallback(async () => {
+    if (!draft || !couponInput.trim()) return;
+    setCouponMessage(null);
+    setApplied(null);
+    try {
+      const result = await validateCoupon(couponInput.trim(), draft.serviceType, priceBase);
+      if (result.valid && result.discount) {
+        setApplied({ code: result.code || couponInput.trim(), discount: result.discount });
+        setCouponMessage({ type: 'success', text: result.message || 'Coupon applied successfully.' });
+      } else {
+        setCouponMessage({ type: 'error', text: result.message || 'Invalid coupon code.' });
+      }
+    } catch (err: any) {
+      setCouponMessage({ type: 'error', text: err.message || 'Invalid coupon code.' });
     }
   }, [draft, couponInput, priceBase]);
 

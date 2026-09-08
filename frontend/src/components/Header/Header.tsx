@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useLocation } from '../../context/LocationContext';
 import { useActiveRoute } from '../../hooks/useActiveRoute';
 import { useAvailableFeatureSet } from '../../hooks/useSiteControl';
+import { useCart } from '../../hooks/useCart';
 import { fetchMyNotifications, markAllNotificationsRead } from '../../api/notifications';
 import type { SiteFeature } from '../../data/siteControl';
 import './Header.css';
@@ -33,6 +34,7 @@ export default function Header() {
   const [unreadCount, setUnreadCount] = useState(0);
   const { selected, options, select } = useLocation();
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { count: cartCount } = useCart();
 
   useEffect(() => {
     const token = localStorage.getItem('vs_auth_token');
@@ -119,6 +121,15 @@ export default function Header() {
         </nav>
 
         <div className="header-right">
+          <Link to="/cart" className="header-icon-btn header-cart-btn" aria-label="Cart">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="9" cy="21" r="1" />
+              <circle cx="20" cy="21" r="1" />
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+            </svg>
+            {cartCount > 0 && <span className="header-cart-badge">{cartCount > 99 ? '99+' : cartCount}</span>}
+          </Link>
+
           <Link to="/account/notifications" className="header-icon-btn header-notif-btn" aria-label="Notifications" onClick={() => { if (unreadCount > 0) { markAllNotificationsRead().catch(() => {}); setUnreadCount(0); } }}>
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />

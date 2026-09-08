@@ -10,7 +10,7 @@ import {
   type ProFixCategory as ApiCategory,
 } from '../../api/proFix';
 import { getQuickFixSlotDays, type QuickFixSlotDay } from '../../data/quickfixBooking';
-import { BOOKING_TIME_SLOTS } from '../../data/bookingSchedule';
+import { BOOKING_TIME_SLOTS, getAvailableTimeSlots } from '../../data/bookingSchedule';
 import { DEFAULT_SLOT_DURATION_MIN } from '../../data/bookingSchedule';
 import { useLocation } from '../../context/LocationContext';
 import {
@@ -488,7 +488,7 @@ export default function ProFixBookVisitPage() {
               ))}
             </div>
             <div className="pfbook-chip-row" role="group" aria-label="Select time slot">
-              {BOOKING_TIME_SLOTS.map((slot) => (
+              {getAvailableTimeSlots(slotDate).map((slot) => (
                 <button
                   key={slot}
                   type="button"

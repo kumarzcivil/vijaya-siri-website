@@ -23,13 +23,14 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 3px;
-    padding: 0.5rem 0;
+    gap: 2px;
+    padding: 0.4rem 0;
     text-decoration: none;
     color: var(--color-text-tertiary);
     transition: color var(--transition-fast);
     flex: 1 1 0;
     min-width: 0;
+    min-height: 48px;
     -webkit-tap-highlight-color: transparent;
     position: relative;
   }
@@ -56,17 +57,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 26px;
-    height: 26px;
+    width: 28px;
+    height: 28px;
   }
 
   .mobile-nav-icon svg {
-    width: 21px;
-    height: 21px;
+    width: 24px;
+    height: 24px;
   }
 
   .mobile-nav-label {
-    font-size: 0.625rem;
+    font-size: 0.65rem;
     font-weight: var(--font-weight-semibold);
     letter-spacing: 0.02em;
     line-height: 1.2;

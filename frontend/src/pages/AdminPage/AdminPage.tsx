@@ -46,6 +46,7 @@ const ADMIN_GROUPS: AdminGroup[] = [
       { to: '/admin/marketing/statistics', label: 'Statistics' },
       { to: '/admin/marketing/discover-services', label: 'Discover Services' },
       { to: '/admin/marketing/offers', label: 'Offers' },
+      { to: '/admin/marketing/coupons', label: 'Coupons' },
     ],
   },
   {

@@ -7,6 +7,7 @@ import {
   type ProFixService as ApiService,
   type ProFixCategory as ApiCategory,
 } from '../../api/proFix';
+import { useCart } from '../../hooks/useCart';
 import './ProFixServiceDetailPage.css';
 
 const WHATSAPP = 'https://wa.me/919008855088';
@@ -91,6 +92,7 @@ export default function ProFixServiceDetailPage() {
   const [service, setService] = useState<PageService | null>(null);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
+  const { addItem, isInCart } = useCart();
 
   useEffect(() => {
     if (!serviceId) {
@@ -114,6 +116,28 @@ export default function ProFixServiceDetailPage() {
     if (!service) return;
     navigate(`/pro-fix/${service.id}/estimate`);
   }, [navigate, service]);
+
+  const handleAddToCart = useCallback(() => {
+    if (!service) return;
+    const pricing = service.pricing;
+    const price = pricing?.enabled && pricing.mode !== 'custom' ? (pricing.rate ?? 0) : 0;
+    addItem({
+      id: `pf-${service.id}`,
+      kind: 'pro-fix',
+      serviceId: service.id,
+      serviceName: service.name,
+      categoryName: categories.find((c) => c.id === service.category)?.name ?? '',
+      image: service.imageUrl,
+      price,
+      quantity: pricing?.defaultQuantity ?? 1,
+      unit: service.unit,
+      siteVisitCharge: service.siteVisitCharge,
+      minQuantity: pricing?.minQuantity ?? 1,
+      maxQuantity: pricing?.maxQuantity ?? 99,
+    });
+  }, [service, categories, addItem]);
+
+  const inCart = service ? isInCart(service.id, 'pro-fix') : false;
 
   if (!loading && !service) {
     return (
@@ -205,10 +229,25 @@ export default function ProFixServiceDetailPage() {
                   ? 'Indicative rate. Create an estimate to see your total.'
                   : 'Pricing depends on your requirements. Our team will prepare a detailed estimate.'}
               </p>
-              <button className="pfsd-cta" onClick={handleCreateEstimate} type="button">
-                Create Estimate
-                <Icon name="arrow-right" size={16} />
-              </button>
+              <div className="pfsd-cta-group">
+                <button className="pfsd-cta pfsd-cta--cart" onClick={handleAddToCart} type="button" disabled={inCart}>
+                  {inCart ? (
+                    <>
+                      <Icon name="check-circle" size={16} />
+                      In Cart
+                    </>
+                  ) : (
+                    <>
+                      <Icon name="shopping-cart" size={16} />
+                      Add to Cart
+                    </>
+                  )}
+                </button>
+                <button className="pfsd-cta" onClick={handleCreateEstimate} type="button">
+                  Create Estimate
+                  <Icon name="arrow-right" size={16} />
+                </button>
+              </div>
               <div className="pfsd-booking-support">
                 <a
                   href={WHATSAPP}

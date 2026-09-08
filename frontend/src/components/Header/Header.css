@@ -199,6 +199,28 @@
   50% { box-shadow: 0 0 0 2px var(--color-bg-white), 0 0 0 5px rgba(239, 68, 68, 0.25); }
 }
 
+.header-cart-btn {
+  position: relative;
+}
+
+.header-cart-badge {
+  position: absolute;
+  top: 1px;
+  right: 0;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 16px;
+  text-align: center;
+  pointer-events: none;
+  box-shadow: 0 0 0 2px var(--color-bg-white);
+}
+
 .location-dropdown {
   position: absolute;
   top: calc(100% + 6px);

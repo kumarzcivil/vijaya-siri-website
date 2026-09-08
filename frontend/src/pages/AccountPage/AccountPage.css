@@ -741,6 +741,15 @@
   box-shadow: var(--shadow-card);
 }
 
+.acc-stat--loading {
+  min-height: 70px;
+  justify-content: center;
+}
+
+.acc-tile--loading {
+  pointer-events: none;
+}
+
 @media (min-width: 768px) {
   .acc-stat {
     padding: var(--space-lg);

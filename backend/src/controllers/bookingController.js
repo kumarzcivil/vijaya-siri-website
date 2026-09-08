@@ -44,6 +44,19 @@ class BookingController {
     }
   }
 
+  async assignVendor(req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
+    try {
+      const { assignedTo, assignedPhone } = req.body;
+      const booking = await bookingService.assignVendor(req.params.id, assignedTo, assignedPhone);
+      if (!booking) return res.status(404).json({ success: false, message: 'Booking not found' });
+      res.json({ success: true, data: booking });
+    } catch (err) {
+      res.status(400).json({ success: false, message: err.message });
+    }
+  }
+
   async delete(req, res) {
     try {
       const booking = await bookingService.delete(req.params.id);

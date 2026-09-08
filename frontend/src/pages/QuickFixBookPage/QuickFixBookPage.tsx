@@ -9,6 +9,7 @@ import {
   type QuickFixBooking,
   type QuickFixBookingDetails,
 } from '../../data/quickfixBooking';
+import { getAvailableTimeSlots } from '../../data/bookingSchedule';
 import { useLocation } from '../../context/LocationContext';
 import {
   CURRENCY,
@@ -367,7 +368,7 @@ export default function QuickFixBookPage() {
                   ))}
                 </div>
                 <div className="qfk-chip-row" role="group" aria-label="Select time slot">
-                  {QUICK_FIX_TIME_SLOTS.map((slot) => (
+                  {getAvailableTimeSlots(slotDate).map((slot) => (
                     <button
                       key={slot}
                       type="button"

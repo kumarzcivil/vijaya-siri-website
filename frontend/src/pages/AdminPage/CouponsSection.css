@@ -1,0 +1,40 @@
+.admin-coupon-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-md);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--font-weight-bold);
+  font-size: 0.75rem;
+  flex-shrink: 0;
+  border: 1px solid var(--color-border-light);
+}
+
+.coupon-stats-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.coupon-stat {
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-warm);
+  color: var(--color-text-secondary);
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+@media (max-width: 767px) {
+  .admin-coupon-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 0.65rem;
+  }
+
+  .coupon-stats-row {
+    flex-wrap: wrap;
+  }
+}

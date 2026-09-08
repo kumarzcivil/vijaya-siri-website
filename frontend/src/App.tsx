@@ -52,6 +52,7 @@ import MarketingStatisticsSection from './pages/AdminPage/MarketingStatisticsSec
 import DiscoverServicesSection from './pages/AdminPage/DiscoverServicesSection';
 import DiscoverServiceDetailPage from './pages/DiscoverServiceDetailPage/DiscoverServiceDetailPage';
 import OffersSection from './pages/AdminPage/OffersSection';
+import CouponsSection from './pages/AdminPage/CouponsSection';
 import SiteControlSection from './pages/AdminPage/SiteControlSection';
 import EstimatorModule from './pages/AdminPage/EstimatorModule';
 import EstimatorProjectSection from './pages/AdminPage/EstimatorProjectSection';
@@ -67,7 +68,10 @@ import ServiceGate from './components/ServiceGate/ServiceGate';
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
 import AnonRoute from './components/ProtectedRoute/AnonRoute';
 import AdminRoute from './components/ProtectedRoute/AdminRoute';
+import LogPanel from './components/LogPanel/LogPanel';
 import PaymentPage from './pages/PaymentPage/PaymentPage';
+import CartPage from './pages/CartPage/CartPage';
+import CheckoutPage from './pages/CheckoutPage/CheckoutPage';
 import { useSiteControl } from './hooks/useSiteControl';
 import AccountDashboardHome from './pages/AccountPage/sections/AccountDashboardHome';
 import ProfileSection from './pages/AccountPage/sections/ProfileSection';
@@ -223,6 +227,8 @@ function AppLayout() {
             <Route path="/login" element={<AnonRoute><LoginPage /></AnonRoute>} />
             <Route path="/signup" element={<AnonRoute><SignupPage /></AnonRoute>} />
             <Route path="/payment" element={<ProtectedRoute><PaymentPage /></ProtectedRoute>} />
+            <Route path="/cart" element={<CartPage />} />
+            <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
             <Route path="/account" element={<FeatureGate feature="account"><ProtectedRoute><AccountPage /></ProtectedRoute></FeatureGate>}>
               <Route index element={<AccountDashboardHome />} />
               <Route path="profile" element={<ProfileSection />} />
@@ -264,6 +270,7 @@ function AppLayout() {
               <Route path="marketing/statistics" element={<MarketingStatisticsSection />} />
               <Route path="marketing/discover-services" element={<DiscoverServicesSection />} />
               <Route path="marketing/offers" element={<OffersSection />} />
+              <Route path="marketing/coupons" element={<CouponsSection />} />
               <Route path="*" element={<AdminComingSoon title="Page not found" />} />
             </Route>
             <Route path="/control-center" element={<AdminRoute><AdminPage /></AdminRoute>}>
@@ -305,6 +312,7 @@ function AppLayout() {
           <MobileNavigation />
         </>
       )}
+      <LogPanel />
     </div>
   );
 }

@@ -1,5 +1,46 @@
 import mongoose from 'mongoose';
 
+const bookingItemSchema = new mongoose.Schema(
+  {
+    kind: {
+      type: String,
+      enum: ['quick-fix', 'pro-fix'],
+      required: true,
+    },
+    serviceId: {
+      type: String,
+      required: true,
+    },
+    serviceName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    categoryName: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    price: {
+      type: Number,
+      default: 0,
+    },
+    quantity: {
+      type: Number,
+      default: 1,
+    },
+    unit: {
+      type: String,
+      default: 'service',
+    },
+    siteVisitCharge: {
+      type: Number,
+      default: 0,
+    },
+  },
+  { _id: false }
+);
+
 const bookingSchema = new mongoose.Schema(
   {
     kind: {
@@ -20,6 +61,10 @@ const bookingSchema = new mongoose.Schema(
       type: String,
       default: '',
       trim: true,
+    },
+    items: {
+      type: [bookingItemSchema],
+      default: [],
     },
     slotDate: {
       type: String,
@@ -87,6 +132,16 @@ const bookingSchema = new mongoose.Schema(
       enum: ['upcoming', 'completed', 'cancelled'],
       default: 'upcoming',
     },
+    assignedTo: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    assignedPhone: {
+      type: String,
+      default: '',
+      trim: true,
+    },
   },
   { timestamps: true }
 );
@@ -95,6 +150,7 @@ bookingSchema.index({ status: 1 });
 bookingSchema.index({ createdAt: -1 });
 bookingSchema.index({ customerMobile: 1 });
 bookingSchema.index({ kind: 1 });
+bookingSchema.index({ customerId: 1 });
 
 const Booking = mongoose.model('Booking', bookingSchema);
 export default Booking;

@@ -52,3 +52,20 @@ export function windowsOverlap(a: ScheduleWindow, b: ScheduleWindow): boolean {
 
 /** Convenience: reusable time-slot labels for scheduling (shared by QF/PF). */
 export const BOOKING_TIME_SLOTS = QUICK_FIX_TIME_SLOTS;
+
+/**
+ * Filter time slots: for today's date, remove slots whose start time has already
+ * passed. For future dates, all slots are available.
+ */
+export function getAvailableTimeSlots(selectedDate: string): readonly string[] {
+  const today = new Date().toISOString().slice(0, 10);
+  if (selectedDate !== today) return BOOKING_TIME_SLOTS;
+
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+  return BOOKING_TIME_SLOTS.filter((slot) => {
+    const startMin = parseTimeToMinutes(slot);
+    return startMin > currentMinutes;
+  });
+}

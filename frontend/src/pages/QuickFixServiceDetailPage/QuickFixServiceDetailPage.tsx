@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Icon from '../../components/Icon/Icon';
 import { fetchQuickFixServices, fetchQuickFixCategories } from '../../api/quickFix';
+import { useCart } from '../../hooks/useCart';
 import './QuickFixServiceDetailPage.css';
 
 function formatINR(amount: number): string {
@@ -43,6 +44,7 @@ export default function QuickFixServiceDetailPage() {
   const [service, setService] = useState<Service | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const { addItem, isInCart } = useCart();
 
   useEffect(() => {
     if (!serviceId) {
@@ -81,6 +83,23 @@ export default function QuickFixServiceDetailPage() {
     if (!service) return;
     navigate(`/quick-fix/${service.id}/book`);
   };
+
+  const handleAddToCart = () => {
+    if (!service) return;
+    addItem({
+      id: `qf-${service.id}`,
+      kind: 'quick-fix',
+      serviceId: service.id,
+      serviceName: service.name,
+      categoryName: category?.name ?? '',
+      image: service.image,
+      price: service.pricing.price ?? 0,
+      quantity: 1,
+      unit: 'service',
+    });
+  };
+
+  const inCart = service ? isInCart(service.id, 'quick-fix') : false;
 
   if (loading) {
     return (
@@ -185,10 +204,25 @@ export default function QuickFixServiceDetailPage() {
               {service.pricing.priceNote && (
                 <p className="qfd-booking-note">{service.pricing.priceNote}</p>
               )}
-              <button className="qfd-cta" onClick={handleBookNow} type="button">
-                Book Now
-                <Icon name="arrow-right" size={16} />
-              </button>
+              <div className="qfd-cta-group">
+                <button className="qfd-cta qfd-cta--cart" onClick={handleAddToCart} type="button" disabled={inCart}>
+                  {inCart ? (
+                    <>
+                      <Icon name="check-circle" size={16} />
+                      In Cart
+                    </>
+                  ) : (
+                    <>
+                      <Icon name="shopping-cart" size={16} />
+                      Add to Cart
+                    </>
+                  )}
+                </button>
+                <button className="qfd-cta" onClick={handleBookNow} type="button">
+                  Book Now
+                  <Icon name="arrow-right" size={16} />
+                </button>
+              </div>
               <div className="qfd-booking-support">
                 <a
                   href={WHATSAPP}

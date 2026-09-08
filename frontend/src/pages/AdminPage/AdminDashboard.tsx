@@ -1,12 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import './AdminShell.css';
 
-const REQUEST_CARDS = [
-  { label: 'Quote Requests', desc: 'Coming with hosting' },
-  { label: 'Pro Fix Requests', desc: 'Coming with hosting' },
-  { label: 'Quick Fix Requests', desc: 'Coming with hosting' },
-];
-
 interface Shortcut {
   to: string;
   title: string;
@@ -22,6 +16,21 @@ const SHORTCUTS: Shortcut[] = [
   { to: '/admin/pro-fix/services', title: 'Pro Fix', desc: 'Services, categories and banner promotions for the Pro Fix experience.' },
   { to: '/admin/quick-fix/services', title: 'Quick Fix', desc: 'Services, categories and banner promotions for the Quick Fix experience.' },
   { to: '/admin/marketing/statistics', title: 'Marketing', desc: 'Statistics and the Discover Services feed on the home page.' },
+  { to: '/admin/marketing/coupons', title: 'Coupons', desc: 'Manage promo codes and discounts for customers.' },
+  { to: '/control-center/bookings', title: 'Bookings', desc: 'View and manage all customer bookings and site visits.' },
+  { to: '/control-center/customers', title: 'Customers', desc: 'View registered customers and their booking history.' },
+];
+
+interface RequestCard {
+  to: string;
+  label: string;
+  desc: string;
+}
+
+const REQUEST_CARDS: RequestCard[] = [
+  { to: '/control-center/requests/quote', label: 'Quote Requests', desc: 'View and manage customer quote requests.' },
+  { to: '/control-center/bookings', label: 'Service Bookings', desc: 'View all Quick Fix and Pro Fix bookings.' },
+  { to: '/control-center/leads', label: 'Leads & Enquiries', desc: 'Manage customer enquiries and leads.' },
 ];
 
 function ArrowIcon() {
@@ -71,21 +80,19 @@ export default function AdminDashboard() {
         <h2 className="admin-dash-section-title">Requests</h2>
         <div className="admin-dash-grid">
           {REQUEST_CARDS.map((card) => (
-            <div key={card.label} className="admin-dash-card admin-dash-card--request">
+            <NavLink key={card.to + card.label} to={card.to} className="admin-dash-card admin-dash-card--request">
               <span className="admin-dash-card-title">
                 {card.label}
+                <span className="admin-dash-card-arrow">
+                  <ArrowIcon />
+                </span>
               </span>
-              <span className="admin-dash-card-count" aria-label="Request count">&mdash;</span>
               <span className="admin-dash-card-desc">{card.desc}</span>
-              <span className="admin-dash-card-cta">View Requests &rarr;</span>
-            </div>
+              <span className="admin-dash-card-cta">View &rarr;</span>
+            </NavLink>
           ))}
         </div>
       </div>
-
-      <p className="admin-dash-note">
-        Sections still under construction show a placeholder until they are enabled.
-      </p>
     </div>
   );
 }

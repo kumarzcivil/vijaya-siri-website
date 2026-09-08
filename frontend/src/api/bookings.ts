@@ -33,6 +33,7 @@ export interface Booking {
   serviceId: string;
   serviceName: string;
   categoryName: string;
+  items: Array<{ kind: string; serviceId: string; serviceName: string; categoryName: string; price: number; quantity: number; unit: string; siteVisitCharge: number }>;
   slotDate: string;
   slotTime: string;
   amount: number;
@@ -48,6 +49,8 @@ export interface Booking {
   siteAddress: string;
   siteLocation: string;
   status: 'upcoming' | 'completed' | 'cancelled';
+  assignedTo: string;
+  assignedPhone: string;
   createdAt: string;
 }
 
@@ -81,6 +84,10 @@ export async function fetchBookingStats(): Promise<BookingStats> {
 
 export async function updateBookingStatus(id: string, status: string): Promise<Booking> {
   return request<Booking>('PATCH', `/bookings/admin/${id}/status`, { status });
+}
+
+export async function assignBookingVendor(id: string, assignedTo: string, assignedPhone: string): Promise<Booking> {
+  return request<Booking>('PATCH', `/bookings/admin/${id}/assign`, { assignedTo, assignedPhone });
 }
 
 export async function deleteBooking(id: string): Promise<void> {

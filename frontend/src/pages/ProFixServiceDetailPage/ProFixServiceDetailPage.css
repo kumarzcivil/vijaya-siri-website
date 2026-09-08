@@ -249,6 +249,31 @@
   outline-offset: 2px;
 }
 
+.pfsd-cta-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.pfsd-cta--cart {
+  background: var(--color-bg-warm);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  flex: 1;
+}
+
+.pfsd-cta--cart:hover:not(:disabled) {
+  background: var(--color-border-light);
+}
+
+.pfsd-cta--cart:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.pfsd-cta-group .pfsd-cta:not(.pfsd-cta--cart) {
+  flex: 1;
+}
+
 .pfsd-booking-support {
   display: flex;
   align-items: center;

@@ -18,6 +18,7 @@ router.get('/admin', adminAuth, bookingController.list);
 router.get('/admin/stats', adminAuth, bookingController.getStats);
 router.get('/admin/:id', adminAuth, ...bookingIdParamValidation, bookingController.getById);
 router.patch('/admin/:id/status', adminAuth, ...bookingIdParamValidation, ...bookingStatusValidation, bookingController.updateStatus);
+router.patch('/admin/:id/assign', adminAuth, ...bookingIdParamValidation, bookingController.assignVendor);
 router.delete('/admin/:id', adminAuth, ...bookingIdParamValidation, bookingController.delete);
 
 export default router;
