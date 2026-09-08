@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Icon from '../../components/Icon/Icon';
+import AddressSelector from '../../components/AddressSelector/AddressSelector';
 import { fetchQuickFixServices, fetchQuickFixCategories } from '../../api/quickFix';
 import {
   getQuickFixSlotDays,
@@ -392,6 +393,14 @@ export default function QuickFixBookPage() {
               <div className="qfk-field-grid">
                 {field('name', 'Name', 'Your full name')}
                 {field('mobile', 'Mobile', '10-digit mobile number')}
+              </div>
+              <AddressSelector
+                onSelect={(addr, loc) => {
+                  updateField('siteAddress', addr);
+                  updateField('siteLocation', loc);
+                }}
+              />
+              <div className="qfk-field-grid">
                 {field('siteAddress', 'Site Address', 'Flat / House / Street / Area')}
                 {field('siteLocation', 'Site Location', 'Landmark / City')}
               </div>

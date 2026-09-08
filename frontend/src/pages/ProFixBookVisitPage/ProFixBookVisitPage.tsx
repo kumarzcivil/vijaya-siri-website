@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import Icon from '../../components/Icon/Icon';
+import AddressSelector from '../../components/AddressSelector/AddressSelector';
 import {
   fetchProFixServices,
   fetchProFixCategories,
@@ -452,6 +453,12 @@ export default function ProFixBookVisitPage() {
             <span className="pfbook-card-label pfbook-card-label--sub" id="pfbook-site-title">
               Site Details
             </span>
+            <AddressSelector
+              onSelect={(addr, loc) => {
+                updateField('siteAddress', addr);
+                updateField('siteLocation', loc);
+              }}
+            />
             <div className="pfbook-field-grid">
               {field('siteAddress', 'Site Address', 'Flat / Plot / Street / Area')}
               {field('siteLocation', 'Site Location', 'Site Location / Landmark / City')}

@@ -1,0 +1,121 @@
+.addr-selector {
+  margin-bottom: 0.75rem;
+}
+
+.addr-selector-label {
+  display: block;
+  font-size: var(--font-small);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.addr-selector-list {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.addr-selector-list::-webkit-scrollbar {
+  display: none;
+}
+
+.addr-selector-card {
+  flex-shrink: 0;
+  min-width: 160px;
+  max-width: 220px;
+  padding: 0.7rem 0.85rem;
+  background: var(--color-bg-white);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.addr-selector-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.addr-selector-card:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.addr-selector-card--active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+  box-shadow: 0 0 0 3px rgba(232, 114, 42, 0.12);
+}
+
+.addr-selector-card--manual {
+  border-style: dashed;
+  opacity: 0.7;
+}
+
+.addr-selector-card--manual.addr-selector-card--active {
+  border-style: solid;
+  opacity: 1;
+}
+
+.addr-selector-card-label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: var(--font-small);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin-bottom: 0.2rem;
+}
+
+.addr-selector-default {
+  font-size: 0.55rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+  padding: 0.1rem 0.35rem;
+  border-radius: var(--radius-pill);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.addr-selector-card-line {
+  display: block;
+  font-size: var(--font-caption);
+  color: var(--color-text-secondary);
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+
+.addr-selector-card-location {
+  display: block;
+  font-size: 0.65rem;
+  color: var(--color-text-tertiary);
+  margin-top: 0.15rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .addr-selector-card {
+    min-width: 140px;
+    padding: 0.6rem 0.7rem;
+  }
+
+  .addr-selector-card-line {
+    max-width: 160px;
+  }
+}
