@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Icon from '../../components/Icon/Icon';
 import { createBooking } from '../../api/bookings';
@@ -15,6 +15,7 @@ export default function ProFixConfirmationPage() {
   const navigate = useNavigate();
   const order = useProFixBooking();
   const recorded = useRef(false);
+  const [showPopup, setShowPopup] = useState(false);
 
   useEffect(() => {
     if (order && !recorded.current) {
@@ -46,8 +47,16 @@ export default function ProFixConfirmationPage() {
         category: 'booking',
         customerId: order.customerId,
       }).catch(() => {});
+      setShowPopup(true);
     }
   }, [order]);
+
+  useEffect(() => {
+    if (showPopup) {
+      const timer = setTimeout(() => navigate('/', { replace: true }), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showPopup, navigate]);
 
   const handleBackToProFix = useCallback(() => {
     navigate('/pro-fix');
@@ -76,6 +85,21 @@ export default function ProFixConfirmationPage() {
   return (
     <div className="pfconf-page">
       <div className="section-container">
+        {showPopup && (
+          <div className="pfconf-popup-overlay" onClick={() => navigate('/', { replace: true })}>
+            <div className="pfconf-popup" onClick={(e) => e.stopPropagation()}>
+              <span className="pfconf-popup-icon">
+                <Icon name="check-circle" size={40} />
+              </span>
+              <h2 className="pfconf-popup-title">Site Visit Booked!</h2>
+              <p className="pfconf-popup-text">Your site visit has been confirmed successfully.</p>
+              <button className="pfconf-popup-btn" onClick={() => navigate('/', { replace: true })} type="button">
+                Go to Home
+              </button>
+              <span className="pfconf-popup-timer">Redirecting in 3s...</span>
+            </div>
+          </div>
+        )}
         <div className="pfconf-card">
           <span className="pfconf-success-icon">
             <Icon name="check-circle" size={30} />

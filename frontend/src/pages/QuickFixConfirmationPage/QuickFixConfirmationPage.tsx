@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Icon from '../../components/Icon/Icon';
 import { createBooking } from '../../api/bookings';
@@ -15,6 +15,7 @@ export default function QuickFixConfirmationPage() {
   const navigate = useNavigate();
   const booking = useQuickFixBooking();
   const recorded = useRef(false);
+  const [showPopup, setShowPopup] = useState(false);
 
   useEffect(() => {
     if (booking && !recorded.current) {
@@ -46,8 +47,16 @@ export default function QuickFixConfirmationPage() {
         category: 'booking',
         customerId: booking.customerId,
       }).catch(() => {});
+      setShowPopup(true);
     }
   }, [booking]);
+
+  useEffect(() => {
+    if (showPopup) {
+      const timer = setTimeout(() => navigate('/', { replace: true }), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showPopup, navigate]);
 
   const scheduleLabel = useMemo(() => {
     if (!booking?.slotDate) return '';
@@ -83,6 +92,21 @@ export default function QuickFixConfirmationPage() {
   return (
     <div className="qfc-page">
       <div className="section-container">
+        {showPopup && (
+          <div className="qfc-popup-overlay" onClick={() => navigate('/', { replace: true })}>
+            <div className="qfc-popup" onClick={(e) => e.stopPropagation()}>
+              <span className="qfc-popup-icon">
+                <Icon name="check-circle" size={40} />
+              </span>
+              <h2 className="qfc-popup-title">Booking Confirmed!</h2>
+              <p className="qfc-popup-text">Your service has been booked successfully.</p>
+              <button className="qfc-popup-btn" onClick={() => navigate('/', { replace: true })} type="button">
+                Go to Home
+              </button>
+              <span className="qfc-popup-timer">Redirecting in 3s...</span>
+            </div>
+          </div>
+        )}
         <div className="qfc-card">
           <span className="qfc-success-icon">
             <Icon name="check-circle" size={30} />

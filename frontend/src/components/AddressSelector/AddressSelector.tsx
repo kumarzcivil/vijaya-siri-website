@@ -53,7 +53,6 @@ export default function AddressSelector({ onSelect }: AddressSelectorProps) {
 
   function handleClear() {
     setSelectedId(null);
-    onSelect('', '');
   }
 
   return (
