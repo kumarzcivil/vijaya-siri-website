@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect,useState } from 'react';
 import Icon from './components/Icon/Icon';
 import { LocationProvider } from './context/LocationContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -7,6 +7,7 @@ import Header from './components/Header/Header';
 import MobileHeader from './components/MobileHeader/MobileHeader';
 import MobileNavigation from './components/MobileNavigation/MobileNavigation';
 import Footer from './components/Footer/Footer';
+import VijayaSiriSplash from './components/VijayaSiriSplash';
 import ProjectsPage from './pages/ProjectsPage/ProjectsPage';
 import ProjectDetailPage from './pages/ProjectDetailPage/ProjectDetailPage';
 import ComparePackagesPage from './pages/ComparePackagesPage/ComparePackagesPage';
@@ -105,6 +106,7 @@ function AppLayout() {
     pathname === '/control-center' ||
     pathname.startsWith('/control-center/');
   const { isMaintenance } = useSiteControl();
+  const [showApp, setShowApp] = useState(false);
 
   if (isAuthenticated && user?.role === 'admin' && !isAdmin && pathname !== '/admin/login') {
     return <Navigate to="/admin" replace />;
@@ -113,7 +115,8 @@ function AppLayout() {
     <div className={`app${isAdmin ? ' app--admin' : ''}`}>
       <PushAutoSubscribe />
       <ScrollToTop />
-      {!isAdmin && (
+      <VijayaSiriSplash onFinish={() => setShowApp(true)} minDuration={5000} />
+      {showApp && !isAdmin && (
         <>
           <Header />
           <MobileHeader />
