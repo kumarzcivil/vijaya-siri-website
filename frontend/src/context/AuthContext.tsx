@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import { signupAPI, loginAPI, adminLoginAPI, getMeAPI, type AuthUser, type SignupData, type LoginData } from '../api/auth';
+import { signupAPI, loginAPI, adminLoginAPI, getMeAPI, googleAuthAPI, type AuthUser, type SignupData, type LoginData } from '../api/auth';
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -7,13 +7,17 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  needsProfileCompletion: boolean;
   login: (data: LoginData) => Promise<void>;
   adminLogin: (data: LoginData) => Promise<void>;
   signup: (data: SignupData) => Promise<void>;
+  googleLogin: (credential: string) => Promise<void>;
+  authenticate: (user: AuthUser, token: string) => void;
   logout: () => void;
   clearError: () => void;
   updateUser: (user: AuthUser) => void;
   refreshUser: () => Promise<void>;
+  completeProfile: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -61,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [needsProfileCompletion, setNeedsProfileCompletion] = useState(false);
 
   useEffect(() => {
     if (token && user) {
@@ -138,6 +143,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const googleLogin = useCallback(async (credential: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await googleAuthAPI({ credential });
+      if (res.success && res.data) {
+        setToken(res.data.token);
+        setUser(res.data.user);
+        if (!res.data.user.mobile) {
+          setNeedsProfileCompletion(true);
+        }
+      } else {
+        throw new Error(res.message || 'Google authentication failed');
+      }
+    } catch (err: any) {
+      const message = err?.message || err?.errors?.[0]?.message || 'Google authentication failed';
+      setError(message);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const authenticate = useCallback((user: AuthUser, authToken: string) => {
+    setToken(authToken);
+    setUser(user);
+  }, []);
+
   const logout = useCallback(() => {
     setToken(null);
     setUser(null);
@@ -166,6 +199,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {}
   }, [updateUser]);
 
+  const completeProfile = useCallback(() => {
+    setNeedsProfileCompletion(false);
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -174,13 +211,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: !!user && !!token,
         isLoading,
         error,
+        needsProfileCompletion,
         login,
         adminLogin,
         signup,
+        googleLogin,
+        authenticate,
         logout,
         clearError,
         updateUser,
         refreshUser,
+        completeProfile,
       }}
     >
       {children}

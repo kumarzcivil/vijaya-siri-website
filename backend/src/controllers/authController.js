@@ -1,6 +1,9 @@
 import jwt from "jsonwebtoken";
+import { OAuth2Client } from "google-auth-library";
 import User from "../models/User.js";
 import { getRedis } from "../config/redis.js";
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const generateToken = (userId) => {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
@@ -142,6 +145,7 @@ const getMe = async (req, res) => {
           isActive: user.isActive,
           lastLogin: user.lastLogin,
           createdAt: user.createdAt,
+          preferredAction: user.preferredAction,
         },
       },
     });
@@ -153,7 +157,7 @@ const getMe = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    const { fullName, mobile, email } = req.body;
+    const { fullName, mobile, email, preferredAction } = req.body;
     const userId = req.user._id;
 
     if (mobile && mobile !== req.user.mobile) {
@@ -174,6 +178,7 @@ const updateProfile = async (req, res) => {
     if (fullName) user.fullName = fullName.trim();
     if (mobile) user.mobile = mobile.trim();
     if (email) user.email = email.trim();
+    if (preferredAction) user.preferredAction = preferredAction;
 
     await user.save();
 
@@ -187,12 +192,99 @@ const updateProfile = async (req, res) => {
           mobile: user.mobile,
           email: user.email,
           role: user.role,
+          preferredAction: user.preferredAction,
         },
       },
     });
   } catch (error) {
     console.error('UpdateProfile error:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+const googleAuth = async (req, res) => {
+  try {
+    const { credential } = req.body;
+
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const { sub: googleId, email, name, email_verified } = payload;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Google account does not have an email address',
+      });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    let user = await User.findOne({ googleId });
+
+    if (!user) {
+      user = await User.findOne({ email: normalizedEmail });
+
+      if (user) {
+        user.googleId = googleId;
+        user.authProvider = 'google';
+        if (email_verified) user.isEmailVerified = true;
+      } else {
+        user = await User.create({
+          fullName: name || normalizedEmail.split('@')[0],
+          email: normalizedEmail,
+          googleId,
+          authProvider: 'google',
+          isEmailVerified: !!email_verified,
+        });
+      }
+    }
+
+    if (!user.isActive) {
+      return res.status(403).json({
+        success: false,
+        message: 'Account is deactivated. Please contact support.',
+      });
+    }
+
+    user.lastLogin = new Date();
+    if (email_verified) user.isEmailVerified = true;
+    await user.save({ validateBeforeSave: false });
+
+    const token = generateToken(user._id);
+
+    try {
+      const redis = getRedis();
+      await redis.set(`user:${user._id}:token`, token, "EX", 7 * 24 * 60 * 60);
+    } catch (err) {
+      console.error("Redis cache error:", err.message);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Google authentication successful',
+      data: {
+        user: {
+          id: user._id,
+          fullName: user.fullName,
+          mobile: user.mobile,
+          email: user.email,
+          role: user.role,
+          lastLogin: user.lastLogin,
+          authProvider: user.authProvider,
+        },
+        token,
+      },
+    });
+  } catch (error) {
+    console.error("GoogleAuth error:", error.message);
+    res.status(401).json({
+      success: false,
+      message: 'Invalid Google credentials. Please try again.',
+    });
   }
 };
 
@@ -266,4 +358,4 @@ const adminLogin = async (req, res) => {
   }
 };
 
-export { signup, login, getMe, updateProfile, adminLogin };
+export { signup, login, getMe, updateProfile, adminLogin, googleAuth };

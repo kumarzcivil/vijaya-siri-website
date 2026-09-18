@@ -1,7 +1,23 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import './LoginPage.css';
+
+declare global {
+  interface Window {
+    google?: {
+      accounts?: {
+        id?: {
+          initialize: (config: {
+            client_id: string;
+            callback: (response: { credential?: string }) => void;
+          }) => void;
+          renderButton: (parent: HTMLElement, config: Record<string, unknown>) => void;
+        };
+      };
+    };
+  }
+}
 
 interface LoginErrors {
   email?: string;
@@ -13,9 +29,51 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<LoginErrors>({});
-  const { login, isLoading, error: authError, clearError, isAuthenticated } = useAuth();
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const { login, isLoading, error: authError, clearError, isAuthenticated, googleLogin } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const googleBtnRef = useRef<HTMLDivElement>(null);
+  const googleInitialized = useRef(false);
+
+  useEffect(() => {
+    if (googleInitialized.current) return;
+    if (!window.google?.accounts?.id) return;
+
+    googleInitialized.current = true;
+    window.google.accounts.id.initialize({
+      client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
+      callback: handleGoogleCallback,
+    });
+
+    if (googleBtnRef.current) {
+      window.google.accounts.id.renderButton(googleBtnRef.current, {
+        theme: 'outline',
+        size: 'large',
+        width: '100%',
+        text: 'continue_with',
+        shape: 'rectangular',
+      });
+    }
+  }, []);
+
+  const handleGoogleCallback = async (response: { credential?: string }) => {
+    if (!response.credential) return;
+    setGoogleLoading(true);
+    try {
+      await googleLogin(response.credential);
+      const returnTo = searchParams.get('return');
+      if (returnTo && returnTo.startsWith('/')) {
+        navigate(returnTo, { replace: true });
+      } else {
+        navigate('/account', { replace: true });
+      }
+    } catch {
+      // error is set in context
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   if (isAuthenticated) {
     const returnTo = searchParams.get('return');
@@ -89,6 +147,19 @@ export default function LoginPage() {
               {authError}
             </div>
           )}
+
+          <div
+            ref={googleBtnRef}
+            className="google-btn-container"
+            style={{ marginBottom: 'var(--space-lg)' }}
+          />
+          {googleLoading && (
+            <p className="google-loading-text">Authenticating with Google...</p>
+          )}
+
+          <div className="google-divider">
+            <span>or</span>
+          </div>
 
           <form className="login-form" onSubmit={handleSubmit} noValidate>
             <div className="login-field">

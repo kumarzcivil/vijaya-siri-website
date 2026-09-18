@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Icon from '../../components/Icon/Icon';
 import { createBooking } from '../../api/bookings';
-import { createNotification } from '../../api/notifications';
 import { useProFixBooking } from '../../hooks/useProFixBooking';
 import './ProFixConfirmationPage.css';
 
@@ -40,12 +39,6 @@ export default function ProFixConfirmationPage() {
         siteAddress: order.billingDetails.siteAddress,
         siteLocation: order.billingDetails.siteLocation,
         status: 'upcoming',
-      }).catch(() => {});
-      createNotification({
-        title: 'Pro Fix site visit booked',
-        message: `Your ${order.serviceName} site visit${order.bookingId ? ` (${order.bookingId})` : ''} is confirmed.`,
-        category: 'booking',
-        customerId: order.customerId,
       }).catch(() => {});
       setShowPopup(true);
     }

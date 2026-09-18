@@ -23,24 +23,39 @@ import offerRoutes from "./src/routes/offers.js";
 import bookingRoutes from "./src/routes/bookings.js";
 import notificationRoutes from "./src/routes/notifications.js";
 import couponRoutes from "./src/routes/coupons.js";
+import searchRoutes from "./src/routes/search.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "https:", "http:"],
-      connectSrc: ["'self'", "https://vijaya-siri-website-qvmi.onrender.com", "https://vijaya-siri-website-two.vercel.app", "https://api.vijayasiri.com"],
-      workerSrc: ["'self'", "blob:"],
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          "'unsafe-eval'",
+          "https://accounts.google.com",
+        ],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        imgSrc: ["'self'", "data:", "https:", "http:"],
+        connectSrc: [
+          "'self'",
+          "https://vijaya-siri-website-two.vercel.app",
+          "https://vijaya-siri-website-qvmi.onrender.com",
+          "https://accounts.google.com",
+          "https://www.googleapis.com",
+        ],
+        frameSrc: ["'self'", "https://accounts.google.com"],
+        workerSrc: ["'self'", "blob:"],
+      },
     },
-  },
-  crossOriginEmbedderPolicy: false,
-}));
+    crossOriginEmbedderPolicy: false,
+  }),
+);
 app.use(
   cors({
     origin: "*",
@@ -84,6 +99,7 @@ app.use("/api/offers", offerRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/coupons", couponRoutes);
+app.use("/api/search", searchRoutes);
 
 app.use((err, req, res, next) => {
   console.error("Unhandled error:", err);
@@ -95,11 +111,17 @@ app.use((err, req, res, next) => {
 
 const start = async () => {
   await connectDB();
-  connectRedis();
+
+  try {
+    connectRedis();
+  } catch (err) {
+    console.warn("Redis connection failed:", err.message);
+  }
 
   // Clean stale push subscriptions on startup
   try {
-    const PushSubscription = (await import("./src/models/PushSubscription.js")).default;
+    const PushSubscription = (await import("./src/models/PushSubscription.js"))
+      .default;
     const result = await PushSubscription.deleteMany({
       $or: [
         { "keys.p256dh": { $exists: false } },
@@ -116,7 +138,7 @@ const start = async () => {
     const total = await PushSubscription.countDocuments();
     console.log(`[Push] ${total} active subscriptions`);
   } catch (err) {
-    console.warn('[Push] Subscription cleanup failed:', err.message);
+    console.warn("[Push] Subscription cleanup failed:", err.message);
   }
 
   app.listen(PORT, () => {
@@ -125,7 +147,9 @@ const start = async () => {
     if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
       console.log(`[Push] VAPID keys configured`);
     } else {
-      console.warn(`[Push] VAPID keys NOT configured - push notifications will not work`);
+      console.warn(
+        `[Push] VAPID keys NOT configured - push notifications will not work`,
+      );
     }
   });
 };

@@ -135,6 +135,73 @@ const adminLoginValidation = [
   handleValidationErrors,
 ];
 
+const sendOTPValidation = [
+  body('fullName')
+    .trim()
+    .notEmpty()
+    .withMessage('Full name is required')
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Full name must be between 2 and 100 characters'),
+  body('mobile')
+    .trim()
+    .notEmpty()
+    .withMessage('Mobile number is required')
+    .matches(/^[6-9]\d{9}$/)
+    .withMessage('Please enter a valid 10-digit Indian mobile number'),
+  body('email')
+    .trim()
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Please enter a valid email address')
+    .normalizeEmail(),
+  body('password')
+    .notEmpty()
+    .withMessage('Password is required')
+    .isLength({ min: 6 })
+    .withMessage('Password must be at least 6 characters'),
+  body('confirmPassword')
+    .notEmpty()
+    .withMessage('Confirm password is required')
+    .custom((value, { req }) => {
+      if (value !== req.body.password) {
+        throw new Error('Passwords do not match');
+      }
+      return true;
+    }),
+  handleValidationErrors,
+];
+
+const verifyOTPValidation = [
+  body('email')
+    .trim()
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Please enter a valid email address')
+    .normalizeEmail(),
+  body('otp')
+    .trim()
+    .notEmpty()
+    .withMessage('OTP is required')
+    .isLength({ min: 6, max: 6 })
+    .withMessage('OTP must be 6 digits')
+    .isNumeric()
+    .withMessage('OTP must contain only numbers'),
+  handleValidationErrors,
+];
+
+const resendOTPValidation = [
+  body('email')
+    .trim()
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Please enter a valid email address')
+    .normalizeEmail(),
+  handleValidationErrors,
+];
+
 const quoteValidation = [
   body('fullName')
     .trim()
@@ -194,4 +261,13 @@ const quoteValidation = [
   handleValidationErrors,
 ];
 
-export { signupValidation, loginValidation, addressValidation, adminLoginValidation, quoteValidation };
+const googleAuthValidation = [
+  body('credential')
+    .notEmpty()
+    .withMessage('Google credential is required')
+    .isString()
+    .withMessage('Google credential must be a string'),
+  handleValidationErrors,
+];
+
+export { signupValidation, loginValidation, addressValidation, adminLoginValidation, quoteValidation, sendOTPValidation, verifyOTPValidation, resendOTPValidation, googleAuthValidation };

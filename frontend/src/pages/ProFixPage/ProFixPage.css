@@ -125,6 +125,27 @@
   box-shadow: 0 0 0 3px rgba(232, 114, 42, 0.12);
 }
 
+.profix-search-clear {
+  position: absolute;
+  right: var(--space-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-warm);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.profix-search-clear:hover {
+  background: var(--color-border);
+  color: var(--color-text-primary);
+}
+
 /* ========================
    CATEGORIES — TILE GRID
    Same visual language as Quick Fix category tiles

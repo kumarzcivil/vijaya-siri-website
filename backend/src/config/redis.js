@@ -1,6 +1,7 @@
 import Redis from "ioredis";
 
 let redis;
+let isRedisAvailable = false;
 
 const connectRedis = () => {
   redis = new Redis({
@@ -23,10 +24,20 @@ const connectRedis = () => {
   redis.connect().catch(() => {});
 
   redis.on("connect", () => {
+    isRedisAvailable = true;
     console.log("Redis connected");
   });
 
+  redis.on("ready", () => {
+    isRedisAvailable = true;
+  });
+
+  redis.on("close", () => {
+    isRedisAvailable = false;
+  });
+
   redis.on("error", (err) => {
+    isRedisAvailable = false;
     if (err.message.includes("ECONNREFUSED")) {
       // silent on first few attempts
     } else {
@@ -44,4 +55,8 @@ const getRedis = () => {
   return redis;
 };
 
-export { connectRedis, getRedis };
+const isRedisReady = () => {
+  return redis && isRedisAvailable && redis.status === "ready";
+};
+
+export { connectRedis, getRedis, isRedisReady };

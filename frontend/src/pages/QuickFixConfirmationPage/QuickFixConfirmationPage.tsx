@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Icon from '../../components/Icon/Icon';
 import { createBooking } from '../../api/bookings';
-import { createNotification } from '../../api/notifications';
 import { useQuickFixBooking } from '../../hooks/useQuickFixBooking';
 import './QuickFixConfirmationPage.css';
 
@@ -40,12 +39,6 @@ export default function QuickFixConfirmationPage() {
         siteAddress: booking.customerDetails.siteAddress,
         siteLocation: booking.customerDetails.siteLocation,
         status: 'upcoming',
-      }).catch(() => {});
-      createNotification({
-        title: 'Quick Fix booking confirmed',
-        message: `Your ${booking.serviceName} booking${booking.bookingId ? ` (${booking.bookingId})` : ''} is confirmed.`,
-        category: 'booking',
-        customerId: booking.customerId,
       }).catch(() => {});
       setShowPopup(true);
     }

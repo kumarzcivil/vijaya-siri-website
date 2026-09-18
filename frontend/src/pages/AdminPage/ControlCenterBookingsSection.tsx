@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
-import { fetchAdminBookings, fetchBookingStats, updateBookingStatus, assignBookingVendor, type Booking, type BookingStats } from '../../api/bookings';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { fetchAdminBookings, fetchBookingStats, updateBookingStatus, assignBookingVendor, deleteBooking, type Booking, type BookingStats } from '../../api/bookings';
 import { SkeletonRow } from '../../components/Skeleton/Skeleton';
 import { logger } from '../../utils/logger';
 import './ControlCenterBookingsSection.css';
@@ -11,10 +11,25 @@ export default function ControlCenterBookingsSection() {
   const [assigningId, setAssigningId] = useState<string | null>(null);
   const [assignName, setAssignName] = useState('');
   const [assignPhone, setAssignPhone] = useState('');
+  const [toast, setToast] = useState<{ message: string; isError?: boolean } | null>(null);
+  const [searchInput, setSearchInput] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const toastTimer = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (toast) {
+      if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
+      toastTimer.current = window.setTimeout(() => setToast(null), 2600);
+    }
+    return () => { if (toastTimer.current !== null) window.clearTimeout(toastTimer.current); };
+  }, [toast]);
 
   const load = useCallback(() => {
     logger.info('Bookings', 'Fetching bookings...');
-    Promise.all([fetchAdminBookings(), fetchBookingStats()])
+    Promise.all([
+      fetchAdminBookings({ search: searchQuery || undefined }),
+      fetchBookingStats(),
+    ])
       .then(([b, s]) => {
         setBookings(b);
         setStats(s);
@@ -24,9 +39,22 @@ export default function ControlCenterBookingsSection() {
         logger.error('Bookings', 'Failed to load bookings', err);
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [searchQuery]);
 
   useEffect(() => { load(); }, [load]);
+
+  const handleSearch = () => {
+    setSearchQuery(searchInput);
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleSearch();
+  };
+
+  const handleClearSearch = () => {
+    setSearchInput('');
+    setSearchQuery('');
+  };
 
   const handleStatus = async (id: string, status: string) => {
     try {
@@ -57,6 +85,23 @@ export default function ControlCenterBookingsSection() {
     }
   };
 
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this booking? This action cannot be undone.')) return;
+    try {
+      await deleteBooking(id);
+      setBookings((prev) => prev.filter((b) => b._id !== id));
+      setStats((prev) => ({
+        ...prev,
+        total: prev.total - 1,
+      }));
+      setToast({ message: 'Booking deleted successfully' });
+      logger.success('Bookings', 'Booking deleted');
+    } catch (err: any) {
+      setToast({ message: err.message || 'Failed to delete booking', isError: true });
+      logger.error('Bookings', `Failed to delete booking: ${err.message}`);
+    }
+  };
+
   if (loading) {
     return (
       <div className="cc-page">
@@ -80,6 +125,35 @@ export default function ControlCenterBookingsSection() {
           View and manage all confirmed service bookings and site visits.
         </p>
       </header>
+
+      {/* Search */}
+      <div className="admin-search cc-search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+        <input
+          className="admin-search-input"
+          placeholder="Search by customer name, mobile or service..."
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          onKeyDown={handleSearchKeyDown}
+        />
+        {searchInput && searchInput !== searchQuery && (
+          <button type="button" className="btn btn--sm btn-ghost" onClick={handleSearch}>
+            Search
+          </button>
+        )}
+        {searchQuery && (
+          <button
+            type="button"
+            className="btn btn--sm btn-ghost"
+            onClick={handleClearSearch}
+          >
+            Clear
+          </button>
+        )}
+      </div>
 
       {bookings.length === 0 ? (
         <div className="cc-empty-state">
@@ -206,11 +280,24 @@ export default function ControlCenterBookingsSection() {
                   >
                     {booking.assignedTo ? 'Reassign Vendor' : 'Assign Vendor'}
                   </button>
+                  <button
+                    className="cc-assign-btn cc-delete-btn"
+                    onClick={() => handleDelete(booking._id)}
+                    type="button"
+                  >
+                    Delete Booking
+                  </button>
                 </div>
               </article>
             ))}
           </div>
         </>
+      )}
+
+      {toast && (
+        <div className={`admin-toast${toast.isError ? ' admin-toast--error' : ''}`} role="status">
+          <span className="admin-toast-dot" />{toast.message}
+        </div>
       )}
     </div>
   );

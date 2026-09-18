@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL || 'https://api.vijayasiri.com/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'https://vijaya-siri-website-qvmi.onrender.com/api';
 
 interface ApiResponse<T> {
   success: boolean;
@@ -16,6 +16,8 @@ export interface AuthUser {
   isActive?: boolean;
   lastLogin?: string;
   createdAt?: string;
+  authProvider?: string;
+  preferredAction?: string;
 }
 
 export interface AuthResponse {
@@ -40,6 +42,7 @@ export interface ProfileUpdateData {
   fullName: string;
   mobile: string;
   email: string;
+  preferredAction?: string;
 }
 
 function getToken(): string | null {
@@ -77,6 +80,40 @@ async function apiRequest<T>(
   return data;
 }
 
+export interface SendOTPData {
+  fullName: string;
+  mobile: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+
+export interface VerifyOTPData {
+  email: string;
+  otp: string;
+}
+
+export async function sendOTPAPI(payload: SendOTPData): Promise<ApiResponse<{ email: string }>> {
+  return apiRequest<{ email: string }>('/auth/verify/send-otp', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function verifyOTPAPI(payload: VerifyOTPData): Promise<ApiResponse<AuthResponse>> {
+  return apiRequest<AuthResponse>('/auth/verify/verify-otp', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function resendOTPAPI(email: string): Promise<ApiResponse<{ message: string }>> {
+  return apiRequest<{ message: string }>('/auth/verify/resend-otp', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  });
+}
+
 export async function signupAPI(payload: SignupData): Promise<ApiResponse<AuthResponse>> {
   return apiRequest<AuthResponse>('/auth/signup', {
     method: 'POST',
@@ -104,6 +141,13 @@ export async function updateProfileAPI(payload: ProfileUpdateData): Promise<ApiR
 
 export async function adminLoginAPI(payload: LoginData): Promise<ApiResponse<AuthResponse>> {
   return apiRequest<AuthResponse>('/auth/admin/login', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function googleAuthAPI(payload: { credential: string }): Promise<ApiResponse<AuthResponse>> {
+  return apiRequest<AuthResponse>('/auth/google', {
     method: 'POST',
     body: JSON.stringify(payload),
   });

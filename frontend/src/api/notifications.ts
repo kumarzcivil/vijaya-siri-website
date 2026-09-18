@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL || 'https://api.vijayasiri.com/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'https://vijaya-siri-website-qvmi.onrender.com/api';
 
 interface ApiResponse<T> {
   success: boolean;
@@ -61,7 +61,13 @@ export async function fetchNotificationStats(): Promise<NotificationStats> {
 }
 
 export async function createNotification(data: Partial<Notification>): Promise<Notification> {
-  return request<Notification>('POST', '/notifications/admin', data);
+  const result = await request<Notification>('POST', '/notifications/admin', data);
+  try {
+    const audio = new Audio('/Notification.mp3');
+    audio.volume = 0.8;
+    audio.play().catch(() => {});
+  } catch {}
+  return result;
 }
 
 export async function markNotificationRead(id: string): Promise<Notification> {

@@ -14,6 +14,16 @@ if ("serviceWorker" in navigator) {
       .catch((error) => {
         console.warn("Service Worker registration failed:", error);
       });
+
+    navigator.serviceWorker.addEventListener("message", (event) => {
+      if (event.data?.type === "PLAY_NOTIFICATION_SOUND") {
+        try {
+          const audio = new Audio("/Notification.mp3");
+          audio.volume = 0.8;
+          audio.play().catch(() => {});
+        } catch {}
+      }
+    });
   });
 }
 

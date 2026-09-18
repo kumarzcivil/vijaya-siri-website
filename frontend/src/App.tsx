@@ -8,6 +8,8 @@ import MobileHeader from './components/MobileHeader/MobileHeader';
 import MobileNavigation from './components/MobileNavigation/MobileNavigation';
 import Footer from './components/Footer/Footer';
 import VijayaSiriSplash from './components/VijayaSiriSplash';
+import FloatingWhatsApp from './components/FloatingWhatsApp/FloatingWhatsApp';
+import './components/FloatingWhatsApp/FloatingWhatsApp.css';
 import ProjectsPage from './pages/ProjectsPage/ProjectsPage';
 import ProjectDetailPage from './pages/ProjectDetailPage/ProjectDetailPage';
 import ComparePackagesPage from './pages/ComparePackagesPage/ComparePackagesPage';
@@ -72,6 +74,7 @@ import AdminRoute from './components/ProtectedRoute/AdminRoute';
 import PaymentPage from './pages/PaymentPage/PaymentPage';
 import CartPage from './pages/CartPage/CartPage';
 import CheckoutPage from './pages/CheckoutPage/CheckoutPage';
+import SearchPage from './pages/SearchPage/SearchPage';
 import { useSiteControl } from './hooks/useSiteControl';
 import AccountDashboardHome from './pages/AccountPage/sections/AccountDashboardHome';
 import ProfileSection from './pages/AccountPage/sections/ProfileSection';
@@ -86,6 +89,7 @@ import ControlCenterBookingsSection from './pages/AdminPage/ControlCenterBooking
 import ControlCenterNotificationsSection from './pages/AdminPage/ControlCenterNotificationsSection';
 import ControlCenterQuoteRequestsSection from './pages/AdminPage/ControlCenterQuoteRequestsSection';
 import PushAutoSubscribe from './components/PushAutoSubscribe/PushAutoSubscribe';
+import ProfileCompletionModal from './components/ProfileCompletionModal/ProfileCompletionModal';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -99,7 +103,7 @@ function ScrollToTop() {
 
 function AppLayout() {
   const { pathname } = useLocation();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, needsProfileCompletion } = useAuth();
   const isAdmin =
     pathname === '/admin' ||
     pathname.startsWith('/admin/') ||
@@ -113,6 +117,9 @@ function AppLayout() {
   }
   return (
     <div className={`app${isAdmin ? ' app--admin' : ''}`}>
+      {isAuthenticated && !isAdmin && needsProfileCompletion && (
+        <ProfileCompletionModal />
+      )}
       <PushAutoSubscribe />
       <ScrollToTop />
       <VijayaSiriSplash onFinish={() => setShowApp(true)} minDuration={5000} />
@@ -122,6 +129,7 @@ function AppLayout() {
           <MobileHeader />
         </>
       )}
+      {showApp && <FloatingWhatsApp />}
       <main>
         {isMaintenance ? (
           <RouteUnavailablePage isMaintenance />
@@ -244,6 +252,7 @@ function AppLayout() {
             <Route path="/bookings" element={<ProtectedRoute><BookingsPage /></ProtectedRoute>} />
             <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
             <Route path="/offers" element={<FeatureGate feature="offers"><OffersPage /></FeatureGate>} />
+            <Route path="/search" element={<SearchPage />} />
             <Route path="/service-detail" element={<DiscoverServiceDetailPage />} />
             <Route path="/admin/login" element={<AdminLoginPage />} />
             <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>}>

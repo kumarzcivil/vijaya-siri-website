@@ -5,7 +5,6 @@ import { useAuth } from '../../context/AuthContext';
 import { getAddressesAPI } from '../../api/addresses';
 import { validateCoupon } from '../../api/coupons';
 import { createBooking } from '../../api/bookings';
-import { createNotification } from '../../api/notifications';
 import { getPaymentPreferences, type PaymentPreference } from '../../data/customerStore';
 import Icon from '../../components/Icon/Icon';
 import { Skeleton, SkeletonRow } from '../../components/Skeleton/Skeleton';
@@ -166,12 +165,6 @@ export default function CheckoutPage() {
 
         const booking = await createBooking(bookingData as any);
         logger.success('Checkout', `Booking created: ${booking._id}`);
-
-        await createNotification({
-          title: 'Booking Confirmed',
-          message: `Your ${item.kind === 'quick-fix' ? 'Quick Fix' : 'Pro Fix'} booking for ${item.serviceName} has been confirmed.`,
-          type: 'booking',
-        }).catch(() => {});
       }
 
       clearCart();

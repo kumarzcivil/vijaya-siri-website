@@ -13,10 +13,16 @@ const userSchema = new mongoose.Schema(
     },
     mobile: {
       type: String,
-      required: [true, 'Mobile number is required'],
       unique: true,
+      sparse: true,
       trim: true,
-      match: [/^[6-9]\d{9}$/, 'Please enter a valid 10-digit Indian mobile number'],
+      validate: {
+        validator: function (v) {
+          if (!v) return true;
+          return /^[6-9]\d{9}$/.test(v);
+        },
+        message: 'Please enter a valid 10-digit Indian mobile number',
+      },
     },
     email: {
       type: String,
@@ -28,9 +34,26 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: [true, 'Password is required'],
       minlength: [6, 'Password must be at least 6 characters'],
       select: false,
+    },
+    googleId: {
+      type: String,
+      index: { sparse: true },
+    },
+    authProvider: {
+      type: String,
+      enum: ['local', 'google'],
+      default: 'local',
+    },
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    preferredAction: {
+      type: String,
+      enum: ['new-home', 'renovation', 'interior', 'commercial', 'civil-works'],
+      default: null,
     },
     role: {
       type: String,
@@ -59,7 +82,10 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.pre('save', async function () {
-  if (!this.isModified('password')) return;
+  if (this.authProvider === 'local' && !this.password) {
+    throw new Error('Password is required for local accounts');
+  }
+  if (!this.isModified('password') || !this.password) return;
 
   const salt = await bcrypt.genSalt(12);
 
