@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 export default function VijayaSiriSplash({
   onFinish,
-  minDuration = 5000,
+  minDuration = 3000,
 }: {
   onFinish?: () => void;
   minDuration?: number;
