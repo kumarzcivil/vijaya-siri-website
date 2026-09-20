@@ -36,6 +36,14 @@ export default function SEO({
       <meta property="og:type" content="website" />
       <meta property="og:url" content={canonicalUrl} />
       <meta property="og:site_name" content="Vijaya Siri" />
+      <meta
+        property="og:image"
+        content="https://www.vijayasiri.com/public/logo.png"
+      />
+      <meta
+        property="og:image:alt"
+        content="Vijaya Siri Construction and Home Improvement Services"
+      />
 
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />
