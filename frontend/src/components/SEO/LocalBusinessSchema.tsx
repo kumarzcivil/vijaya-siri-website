@@ -33,6 +33,21 @@ export default function LocalBusinessSchema() {
       "Painting",
       "Construction Cost Estimation",
     ],
+    openingHoursSpecification: [
+      {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+        ],
+        opens: "09:30",
+        closes: "18:00",
+      },
+    ],
   };
 
   return (
