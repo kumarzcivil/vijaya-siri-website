@@ -7,7 +7,7 @@ interface SEOProps {
   noIndex?: boolean;
 }
 
-const SITE_URL = "https://www.vijayasiri.com"; // Replace with your actual domain
+const SITE_URL = "https://www.vijayasiri.com";
 
 export default function SEO({
   title,
@@ -15,9 +15,7 @@ export default function SEO({
   canonical,
   noIndex = false,
 }: SEOProps) {
-  const canonicalUrl = canonical
-    ? `${SITE_URL}${canonical}`
-    : SITE_URL;
+  const canonicalUrl = `${SITE_URL}${canonical || "/"}`;
 
   return (
     <Helmet>

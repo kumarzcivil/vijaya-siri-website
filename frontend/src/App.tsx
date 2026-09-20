@@ -91,6 +91,7 @@ import ControlCenterQuoteRequestsSection from './pages/AdminPage/ControlCenterQu
 import PushAutoSubscribe from './components/PushAutoSubscribe/PushAutoSubscribe';
 import ProfileCompletionModal from './components/ProfileCompletionModal/ProfileCompletionModal';
 import RouteSEO from './components/SEO/RouteSEO';
+import LocalBusinessSchema from './components/SEO/LocalBusinessSchema';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -119,6 +120,7 @@ function AppLayout() {
   return (
     <div className={`app${isAdmin ? ' app--admin' : ''}`}>
       <RouteSEO />
+      {!isAdmin && <LocalBusinessSchema />}
       {isAuthenticated && !isAdmin && needsProfileCompletion && (
         <ProfileCompletionModal />
       )}

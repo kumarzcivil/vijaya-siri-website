@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin
+Disallow: /control-center
+Disallow: /account
+Disallow: /login
+Disallow: /signup
+Disallow: /payment
+Disallow: /checkout
+Disallow: /bookings
+Disallow: /notifications
+
+Sitemap: https://www.vijayasiri.com/sitemap.xml
