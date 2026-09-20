@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import ErrorBoundary from "./components/ErrorBoundary/ErrorBoundary";
 import "./styles/global.css";
 import App from "./App.tsx";
+import { HelmetProvider } from "react-helmet-async";
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
@@ -30,7 +31,9 @@ if ("serviceWorker" in navigator) {
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ErrorBoundary>
-      <App />
+      <HelmetProvider>
+        <App />
+      </HelmetProvider>
     </ErrorBoundary>
   </StrictMode>,
 );
