@@ -5,6 +5,7 @@ import { useIsFeatureEnabled } from "../../hooks/useSiteControl";
 import type { SiteFeature } from "../../data/siteControl";
 import "./HomePage.css";
 import SEO from "../../components/SEO/SEO";
+import LocationSEOSection from "../../components/SEO/LocationSEOSection";
 
 interface Service {
   id: string;
@@ -193,6 +194,8 @@ export default function HomePage() {
           </div>
         </section>
       </div>
+
+      <LocationSEOSection />
     </>
   );
 }
