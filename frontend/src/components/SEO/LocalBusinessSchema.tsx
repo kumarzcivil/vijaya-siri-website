@@ -1,14 +1,16 @@
 import { Helmet } from "react-helmet-async";
 
 export default function LocalBusinessSchema() {
-  const structuredData = {
+  const schema = {
     "@context": "https://schema.org",
     "@type": "HomeAndConstructionBusiness",
     "@id": "https://www.vijayasiri.com/#business",
+
     name: "Vijaya Siri",
-    url: "https://www.vijayasiri.com",
+    url: "https://www.vijayasiri.com/",
     description:
-      "Residential construction, renovation and home improvement services.",
+      "Vijaya Siri provides construction, home improvement, renovation, plumbing, electrical, painting, and flooring services.",
+
     areaServed: [
       {
         "@type": "City",
@@ -23,16 +25,7 @@ export default function LocalBusinessSchema() {
         name: "Sindhanur",
       },
     ],
-    knowsAbout: [
-      "House Construction",
-      "Home Renovation",
-      "Modular Kitchen",
-      "Flooring and Tiles",
-      "Electrical Work",
-      "Plumbing",
-      "Painting",
-      "Construction Cost Estimation",
-    ],
+
     openingHoursSpecification: [
       {
         "@type": "OpeningHoursSpecification",
@@ -48,12 +41,23 @@ export default function LocalBusinessSchema() {
         closes: "18:00",
       },
     ],
+
+    knowsAbout: [
+      "House Construction",
+      "Home Renovation",
+      "Modular Kitchen",
+      "Flooring and Tiles",
+      "Electrical Services",
+      "Plumbing Services",
+      "Painting Services",
+      "Construction Cost Estimation",
+    ],
   };
 
   return (
     <Helmet>
       <script type="application/ld+json">
-        {JSON.stringify(structuredData)}
+        {JSON.stringify(schema)}
       </script>
     </Helmet>
   );
