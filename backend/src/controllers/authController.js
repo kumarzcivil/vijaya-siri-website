@@ -320,13 +320,16 @@ const adminLogin = async (req, res) => {
         password: adminPassword,
         role: 'admin',
       });
-    } else if (adminUser.role !== 'admin') {
-      adminUser.role = 'admin';
-      await adminUser.save({ validateBeforeSave: false });
     }
 
-    adminUser.lastLogin = new Date();
-    await adminUser.save({ validateBeforeSave: false });
+    const lastLogin = new Date();
+    await User.updateOne(
+      { _id: adminUser._id },
+      { $set: { role: 'admin', lastLogin } },
+    );
+
+    adminUser.role = 'admin';
+    adminUser.lastLogin = lastLogin;
 
     const token = generateToken(adminUser._id);
 

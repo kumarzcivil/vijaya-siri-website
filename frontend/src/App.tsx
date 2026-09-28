@@ -126,7 +126,7 @@ function AppLayout() {
       )}
       <PushAutoSubscribe />
       <ScrollToTop />
-      <VijayaSiriSplash onFinish={() => setShowApp(true)} minDuration={5000} />
+      <VijayaSiriSplash onFinish={() => setShowApp(true)} minDuration={3000} />
       {showApp && !isAdmin && (
         <>
           <Header />
